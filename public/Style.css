@@ -1,0 +1,3183 @@
+/* Navbar */
+
+* {
+    padding: 0;
+    margin: 0;
+}
+
+body {
+    font-family: "Montserrat", sans-serif;
+    background-color: black;
+}
+
+/* Safety net: koi bhi element galti se page ko viewport se chaura kar de
+   (khaas taur par chhoti/mobile screens par), tab bhi poori page side-ways
+   pan/scroll nahi hogi - jo bhi content fit nahi hota bas clip ho jata hai
+   is se aage.
+   NOTE: sirf <body> par lagate hain, <html> par nahi - kayi mobile browsers
+   (khaas kar Safari/iOS) me <html> par overflow-x:hidden lagane se
+   "position: fixed" elements (jaise neeche wala music player bar) apni
+   fixed jagah chhod kar page ke sath hi scroll/gayab hone lagte hain. */
+body { overflow-x: hidden; max-width: 100%; }
+
+nav {
+    background-color: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 4rem;
+}
+
+.left-half {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    color: white;
+}
+
+.logo {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0.5rem;
+    cursor: pointer;
+}
+
+/* ---------- Mobile hamburger button (sirf <=768px pe dikhta hai, see media query) ---------- */
+.mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    margin-left: 0.2rem;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.25rem;
+    cursor: pointer;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+.mobile-menu-btn:hover,
+.mobile-menu-btn:focus-visible { background-color: rgba(255, 255, 255, 0.1); outline: none; }
+
+/* ---------- Mobile side menu (hamburger click se khulta hai) ----------
+   Ab ye poori screen cover nahi karta - sirf ek chhota, top navbar ke
+   neeche se shuru hokar player-bar se upar tak (jitna area red se mark
+   kiya gaya tha) tairta hua panel hai, taake baaki screen (songs/player)
+   thoda dhundla lekin nazar aata rahe. */
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 15000;
+    background-color: rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.mobile-menu-overlay.open { display: block; opacity: 1; }
+
+.mobile-menu-panel {
+    position: fixed;
+    top: 0; /* screen ke bilkul top se - navbar ke bhi upar se start hota hai, use cover karta hai */
+    left: 0;
+    z-index: 15001;
+    width: 46%;
+    min-width: 13rem;
+    max-width: none;
+    height: calc(100vh - 5.4rem - env(safe-area-inset-bottom, 0px));
+    max-height: none;
+    background-color: #000;
+    border: none;
+    border-right: 1px solid #262626;
+    border-radius: 0;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+    padding: calc(1.1rem + env(safe-area-inset-top, 0px)) 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.mobile-menu-panel.open { transform: translateX(0); }
+
+.mobile-menu-close {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.3rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+.mobile-menu-close:hover { background-color: rgba(255, 255, 255, 0.1); }
+
+.mobile-menu-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-top: 0.3rem;
+}
+
+.mobile-menu-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Har link ek row hai: icon + text, dono white, ek hi tarah align (fixed
+   icon width se sab text ek hi line par shuru hote hain - rough nahi
+   lagega). Hover/press par piche halka white background highlight aata
+   hai (jaisa asal Premium/Playlist/Support buttons ka original theme hai).
+   Icon/text bare/zyada visible hain, panel bhi red-marked area jitna
+   bara/tall rakha hai taake sab kuch achi tarah nazar aaye. */
+.mobile-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-decoration: none;
+    letter-spacing: 0.2px;
+    padding: 0.85rem 0.7rem;
+    border-radius: 10px;
+    transition: background-color 0.15s, color 0.15s;
+}
+.mobile-menu-link i {
+    width: 1.8rem;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 1.6rem;
+    color: #fff;
+}
+.mobile-menu-link:hover,
+.mobile-menu-link:active,
+.mobile-menu-link:focus-visible {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    outline: none;
+}
+.mobile-menu-group-2 { margin-top: 0; } /* space-evenly gap khud handle karta hai */
+
+.mobile-menu-actions {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+.mobile-menu-action-btn {
+    background-color: #2a2a2a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem 0.9rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.mobile-menu-action-btn:hover { background-color: #3a3a3a; }
+
+/* "Exit" - panel ke sabse aakhir (last) me, menu ko band karta hai (X button jaisa hi kaam) */
+.mobile-menu-exit-btn {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    width: 100%;
+    background: none;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 0.85rem 0.7rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+.mobile-menu-exit-btn i { font-size: 1.2rem; }
+.mobile-menu-exit-btn:hover,
+.mobile-menu-exit-btn:focus-visible {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #555;
+    outline: none;
+}
+
+/* ---------- "Leave" button - mobile-only, Your Playlists / Downloads full-screen view se wapas Home par le jata hai ---------- */
+.view-leave-btn {
+    display: none;
+}
+
+.logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    position: relative;
+    outline: none;
+}
+
+.logo-m {
+    display: inline-block;
+    width: 5.6rem;
+    height: 4.67rem;
+    -webkit-mask-image: url('assets/m-logo-mask.png');
+    mask-image: url('assets/m-logo-mask.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    background: linear-gradient(115deg, #43e97b 0%, #2ed573 25%, #0b6e3a 50%, #38f9a3 75%, #43e97b 100%);
+    background-size: 300% 300%;
+    filter: drop-shadow(0 3px 8px rgba(46, 213, 115, 0.35));
+    animation: mGradientFlow 7s ease-in-out infinite;
+    transform: translateY(20px); /* logo ko neeche kiya - value badhao/ghatao to aur zyada/kam neeche jayega */
+    transition: transform 0.35s ease, filter 0.35s ease, background 0.6s ease;
+}
+
+.logo-wrap:hover .logo-m,
+.logo-wrap:focus-visible .logo-m {
+    transform: translateY(20px) scale(1.1);
+    filter: drop-shadow(0 4px 12px rgba(46, 213, 115, 0.55));
+}
+
+/* Red theme: logo switches to the reddish gradient */
+body.red-theme .logo-m {
+    background: linear-gradient(115deg, #ff3d5a 0%, #ff0844 25%, #7a0019 50%, #ff2d55 75%, #ff3d5a 100%);
+    filter: drop-shadow(0 3px 8px rgba(255, 10, 60, 0.35));
+}
+
+body.red-theme .logo-wrap:hover .logo-m,
+body.red-theme .logo-wrap:focus-visible .logo-m {
+    filter: drop-shadow(0 4px 12px rgba(255, 10, 60, 0.55));
+}
+
+.logo-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, 4px);
+    margin-top: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    background-color: #1f1f1f;
+    color: #ffffff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 10;
+}
+
+.logo-wrap:hover .logo-tooltip,
+.logo-wrap:focus-visible .logo-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+@keyframes mGradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
+.home-icon {
+    font-size: 1.7rem;
+    background-color: #1f1f1f;
+    padding: 8px;
+    border-radius: 50%;
+    margin: 0 0.5rem;
+    color: rgb(179, 179, 179);
+    transition: 0.2;
+    cursor: pointer;
+}
+
+.home-icon:hover {
+    color: white;
+    transform: scale(1.05);
+}
+
+.search-bar {
+    display: flex;
+    height: 3rem;
+    width: 30rem;
+    border-radius: 20rem;
+    background-color: #1f1f1f;
+    align-items: center;
+}
+
+.search-bar:hover {
+    background-color: #2c2c2c;
+    border: 2px solid rgb(57, 56, 56);
+}
+
+.search-icon {
+    font-size: 1.5rem;
+    color: rgb(179, 179, 179);
+    padding: 0 0.7rem;
+}
+
+.search-bar:hover .search-icon {
+    color: white;
+}
+
+.input-box {
+    width: 78%;
+    height: 60%;
+    background-color: #2c2c2c00;
+    border: none;
+    border-right: 1px solid rgb(179, 179, 179);
+    color: white;
+    font-size: 1.2rem;
+    outline: none; /* focus/typing par white outline stroke hata di */
+}
+
+.input-box:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.browse {
+    font-size: 1.3rem;
+    margin-left: 0.6rem;
+    transition: 0.2;
+}
+
+.browse:hover {
+    transform: scale(1.05);
+}
+
+.right-half {
+    display: flex;
+    align-items: center;
+    color: white;
+    width: 48%;
+}
+
+.right-half-p1 {
+    display: flex;
+    align-items: center;
+    height: 1.7rem;
+    margin: 0 1rem;
+    padding: 0 2rem 0 0;
+    border-right: 2px solid rgb(179, 179, 179);
+}
+
+.nav-text {
+    padding: 0 0.5rem;
+    font-weight: 600;
+    color: rgb(179, 179, 179);
+    transition: 0.1;
+}
+
+.nav-text:hover {
+    color: white;
+    transform: scale(1.05);
+    cursor: pointer;
+}
+
+.right-half-p2 {
+    display: flex;
+    align-items: center;
+}
+
+.login-btn {
+    height: 3rem;
+    width: 7rem;
+    border-radius: 15rem;
+    border: none;
+    background-color: white;
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 1rem;
+    transition: 0.2;
+    cursor: pointer;
+}
+
+.login-btn:hover {
+    transform: scale(1.05);
+}
+
+.placeholder {
+    border: none;
+}
+
+/* main-left-part */
+
+.main {
+    background-color: black;
+    min-width: 98vw;
+    height: 80vh;
+    margin-top: 2vh;
+    display: flex;
+    justify-content: space-around;
+    color: white;
+}
+
+.main-left-part {
+    width: 27%;
+    height: 100%;
+    background-color: #121212;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* is se andar sirf playlists list scroll hogi, poora left part nahi */
+}
+
+
+.library {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 1.5rem 0.2rem 1.5rem;
+}
+
+.library p {
+    font-weight: 600;
+}
+
+.library div {
+    font-size: 2rem;
+    color: rgb(179, 179, 179);
+    background-color: #2f2f2f;
+    padding: 8px;
+    height: 1.5rem;
+    width: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: 0.2;
+    cursor: pointer;
+}
+
+.library div:hover {
+    color: white;
+    background-color: #2f2f2f;
+}
+
+.box-container {
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
+.box {
+    background-color: #1f1f1f;
+    height: 7.5rem;
+    width: 98%;
+    border-radius: 8px;
+    margin: 1rem 0;
+    box-sizing: border-box;
+}
+
+.box-container .box:first-child {
+    margin-top: 0.4rem;
+}
+
+.box h4 {
+    font-weight: 600;
+    font: 0.9rem;
+    padding: 1.3rem 0 0.5rem 1rem;
+}
+
+.box p {
+    font-size: 0.8rem;
+    padding-left: 1rem;
+}
+
+.box button {
+    background-color: white;
+    color: black;
+    font-weight: 600;
+    padding: 0.6rem 0.8rem;
+    margin: 1rem 0 0 1rem;
+    border-radius: 25rem;
+    border: none;
+    transition: 0.2;
+    cursor: pointer;
+}
+
+.box button:hover {
+    transform: scale(1.04);
+    background-color: rgb(226, 226, 226);
+}
+
+/* Main right part */
+
+.main-right-part {
+    width: 72%;
+    height: 100%;
+    background-color: #121212;
+    border-radius: 10px;
+    overflow: auto;
+}
+
+.music-card img {
+    height: 15rem;
+    width: 15em;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 5px;
+    display: block;
+}
+
+.music-card {
+    width: 15rem;
+    padding: 0.7rem;
+    border-radius: 5px;
+    position: relative;
+}
+
+/* Admin panel se add hone wale songs ke liye - thumbnail ka apna chota
+   overflow:hidden wrapper (poore .music-card par nahi lagate, warna hover
+   par play button clip ho jata). YouTube ki default thumbnails mein kabhi
+   kabhi upar/neeche halki black bars khud tasveer ke andar bake hui hoti
+   hain - sirf object-fit:cover unhe nahi hata sakta (height already match ho
+   jati hai, crop hoti hi nahi). Isliye thumbnail ko thora zoom karke crop
+   karte hain (yt-thumb) taake koi khaali/blank hissa na bache. */
+.music-thumb-wrap {
+    height: 15rem;
+    width: 15em;
+    overflow: hidden;
+    border-radius: 5px;
+    position: relative;
+}
+.music-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+.music-thumb-wrap img.yt-thumb {
+    transform: scale(1.22);
+    transform-origin: center center;
+}
+
+.music-card:hover {
+    background-color: #222;
+}
+
+.music-section {
+    margin: 2rem 0 2rem 2rem;
+}
+
+.songs {
+    margin: 2rem 0;
+    display: grid;
+    /* Har row me sirf 4 songs (slots) - 5th song khud niche nayi row me chala jata
+       hai, width ya layout kharab kiye baghair (chahe manually add ho ya admin
+       panel se YouTube link ke zariye). justify-content/align-content: start
+       taake adhoori (partial) last row hamesha left se shuru ho, order wise -
+       na stretch ho na center. */
+    grid-template-columns: repeat(4, max-content);
+    justify-content: start;
+    align-content: start;
+}
+
+.img-title {
+    margin: 0.5rem 0;
+    font-weight: 500;
+    font-size: 20px;
+}
+
+.img-description {
+    font-size: 0.8rem;
+    color: rgb(198, 198, 198);
+    font-size: 14px;
+}
+
+.music-play-btn {
+    color: rgb(94, 218, 94);
+    font-size: 2.5rem;
+    position: absolute;
+    background-color: black;
+    width: 2.5rem;
+    display: flex;
+    border-radius: 20rem;
+    transform: translate(181px, -32px);
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.music-card:hover .music-play-btn {
+    opacity: 1;
+    transform: translate(181px, -40px);
+    cursor: pointer;
+}
+
+/* Player */
+
+.player-bar {
+    width: 100%;
+    height: 5rem;
+    margin-top: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #131313;
+}
+
+.music-controller {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+}
+
+.player-btns {
+    font-size: 1.1rem;
+    margin: 0.4rem 1rem;
+    color: rgb(190, 190, 190);
+    cursor: pointer;
+}
+
+.player-btns:hover {
+    transform: scale(1.02);
+    color: rgb(209, 208, 208);
+}
+
+#play {
+    font-size: 2.2rem;
+    color: white;
+}
+
+/* Progress bar fill ka single source of truth: sirf --p (JS se set hoti hai)
+   is background gradient ko control karti hai. Neeche jitne bhi #progressBar
+   blocks hain unme se koi bhi ab inline background nahi set karta - isi
+   se theme change / restart pe fill kabhi stale ya missing nahi rahegi. */
+#progressBar {
+    appearance: none;
+    width: 600px;
+    height: 3px;
+    border-radius: 5px;
+    cursor: pointer;
+    --p: 0%;
+    background: linear-gradient(to right, #ffffff var(--p), #333 var(--p));
+}
+
+input [type='range']::-webkit-slider-thumb {
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.now-bar {
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.player-bar img {
+    height: 4rem;
+    width: 4rem;
+    border-radius: 10px;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.now-bar-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* Title + artist column - download icon (below) sits right after this as a
+   flex sibling, so the gap between "song name" and the download icon stays
+   fixed no matter how long the title/artist text is. */
+.now-bar-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.img-title-info {
+    font-size: 0.9rem;
+    margin-left: 1rem;
+    font-weight: 500;
+}
+
+.img-des-info {
+    font-size: 0.8rem;
+    color: rgb(205, 204, 204);
+    margin-left: 1rem;
+}
+
+.active {
+    color: rgb(31, 243, 31);
+}
+
+.active:hover {
+    color: rgb(31, 243, 31);
+}
+
+
+
+.volume-container {
+    width: 20%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 2rem;
+}
+
+/* ---------- Player-bar download icon (offline.js) - now-bar mein song
+   name/artist ke bilkul baad, ek fixed gap (margin-left) par - taake position
+   hamesha wahi rahe chahe title lamba ho ya chhota. Plain icon - koi circle/
+   background/ring nahi, sirf hover par halka color change aur download ke
+   waqt smooth animation. ---------- */
+.player-download-btn {
+    font-size: 1.3rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    margin-left: 1.8rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    cursor: pointer;
+    transition: color 0.25s ease, transform 0.15s ease;
+}
+.player-download-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Downloading: icon ka smooth pulse - koi ring/circle nahi */
+.player-download-btn.downloading {
+    color: #1db954;
+    animation: mldx-dl-pulse 0.9s ease-in-out infinite;
+}
+body.red-theme .player-download-btn.downloading { color: #ff4d4d; }
+@keyframes mldx-dl-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.65; }
+}
+
+/* Downloaded: checkmark halka sa "pop" in ho jata hai */
+.player-download-btn.downloaded {
+    color: #1db954;
+    animation: mldx-dl-pop 0.4s ease;
+}
+body.red-theme .player-download-btn.downloaded { color: #ff4d4d; }
+@keyframes mldx-dl-pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+#vol-icon {
+    color: rgb(179, 179, 179);
+    margin-right: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#vol-icon:hover {
+    color: white;
+}
+
+#volumeBar {
+    appearance: none;
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(to right, #d5d8d6 100%, #333 100%);
+    /* Green initial state */
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+#volumeBar::-webkit-slider-thumb {
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    background-color: white;
+    border-radius: 50%;
+    opacity: 0;
+    transition: 0.2s;
+}
+
+.volume-container:hover #volumeBar::-webkit-slider-thumb {
+    opacity: 1;
+}
+
+.volume-container:hover #volumeBar {
+    background: linear-gradient(to right, #aab3ad 100%, #535353 100%);
+}
+
+
+
+.player-bar {
+    width: 100%;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #131313;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    z-index: 4000;
+    border: 4px solid black;
+}
+
+
+.now-bar,
+.music-controller,
+.volume-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+
+.now-bar {
+    justify-content: flex-start;
+    padding-left: 1rem;
+}
+
+.music-controller {
+    flex-direction: column;
+    justify-content: center;
+}
+
+.volume-container {
+    justify-content: flex-end;
+    padding-right: 2rem;
+}
+
+
+#progressBar {
+    appearance: none;
+    width: 650px;
+    height: 4px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+
+
+.music-controller {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.spotify-timer-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    max-width: 700px;
+}
+
+
+#progressBar {
+    appearance: none;
+    flex-grow: 1;
+    height: 4px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+
+.time-label {
+    font-size: 12px;
+    color: #a7a7a7;
+    min-width: 40px;
+}
+
+#progressBar {
+    appearance: none;
+    flex-grow: 1;
+    height: 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    outline: none;
+}
+
+
+#progressBar::-webkit-slider-thumb {
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    background: white;
+    border-radius: 50%;
+}
+
+
+body.red-theme {
+    background: linear-gradient(135deg, #000000 0%, #300000 100%) !important;
+    background-attachment: fixed;
+}
+
+
+body.red-theme .player-bar, 
+body.red-theme footer, 
+body.red-theme .bottom-player {
+    background: rgba(0, 0, 0, 0.6) !important; 
+    width: 100% !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+
+body.red-theme .main-left-part, 
+body.red-theme .main-right-part, 
+body.red-theme .playlist-container {
+    background: transparent !important;
+}
+body.red-theme nav {
+    background: #000 !important;
+}
+
+
+.volume-container {
+    width: 25%;
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 40px;
+    align-items: center;
+    gap: 15px; 
+}
+
+
+body.red-theme #progressBar {
+    background: linear-gradient(to right, #ffff00 var(--p), #333 var(--p)) !important;
+}
+
+
+
+#theme-toggle {
+    font-size: 1.3rem;
+    color: #b3b3b3;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    display: inline-block;
+}
+
+
+#theme-toggle:hover {
+    color: #ffffff;
+    transform: scale(1.2) rotate(15deg);
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+}
+
+
+#theme-toggle.active {
+    color: #ffff00 !important;
+    transform: scale(1.1) rotate(360deg); 
+    text-shadow: 0 0 20px rgba(255, 255, 0, 0.6); 
+    filter: drop-shadow(0 0 8px rgba(255, 255, 0, 0.4));
+}
+
+/* Modal Background - Reduced Blur */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Halka dark */
+    backdrop-filter: blur(4px); /* Blur kam kar diya */
+}
+
+/* Modal Box - Premium Look */
+.modal-content {
+    background: #181818;
+    margin: 50px auto;
+    padding: 24px;
+    width: 400px;
+    border-radius: 12px;
+    color: white;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-header h2 { margin: 0; font-size: 1.5rem; }
+
+.close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #b3b3b3;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, transform 0.15s;
+    user-select: none;
+}
+
+.close-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Red Theme Override */
+body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; }
+
+
+/* Search Bar Container */
+.search-bar {
+    position: relative; /* Zaroori hai positioning ke liye */
+}
+
+/* Temporary Slide Styling */
+.search-results-slide {
+    display: none; /* Pehle se hide rahega */
+    position: absolute;
+    top: 110%; /* Search bar se thoda niche */
+    left: 0;
+    width: 100%; /* Jitni length search bar ki hai */
+    background: #121212; /* Spotify Dark Theme */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    z-index: 9999;
+    max-height: 450px;
+    overflow-y: auto;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+}
+
+/* Jab search results dikhane hon */
+.search-results-slide.active {
+    display: block;
+}
+
+/* Individual Search Item */
+.search-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-item:hover {
+    background: #282828;
+}
+
+.search-item img {
+    width: 55px; /* Aesthetic Image Size */
+    height: 55px;
+    border-radius: 4px;
+    margin-right: 15px;
+    object-fit: cover;
+}
+
+.search-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.search-item-info strong {
+    color: white;
+    font-size: 0.95rem;
+    margin-bottom: 3px;
+}
+
+.search-item-info span {
+    color: #b3b3b3;
+    font-size: 0.85rem;
+}
+
+/* Scrollbar Customization */
+.search-results-slide::-webkit-scrollbar {
+    width: 6px;
+}
+.search-results-slide::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 10px;
+}
+
+.projector-container {
+    display: none; /* Sirf shuru mein hidden hoga */
+    position: fixed;
+    top: 45%; 
+    left: 58%; 
+    transform: translate(-50%, -50%);
+    width: 1300px; /* Kaafi bada size */
+    z-index: 0; /* Cards ke piche background ki tarah */
+    pointer-events: none;
+    mix-blend-mode: screen; 
+    opacity: 0.8; /* Ab zyada saaf nazar aayega */
+    filter: blur(1px); 
+    transition: opacity 0.5s ease;
+}
+
+.projector-mask {
+    width: 100%;
+    /* Boundary ko fade karne ke liye behtar gradient */
+    mask-image: radial-gradient(circle, black 45%, transparent 85%);
+    -webkit-mask-image: radial-gradient(circle, black 45%, transparent 85%);
+}
+
+#projector-video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+
+/* Main section jahan saare gaane hain */
+.main-right-part {
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* COOL ANIMATION CLASS: Jab projector video chalay gi to ye class automatically lag jaye gi */
+.songs-fade-out {
+    opacity: 0 !important;
+    transform: translateY(20px) scale(0.98); /* Halka sa niche slide ho kar invisible hoga */
+    pointer-events: none; /* Gayab hone par clicks block na hon */
+    visibility: hidden;
+}
+
+
+
+
+
+/* =========================================================
+   EXIT PROJECTOR MODE BUTTON (toggle: minus <-> plus)
+   Sirf projector-capable song chalte waqt top-right corner mein
+   nazar aata ha. Click karne se button gayab NAHI hota - sirf
+   projector video ON/OFF toggle hoti ha, icon minus <-> plus
+   morph hota ha (cool bouncy transition + flash animation).
+   ========================================================= */
+.exit-projector-btn {
+    position: fixed;
+    top: 22px;
+    right: 14px;
+    z-index: 50; /* Cards aur projector video se upar */
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #141414;
+    cursor: pointer;
+    isolation: isolate; /* apna stacking context, taake ::before ring peeche rahay */
+
+    /* Hidden by default */
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-14px) scale(0.8);
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+}
+
+/* Rotating dark-red / yellow color ring (aesthetic animation) */
+.exit-projector-btn::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    padding: 3px;
+    background: conic-gradient(from 0deg, #5c0000, #ffcf40, #8a1f00, #5c0000);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: -1;
+}
+
+.exit-projector-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    animation: floatPulse 2.4s ease-in-out infinite;
+}
+
+.exit-projector-btn.visible::before {
+    opacity: 1;
+    animation: spinRing 6s linear infinite;
+}
+
+@keyframes spinRing {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes floatPulse {
+    0%, 100% { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 0 rgba(255, 180, 0, 0); }
+    50%      { box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(255, 160, 0, 0.55); }
+}
+
+.exit-projector-btn:hover {
+    transform: scale(1.1);
+}
+
+.exit-projector-btn:active {
+    transform: scale(0.88);
+}
+
+/* One-shot "cool" flash/pop jab bhi toggle click ho (minus->plus ya plus->minus, dono directions) */
+.exit-projector-btn.burst {
+    animation: toggleFlash 0.45s ease-out;
+}
+
+@keyframes toggleFlash {
+    0%   { transform: scale(1);   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 0 rgba(255, 255, 255, 0); }
+    40%  { transform: scale(1.22); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 24px rgba(255, 207, 64, 0.9); }
+    100% { transform: scale(1);   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+/* Minus / Plus icon, hand-built so it can morph smoothly */
+.exit-icon {
+    position: relative;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.35s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* bouncy overshoot */
+}
+
+.exit-icon::before,
+.exit-icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    background: #fff;
+    border-radius: 2px;
+    transition: transform 0.35s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* Horizontal bar - hamesha nazar ata ha (minus ka jism) */
+.exit-icon::before {
+    width: 16px;
+    height: 2.5px;
+    transform: translate(-50%, -50%);
+}
+
+/* Vertical bar - shuru mein chupi hoti ha (isi liye "minus" nazar ata ha) */
+.exit-icon::after {
+    width: 2.5px;
+    height: 16px;
+    transform: translate(-50%, -50%) scaleY(0);
+}
+
+/* .off = projector user ne manually band ki hui ha -> "-" se "+" ban jata ha, button visible rehta ha */
+.exit-projector-btn.off .exit-icon {
+    transform: rotate(90deg);
+}
+
+.exit-projector-btn.off .exit-icon::after {
+    transform: translate(-50%, -50%) scaleY(1);
+}
+
+/* ===================== Account System (Login/Signup) ===================== */
+
+.guest-auth-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.user-profile-box {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 1rem;
+    padding: 0.3rem 0.8rem 0.3rem 0.3rem;
+    border-radius: 2rem;
+    background-color: #2c2c2c;
+    cursor: pointer;
+    position: relative;
+}
+
+.user-avatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 0.9rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-dropdown {
+    display: none;
+    position: absolute;
+    top: 3rem;
+    right: 0;
+    background-color: #282828;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    z-index: 20;
+}
+
+.user-profile-box:hover .user-dropdown,
+.user-profile-box:focus-within .user-dropdown {
+    display: block;
+}
+
+#logout-btn {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.8rem 1.4rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+#logout-btn:hover {
+    background-color: #3e3e3e;
+}
+
+/* ===== Auth modal: bigger box + modern glassy aesthetic ===== */
+.auth-modal-content {
+    width: 460px;
+    max-width: 92vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 32px 34px;
+    background: radial-gradient(circle at 50% 0%, #232323 0%, #161616 60%, #101010 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(29, 185, 84, 0.05);
+    scrollbar-width: thin;
+    scrollbar-color: #1db954 transparent;
+}
+
+.auth-modal-content::-webkit-scrollbar { width: 6px; }
+.auth-modal-content::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.auth-modal-content .modal-header { margin-bottom: 1.4rem; }
+.auth-modal-content .modal-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+/* Tabs -> sliding pill toggle */
+.auth-tabs {
+    display: flex;
+    position: relative;
+    background: #0d0d0d;
+    border: 1px solid #2a2a2a;
+    border-radius: 50px;
+    padding: 5px;
+    margin-bottom: 1.6rem;
+}
+
+.auth-tab {
+    flex: 1;
+    position: relative;
+    z-index: 2;
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 0.7rem 0;
+    cursor: pointer;
+    border-radius: 50px;
+    transition: color 0.25s ease;
+}
+
+.auth-tab.active { color: #000; }
+
+.auth-tabs::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: calc(50% - 5px);
+    height: calc(100% - 10px);
+    background: linear-gradient(135deg, #1ed760, #1db954);
+    border-radius: 50px;
+    transition: transform 0.28s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: 1;
+}
+
+.auth-tabs:has(#tab-signup.active)::before {
+    transform: translateX(100%);
+}
+
+.auth-oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1.3rem;
+}
+
+.oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 0.85rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid #3a3a3a;
+    color: white;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.oauth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    filter: brightness(1.06);
+}
+
+.oauth-btn:active { transform: translateY(0); }
+
+.google-btn {
+    background-color: white;
+    color: #1f1f1f;
+    border: none;
+}
+
+.facebook-btn {
+    background-color: #1877f2;
+    border: none;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #777;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    margin: 1.2rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #2c2c2c;
+}
+
+.auth-divider span {
+    padding: 0 0.9rem;
+    text-transform: uppercase;
+}
+
+.auth-error {
+    color: #ff5c5c;
+    background: rgba(255, 76, 76, 0.1);
+    border: 1px solid rgba(255, 76, 76, 0.35);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 0;
+    margin-bottom: 0;
+    display: none;
+}
+
+.auth-error.visible {
+    display: block;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.auth-success {
+    color: #3fd67a;
+    background: rgba(29, 185, 84, 0.12);
+    border: 1px solid rgba(29, 185, 84, 0.35);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 0;
+    margin-bottom: 0;
+    display: none;
+}
+.auth-success.visible {
+    display: block;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.auth-resend-hint {
+    font-size: 0.82rem;
+    color: #b3b3b3;
+    margin: -0.6rem 0 1rem;
+}
+.auth-resend-hint a { color: #1db954; cursor: pointer; text-decoration: underline; }
+body.red-theme .auth-resend-hint a { color: #ff4d4d; }
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.auth-input-group {
+    position: relative;
+}
+
+.auth-input-group i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+    font-size: 0.95rem;
+    transition: color 0.15s ease;
+}
+
+.auth-input-group:focus-within i { color: #1db954; }
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    width: 100%;
+    padding: 0.95rem 1rem 0.95rem 2.7rem;
+    background: #2a2a2a;
+    border: 1.5px solid #3a3a3a;
+    border-radius: 8px;
+    color: white;
+    outline: none;
+    box-sizing: border-box;
+    font-size: 0.98rem;
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.auth-form input::placeholder { color: #888; }
+
+.auth-form input:focus {
+    border-color: #1db954;
+    background: #232323;
+}
+
+.auth-submit-btn {
+    width: 100%;
+    padding: 0.95rem;
+    background: linear-gradient(135deg, #1ed760, #1db954);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    margin-top: 0.4rem;
+}
+
+.auth-submit-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 24px rgba(29, 185, 84, 0.35);
+}
+
+.auth-submit-btn:active { transform: scale(0.99); }
+
+.auth-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.auth-switch-hint {
+    text-align: center;
+    color: #999;
+    font-size: 0.85rem;
+    margin-top: 1.3rem;
+}
+
+.auth-switch-hint a {
+    color: #1db954;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Avatar upload - bigger circle with hover camera overlay */
+.avatar-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+}
+
+.avatar-upload-wrapper {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    cursor: pointer;
+}
+
+.avatar-upload img {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #2f2f2f;
+    transition: border-color 0.18s ease, filter 0.18s ease;
+}
+
+.avatar-upload-wrapper:hover img {
+    border-color: #1db954;
+    filter: brightness(0.75);
+}
+
+.avatar-upload-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-size: 1.2rem;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+}
+
+.avatar-upload-wrapper:hover .avatar-upload-overlay { opacity: 1; }
+
+.avatar-upload-label {
+    font-size: 0.82rem;
+    color: #999;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.avatar-upload input[type="file"] {
+    display: none;
+}
+
+body.red-theme .auth-tabs::before { background: linear-gradient(135deg, #ff6b6b, #ff4d4d); }
+body.red-theme .auth-submit-btn { background: linear-gradient(135deg, #ff6b6b, #ff4d4d); color: white; }
+body.red-theme .auth-submit-btn:hover { box-shadow: 0 10px 24px rgba(255, 77, 77, 0.35); }
+body.red-theme .auth-form input:focus { border-color: #ff4d4d; }
+body.red-theme .auth-input-group:focus-within i { color: #ff4d4d; }
+body.red-theme .avatar-upload-wrapper:hover img { border-color: #ff4d4d; }
+body.red-theme .auth-switch-hint a { color: #ff4d4d; }
+
+/* ============================================================
+   ADMIN PANEL (add song via YouTube link) + YouTube mini player
+   ============================================================ */
+
+.admin-panel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: #1db954;
+    color: #000;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin: 0 4px;
+}
+.admin-panel-btn:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(29, 185, 84, 0.4); }
+body.red-theme .admin-panel-btn { background: #ff4d4d; }
+body.red-theme .admin-panel-btn:hover { box-shadow: 0 4px 14px rgba(255, 77, 77, 0.4); }
+
+.admin-panel-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+    z-index: 10500;
+}
+.admin-panel-overlay.open { display: block; }
+
+.admin-panel {
+    position: fixed;
+    top: 0;
+    right: -520px;
+    width: 460px;
+    max-width: 90vw;
+    height: 100%;
+    background: #181818;
+    border-left: 1px solid #2c2c2c;
+    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.5);
+    z-index: 10600;
+    padding: 24px;
+    overflow-y: auto;
+    transition: right 0.3s ease;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+.admin-panel.open { right: 0; }
+
+.admin-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+.admin-panel-header h3 { margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+.admin-panel-header h3 i { color: #1db954; }
+body.red-theme .admin-panel-header h3 i { color: #ff4d4d; }
+
+.admin-panel-close {
+    background: transparent;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+}
+.admin-panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.admin-song-form { display: flex; flex-direction: column; gap: 14px; }
+.admin-song-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #b3b3b3;
+}
+.admin-field-hint { color: #737373; font-size: 0.7rem; }
+
+.admin-song-form input[type="text"],
+.admin-song-form input[type="url"],
+.admin-song-form input[type="file"] {
+    padding: 10px 12px;
+    background: #2c2c2c;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #fff;
+    outline: none;
+    font-size: 0.9rem;
+}
+.admin-song-form input[type="text"]:focus,
+.admin-song-form input[type="url"]:focus { border-color: #1db954; }
+body.red-theme .admin-song-form input:focus { border-color: #ff4d4d; }
+
+.song-image-preview {
+    width: 100%;
+    max-height: 140px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: -6px;
+}
+
+/* Custom "Choose Image" / "Choose Video" buttons (image vs video visually distinct) */
+.admin-song-form input[type="file"]#song-image,
+.admin-song-form input[type="file"]#song-projector-video,
+.admin-song-form input[type="file"]#pbanner-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    padding: 0;
+}
+.admin-file-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #2c2c2c;
+    border: 1px dashed #444;
+    border-radius: 6px;
+    color: #ddd;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+.admin-file-btn:hover { border-color: #1db954; color: #fff; }
+body.red-theme .admin-file-btn:hover { border-color: #ff4d4d; }
+.admin-file-btn-image i { color: #1db954; }
+.admin-file-btn-video i { color: #b968ff; }
+.admin-file-btn-audio i { color: #ffd54d; }
+body.red-theme .admin-file-btn-image i { color: #ff4d4d; }
+body.red-theme .admin-file-btn-video i { color: #ff8b3d; }
+body.red-theme .admin-file-btn-audio i { color: #ffd54d; }
+
+.song-projector-video-preview {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: -6px;
+    background: #000;
+}
+
+/* Yes/No toggle for the optional projector video feature */
+.admin-projector-toggle { display: flex; flex-direction: column; gap: 6px; }
+.admin-projector-toggle-label { font-size: 0.8rem; color: #b3b3b3; }
+.admin-yesno { display: flex; gap: 8px; }
+.admin-yesno-btn {
+    flex: 1;
+    padding: 9px 12px;
+    background: #2c2c2c;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: #b3b3b3;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.admin-yesno-btn:hover { color: #fff; }
+.admin-yesno-btn.active { background: #1db954; color: #000; }
+body.red-theme .admin-yesno-btn.active { background: #ff4d4d; color: #fff; }
+
+.admin-form-error, .admin-form-success {
+    display: none;
+    font-size: 0.8rem;
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+.admin-form-error.visible { display: block; background: rgba(255, 77, 77, 0.15); color: #ff8080; }
+.admin-form-success.visible { display: block; background: rgba(29, 185, 84, 0.15); color: #4be08a; }
+
+.admin-submit-btn {
+    padding: 12px;
+    background: #1db954;
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.admin-submit-btn:hover { transform: scale(1.02); }
+.admin-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+body.red-theme .admin-submit-btn { background: #ff4d4d; color: #fff; }
+
+.admin-panel-divider { height: 1px; background: #2c2c2c; margin: 22px 0; }
+.admin-existing-title { font-size: 0.9rem; color: #b3b3b3; margin: 0 0 12px; }
+
+.admin-song-list { display: flex; flex-direction: column; gap: 10px; max-height: 65vh; overflow-y: auto; padding-right: 4px; }
+.admin-song-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+.admin-song-row:hover { background: rgba(255,255,255,0.06); }
+.admin-song-row img { width: 52px; height: 52px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.admin-song-row .admin-song-meta { flex: 1; min-width: 0; }
+.admin-song-row .admin-song-meta strong { display: block; font-size: 0.82rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.admin-song-row .admin-song-meta span { font-size: 0.72rem; color: #8a8a8a; }
+.admin-song-row .admin-song-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.admin-song-row .admin-song-edit,
+.admin-song-row .admin-song-delete { background: none; border: none; color: #8a8a8a; cursor: pointer; font-size: 0.9rem; }
+.admin-song-row .admin-song-edit:hover { color: #1db954; }
+.admin-song-row .admin-song-delete:hover { color: #ff4d4d; }
+body.red-theme .admin-song-row .admin-song-edit:hover { color: #ff4d4d; }
+
+.admin-form-actions { display: flex; align-items: center; gap: 10px; }
+.admin-form-actions .admin-submit-btn { flex: 1; }
+.admin-cancel-edit-btn {
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+}
+.admin-cancel-edit-btn:hover { border-color: #888; color: #fff; }
+
+/* Admin panel se add hui YouTube songs bilkul manual songs jaisi hi dikhti hain -
+   same .music-card, same play icon styling, koi alag color/box nahi. Playback
+   bhi ab isi main player-bar (.now-bar + .music-controller) se hoti hai. */
+
+/* ==========================================================================
+   PLAYLIST FEATURE (Create / Sidebar list / Nav tab / Edit / Delete)
+   ========================================================================== */
+
+/* ---------- Sidebar: user ki apni playlists (Browse Podcasts box ke neeche) ---------- */
+.user-playlists-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 0.5rem;
+    padding: 0 0.4rem 0.6rem 0.4rem;
+    scrollbar-width: thin;
+    scrollbar-color: #1db954 transparent;
+}
+.user-playlists-list::-webkit-scrollbar { width: 6px; }
+.user-playlists-list::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.sidebar-playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    margin-bottom: 0.2rem;
+}
+.sidebar-playlist-item:hover { background-color: #1f1f1f; }
+
+.sidebar-playlist-cover {
+    width: 2.8rem;
+    height: 2.8rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #1db954, #14532d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.1rem;
+    overflow: hidden;
+}
+.sidebar-playlist-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body.red-theme .sidebar-playlist-cover { background: linear-gradient(135deg, #ff4d4d, #4e0000); }
+
+.sidebar-playlist-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sidebar-playlist-info strong { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-playlist-info span { font-size: 0.72rem; color: #b3b3b3; }
+
+.sidebar-playlist-actions {
+    display: flex;
+    gap: 0.3rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+}
+.sidebar-playlist-item:hover .sidebar-playlist-actions { opacity: 1; }
+.sidebar-playlist-actions button {
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.35rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+.sidebar-playlist-actions button:hover { color: #fff; background: rgba(255,255,255,0.12); }
+.sidebar-playlist-actions .sidebar-playlist-delete:hover { color: #ff4d4d; }
+
+.playlists-empty-hint {
+    color: #888;
+    font-size: 0.85rem;
+    padding: 0.5rem;
+}
+
+/* ---------- Nav "Playlist" button: same look/behaviour as Premium/Support/Download ---------- */
+#nav-playlist-btn { cursor: pointer; }
+
+/* ---------- Create / Edit Playlist module: ~70% screen, theme-aware ---------- */
+.playlist-modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 10010;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+.playlist-modal-overlay.open { display: block; }
+
+.playlist-modal {
+    display: none;
+    flex-direction: column;
+    position: fixed;
+    z-index: 10011;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 70%;
+    max-width: 1100px;
+    background: #181818;
+    border: 1px solid #2a2a2a;
+    border-radius: 14px;
+    padding: 1.7rem 2rem;
+    color: #fff;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.playlist-modal.open { display: flex; }
+body.red-theme .playlist-modal { background: #1a0000; border: 1px solid #4e0000; }
+
+.playlist-modal-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.playlist-modal-header h3 { margin: 0; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
+.playlist-modal-header h3 i { color: #1db954; }
+body.red-theme .playlist-modal-header h3 i { color: #ff4d4d; }
+
+.playlist-modal-close {
+    background: none; border: none; color: #b3b3b3; font-size: 1.3rem; cursor: pointer;
+    width: 2.2rem; height: 2.2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.playlist-modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.playlist-modal-top { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.2rem; flex-shrink: 0; }
+
+.playlist-name-field { flex: 1; display: flex; flex-direction: column; gap: 0.45rem; }
+.playlist-name-field label { font-size: 0.8rem; color: #b3b3b3; font-weight: 600; }
+.playlist-name-field input {
+    background: #2a2a2a; border: 1px solid #3a3a3a; color: #fff;
+    padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 1rem; font-family: inherit;
+}
+.playlist-name-field input:focus { outline: none; border-color: #1db954; }
+body.red-theme .playlist-name-field input:focus { border-color: #ff4d4d; }
+.playlist-field-hint { font-size: 0.7rem; color: #777; }
+
+.playlist-cover-upload {
+    position: relative;
+    width: 6.5rem;
+    height: 6.5rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+    cursor: pointer;
+    overflow: hidden;
+    background: linear-gradient(135deg, #2a2a2a, #161616);
+}
+.playlist-cover-preview { width: 100%; height: 100%; object-fit: cover; display: block; }
+.playlist-cover-default { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.1rem; color: #666; }
+.playlist-cover-edit {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.55); color: #fff; opacity: 0; transition: opacity 0.15s; font-size: 1.3rem;
+}
+.playlist-cover-upload:hover .playlist-cover-edit { opacity: 1; }
+.playlist-cover-label { display: none; }
+.playlist-search-label { display: none; }
+.btn-label-mobile { display: none; }
+
+.playlist-modal-divider { height: 1px; background: #2c2c2c; margin: 1.3rem 0 0.9rem; flex-shrink: 0; }
+
+.playlist-songs-header { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.playlist-songs-header h4 { margin: 0; font-size: 1rem; }
+.playlist-selected-count { font-size: 0.8rem; color: #1db954; font-weight: 600; }
+body.red-theme .playlist-selected-count { color: #ff4d4d; }
+
+.playlist-song-picker {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 0.8rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.3rem 1.2rem;
+    scrollbar-width: thin;
+    scrollbar-color: #1db954 transparent;
+}
+.playlist-song-picker::-webkit-scrollbar { width: 6px; }
+.playlist-song-picker::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+/* Song search box - "Add songs" heading ke turant baad, list ke upar - taake
+   bari list (1000+ songs) me se user turant naam se dhoond sake. Checkbox
+   selections filter karte waqt bilkul preserve rehti hain (JS sirf rows
+   hide/show karta hai, kabhi re-render nahi). */
+.playlist-song-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+    padding: 0.55rem 0.9rem;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    flex-shrink: 0;
+    transition: border-color 0.15s;
+}
+.playlist-song-search-wrap:focus-within { border-color: #1db954; }
+body.red-theme .playlist-song-search-wrap:focus-within { border-color: #ff4d4d; }
+.playlist-song-search-wrap i { color: #888; font-size: 0.85rem; flex-shrink: 0; }
+.playlist-song-search {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.85rem;
+}
+.playlist-song-search::placeholder { color: #888; }
+
+.playlist-song-picker-empty {
+    text-align: center;
+    color: #888;
+    font-size: 0.85rem;
+    margin-top: 1rem;
+    flex-shrink: 0;
+}
+
+.playlist-song-row {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.5rem;
+    border-radius: 6px; cursor: pointer; transition: background-color 0.15s;
+}
+.playlist-song-row:hover { background-color: #232323; }
+.playlist-song-row img { width: 2.5rem; height: 2.5rem; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+.playlist-song-row-info { display: flex; flex-direction: column; min-width: 0; }
+.playlist-song-row-info strong { font-size: 0.83rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.playlist-song-row-info span { font-size: 0.7rem; color: #b3b3b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.playlist-song-checkbox { accent-color: #1db954; width: 1.05rem; height: 1.05rem; flex-shrink: 0; cursor: pointer; }
+body.red-theme .playlist-song-checkbox { accent-color: #ff4d4d; }
+
+.playlist-modal-error { color: #ff4d4d; font-size: 0.82rem; min-height: 1.1rem; margin-top: 0.5rem; flex-shrink: 0; }
+
+.playlist-modal-actions { display: flex; gap: 0.8rem; margin-top: 0.7rem; flex-shrink: 0; }
+.playlist-create-btn, .playlist-cancel-btn {
+    padding: 0.7rem 1.6rem; border-radius: 25rem; border: none; font-weight: 600; cursor: pointer;
+    transition: transform 0.15s; font-family: inherit;
+}
+.playlist-create-btn { background: #1db954; color: #fff; }
+.playlist-create-btn:hover { transform: scale(1.03); }
+body.red-theme .playlist-create-btn { background: #ff4d4d; }
+.playlist-cancel-btn { background: transparent; color: #b3b3b3; border: 1px solid #444; }
+.playlist-cancel-btn:hover { color: #fff; border-color: #fff; }
+
+@media (max-width: 900px) {
+    /* --- Create/Edit Playlist: sketch ke mutabiq full mobile screen le leta
+       hai (koi floating card/rounded corners nahi), taake bilkul wahi
+       layout mile jo screenshot me hai. Sirf andar wali song-list apni
+       jagah scroll karti hai - baqi screen fix rehti hai, poore page ko
+       scroll karne ki zaroorat nahi parti. --- */
+    .playlist-modal-overlay { backdrop-filter: blur(4px); background-color: rgba(0, 0, 0, 0.7); }
+    .playlist-modal {
+        top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 92%; min-width: 0;
+        height: calc(100vh - var(--mobile-navbar-h, calc(3.7rem + env(safe-area-inset-top, 0px))) - 6rem);
+        max-height: calc(100vh - var(--mobile-navbar-h, calc(3.7rem + env(safe-area-inset-top, 0px))) - 6rem);
+        max-width: 30rem;
+        border-radius: 14px; border: 1px solid #2a2a2a;
+        padding: 1.3rem 1.2rem calc(1.3rem + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .playlist-modal-top { flex-direction: column; align-items: flex-start; gap: 0.7rem; }
+    .playlist-cover-upload { width: 4rem; height: 4rem; }
+    .playlist-cover-default { font-size: 1.1rem; flex-direction: column; gap: 0.25rem; }
+    .playlist-cover-default i { display: none; }
+    .playlist-field-hint { display: none; } /* sketch me nahi hai - extra cheez hata di */
+    .playlist-cover-label { display: block; font-size: 0.62rem; font-weight: 600; text-align: center; line-height: 1.15; color: #ccc; }
+
+    /* "Add songs / N selected" row sketch me nahi hai */
+    .playlist-songs-header { display: none; }
+    .playlist-modal-divider { display: none; } /* sketch me koi divider line nahi hai */
+
+    .playlist-search-label { display: block; font-size: 0.8rem; color: #b3b3b3; font-weight: 600; margin-top: 0.9rem; }
+    .playlist-song-search-wrap { margin-top: 0.4rem; }
+
+    .playlist-song-picker { grid-template-columns: 1fr; }
+
+    .playlist-modal-actions { margin-top: auto; padding-top: 0.9rem; flex-direction: column; gap: 0.6rem; }
+    .playlist-create-btn, .playlist-cancel-btn { width: 100%; text-align: center; }
+    .btn-label-desktop { display: none; }
+    .btn-label-mobile { display: inline; }
+}
+
+/* ---------- "Playlist" nav tab: Your Playlists grid (edit/delete yahan bhi) ---------- */
+.playlists-view-section { margin: 2rem 0 2rem 2rem; }
+.playlists-view-section h2 { margin-bottom: 1rem; }
+.downloads-view-empty { color: rgb(179, 179, 179); font-size: 0.95rem; max-width: 30rem; }
+
+.playlists-view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 15rem);
+    gap: 1.2rem;
+}
+
+.playlist-view-card {
+    background: #181818;
+    border-radius: 8px;
+    padding: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.playlist-view-card:hover { background-color: #222; }
+
+.playlist-view-cover {
+    width: 100%;
+    height: 12.3rem;
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    background: linear-gradient(135deg, #1db954, #14532d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2.6rem;
+}
+body.red-theme .playlist-view-cover { background: linear-gradient(135deg, #ff4d4d, #4e0000); }
+.playlist-view-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.playlist-view-play {
+    position: absolute; right: 0.6rem; bottom: 0.6rem; width: 2.8rem; height: 2.8rem; border-radius: 50%;
+    background: #1db954; color: #000; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+    opacity: 0; transform: translateY(8px); transition: 0.2s; box-shadow: 0 8px 16px rgba(0,0,0,0.4); border: none; cursor: pointer;
+}
+.playlist-view-card:hover .playlist-view-play { opacity: 1; transform: translateY(0); }
+body.red-theme .playlist-view-play { background: #ff4d4d; color: #fff; }
+
+.playlist-view-info { margin-top: 0.6rem; }
+.playlist-view-name { font-weight: 600; font-size: 0.98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.playlist-view-count { font-size: 0.78rem; color: #b3b3b3; margin-top: 0.2rem; }
+
+.playlist-view-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; opacity: 0; transition: opacity 0.15s; }
+.playlist-view-card:hover .playlist-view-actions { opacity: 1; }
+.playlist-view-actions button {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #ddd;
+    padding: 0.45rem 0.9rem; border-radius: 20rem; cursor: pointer; font-size: 0.76rem;
+    font-weight: 600; font-family: inherit; transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.playlist-view-actions button:hover { transform: translateY(-1px); }
+.playlist-view-actions .playlist-view-edit:hover { background: rgba(29,185,84,0.16); border-color: #1db954; color: #1db954; }
+body.red-theme .playlist-view-actions .playlist-view-edit:hover { background: rgba(255,77,77,0.16); border-color: #ff4d4d; color: #ff4d4d; }
+.playlist-view-actions .playlist-view-delete:hover { background: rgba(255,77,77,0.16); border-color: #ff4d4d; color: #ff4d4d; }
+/* Sirf Delete option ho (auto playlist) to hover pe hi na dabao card, seedha
+   nazar aaye - thora zyada emphasis. */
+.playlist-view-actions:has(> button:only-child) .playlist-view-delete { width: 100%; justify-content: center; }
+
+/* ---------- Playlist Detail module (songs list with added date/time) ----------
+   Isko explicitly # (id) selector se bhi reinforce kar rahe hain taake ye
+   hamesha poore 70% x 70% area ko achi tarah, Spotify-jaisi "hero header"
+   style ke sath fill kare - chhota/khaali na lage. */
+#playlist-detail-modal.playlist-modal {
+    width: 70%;
+    height: 70%;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Banner-slide click se khulne wala bara module - poori screen ka ~80%
+   cover karta hai (chhoti detail-view se bara). */
+#playlist-detail-modal.playlist-modal.playlist-detail-modal-large {
+    width: 80%;
+    height: 80%;
+    max-width: none;
+}
+
+#playlist-detail-modal .playlist-modal-header {
+    padding: 1.4rem 2rem 0 2rem;
+}
+#playlist-detail-modal .playlist-modal-header h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b3b3b3;
+}
+#playlist-detail-modal .playlist-modal-header h3 i { display: none; }
+
+.playlist-detail-top {
+    align-items: flex-end;
+    gap: 1.8rem;
+    padding: 1.4rem 2rem 1.8rem 2rem;
+    margin: 0;
+    background: linear-gradient(180deg, rgba(29,185,84,0.35), rgba(24,24,24,0) 85%);
+}
+body.red-theme .playlist-detail-top { background: linear-gradient(180deg, rgba(255,77,77,0.35), rgba(26,0,0,0) 85%); }
+
+.playlist-detail-cover {
+    width: 9.5rem;
+    height: 9.5rem;
+    border-radius: 8px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1db954, #14532d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 3rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+}
+.playlist-detail-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+body.red-theme .playlist-detail-cover { background: linear-gradient(135deg, #ff4d4d, #4e0000); }
+
+.playlist-detail-meta { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; padding-bottom: 0.3rem; }
+.playlist-detail-name { font-size: 2.1rem; font-weight: 800; line-height: 1.15; }
+.playlist-detail-count { font-size: 0.9rem; color: #d0d0d0; font-weight: 500; }
+.playlist-detail-meta-actions { display: flex; gap: 0.6rem; margin-top: 0.6rem; }
+.playlist-detail-meta-actions button {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: #ddd; padding: 0.5rem 1.1rem;
+    border-radius: 20rem; cursor: pointer; font-size: 0.82rem; font-family: inherit; font-weight: 600;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s;
+}
+.playlist-detail-meta-actions button:hover { transform: translateY(-1px); }
+.playlist-detail-edit-btn:hover { background: rgba(29,185,84,0.16); border-color: #1db954; color: #1db954; }
+body.red-theme .playlist-detail-edit-btn:hover { background: rgba(255,77,77,0.16); border-color: #ff4d4d; color: #ff4d4d; }
+.playlist-detail-delete-btn:hover { background: rgba(255,77,77,0.16) !important; border-color: #ff4d4d; color: #ff4d4d !important; }
+
+#playlist-detail-modal .playlist-modal-divider { margin: 0 2rem; }
+
+.playlist-detail-song-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 0;
+    padding: 0.6rem 2rem 1.8rem 2rem;
+    scrollbar-width: thin;
+    scrollbar-color: #1db954 transparent;
+}
+.playlist-detail-song-list::-webkit-scrollbar { width: 6px; }
+.playlist-detail-song-list::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.playlist-detail-song-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.playlist-detail-song-row:last-child { border-bottom: none; }
+.playlist-detail-song-row:hover { background-color: #232323; }
+.playlist-detail-song-row img { width: 3.2rem; height: 3.2rem; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+
+.playlist-detail-song-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.playlist-detail-song-info strong { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.playlist-detail-song-info span { font-size: 0.75rem; color: #b3b3b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.playlist-detail-song-added {
+    font-size: 0.72rem;
+    color: #888;
+    flex-shrink: 0;
+    text-align: right;
+    white-space: nowrap;
+}
+.playlist-detail-song-added i { margin-right: 0.3rem; color: #1db954; }
+body.red-theme .playlist-detail-song-added i { color: #ff4d4d; }
+
+.playlist-detail-song-play {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #b3b3b3;
+    font-size: 1.4rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+    width: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.playlist-detail-song-row:hover .playlist-detail-song-play { opacity: 1; color: #1db954; }
+body.red-theme .playlist-detail-song-row:hover .playlist-detail-song-play { color: #ff4d4d; }
+
+/* ============================================================
+   CONFIRM DIALOG (replaces native browser confirm() popups)
+   Centered on screen, follows the active theme (dark / red),
+   with a smooth fade + scale in/out animation.
+   ============================================================ */
+.confirm-dialog-overlay {
+    display: none;
+    position: fixed;
+    z-index: 20000;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.confirm-dialog-overlay.open {
+    display: flex;
+    opacity: 1;
+}
+
+.confirm-dialog {
+    background: #181818;
+    color: #fff;
+    width: 90%;
+    max-width: 380px;
+    border-radius: 14px;
+    padding: 1.6rem;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transform: scale(0.9) translateY(10px);
+    opacity: 0;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.confirm-dialog-overlay.open .confirm-dialog {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+body.red-theme .confirm-dialog { background: #1a0000; border: 1px solid #4e0000; }
+
+.confirm-dialog-icon {
+    width: 3.2rem;
+    height: 3.2rem;
+    margin: 0 auto 0.9rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 77, 77, 0.12);
+    color: #ff4d4d;
+    font-size: 1.4rem;
+}
+
+.confirm-dialog-message {
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #f2f2f2;
+    margin-bottom: 1.4rem;
+    word-break: break-word;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+}
+
+.confirm-dialog-btn {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.confirm-dialog-btn:active { transform: scale(0.96); }
+
+.confirm-dialog-cancel {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+.confirm-dialog-cancel:hover { background: rgba(255, 255, 255, 0.16); }
+
+.confirm-dialog-confirm {
+    background: #1db954;
+    color: #fff;
+}
+.confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(29, 185, 84, 0.35); }
+body.red-theme .confirm-dialog-confirm { background: #ff4d4d; }
+body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 77, 77, 0.35); }
+
+/* ============================================================
+   SMOOTH TRANSITION between Home view and Playlists view
+   ============================================================ */
+.main-right-part > .music-section,
+#playlists-view-section,
+#downloads-view-section {
+    transition: opacity 0.28s ease, transform 0.28s ease;
+    opacity: 1;
+    transform: translateY(0);
+}
+.main-right-part > .music-section.view-hidden,
+#playlists-view-section.view-hidden,
+#downloads-view-section.view-hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   PLAYLISTS SLIDE BANNER (admin-managed, homepage top)
+   ========================================================================== */
+
+.playlist-banner {
+    position: relative;
+    margin: 1.5rem 2rem 0 2rem;
+    height: 250px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #181818;
+    display: none; /* JS 'flex' karke dikhata hai */
+}
+
+.playlist-banner-track {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease;
+}
+
+/* min-width: 0 is the key fix here - by default flex items get
+   min-width:auto, which lets their content (e.g. a big cover image)
+   push them wider than their flex-basis and bleed into the next
+   slide. Forcing min-width:0 + overflow:hidden guarantees each slide
+   is clipped to exactly one "page" of the track, so slide 2 never
+   shows a sliver of slide 1 (or vice versa) once we've scrolled. */
+.playlist-banner-slide {
+    position: relative;
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+/* The cover image now fills the ENTIRE slide (one big image per slide,
+   sized exactly to the banner) instead of a small floating thumbnail. */
+.playlist-banner-slide-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.playlist-banner-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+/* Dark gradient overlay on top of the big cover image so the title/desc
+   text stays readable. */
+.playlist-banner-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.55) 42%, rgba(0, 0, 0, 0.15) 75%, rgba(0, 0, 0, 0.05) 100%);
+    pointer-events: none;
+}
+
+.playlist-banner-slide-info {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    max-width: 70%;
+    padding: 0 3.2rem 2rem;
+}
+
+.playlist-banner-tag {
+    display: inline-block;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.playlist-banner-slide-info h3 {
+    margin: 0.4rem 0 0.3rem;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.15;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+.playlist-banner-slide-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 32rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.playlist-banner-empty {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: #1c1c1c;
+}
+.playlist-banner-empty .playlist-banner-slide-info { max-width: 100%; padding: 0 1.5rem; }
+
+/* ---------- Small backward/forward buttons ---------- */
+.playlist-banner-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: background-color 0.15s, transform 0.15s;
+}
+.playlist-banner-nav:hover { background: rgba(0, 0, 0, 0.75); transform: translateY(-50%) scale(1.1); }
+.playlist-banner-prev { left: 14px; }
+.playlist-banner-next { right: 14px; }
+
+.playlist-banner-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 2;
+}
+.playlist-banner-dot {
+    width: 7px;
+    height: 7px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.playlist-banner-dot.active { width: 18px; border-radius: 4px; background: #fff; }
+
+/* ---------- Admin-only edit button (top-right corner of the banner) ---------- */
+.playlist-banner-edit-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: #1db954;
+    color: #000;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.playlist-banner-edit-btn:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(29, 185, 84, 0.4); }
+body.red-theme .playlist-banner-edit-btn { background: #ff4d4d; }
+body.red-theme .playlist-banner-edit-btn:hover { box-shadow: 0 4px 14px rgba(255, 77, 77, 0.4); }
+
+@media (max-width: 900px) {
+    .playlist-banner { height: 200px; margin: 1.2rem 1rem 0 1rem; }
+    .playlist-banner-slide-info { max-width: 82%; padding: 0 1.6rem 1.4rem; }
+    .playlist-banner-slide-info h3 { font-size: 1.4rem; }
+}
+
+/* ---------- Admin "Manage playlists banner" panel (slide-in, reuses .admin-panel) ---------- */
+.pbanner-swatches { display: flex; align-items: center; gap: 8px; }
+.pbanner-swatch {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+.pbanner-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px #1db954; }
+body.red-theme .pbanner-swatch.active { box-shadow: 0 0 0 2px #ff4d4d; }
+.pbanner-color-custom {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   MOBILE / TABLET RESPONSIVE
+   Poori app - navbar, sidebar, song grid, player-bar, banner, playlist aur
+   downloads grid, saare modals - chhote screens ke liye. Teen breakpoints:
+   tablet (<=1024px), phone (<=768px), chhota phone (<=480px). Neeche wale
+   breakpoints upar walon ke ooper aage badhte hain (cascade), overwrite
+   nahi karte.
+   ========================================================================== */
+
+/* ---------- Tablet (<=1024px): sidebar upar/niche stack, 3-column grid ---------- */
+@media (max-width: 1024px) {
+    .main {
+        flex-direction: column;
+        height: auto;
+        min-width: 94vw;
+    }
+    .main-left-part {
+        width: 100%;
+        height: auto;
+        max-height: 18rem;
+    }
+    .main-right-part {
+        width: 100%;
+        height: auto;
+        min-height: 60vh;
+        padding-bottom: 6rem; /* fixed player-bar ke neeche content chupne se bacha */
+        box-sizing: border-box;
+    }
+
+    .songs { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .music-card { width: 100%; box-sizing: border-box; }
+    .music-card img,
+    .music-thumb-wrap { width: 100%; height: auto; aspect-ratio: 1 / 1; }
+    /* Play button ki position Your Playlists jaisi hi - bottom-right corner,
+       card ki fixed 15rem width par depend nahi karta, chahe card ki width kuch bhi ho.
+       Same green color jo Your Playlists ke play button me hai, lekin ye sirf hover par hi nazar aata hai. */
+    .music-play-btn {
+        top: auto; right: 0.6rem; left: auto; bottom: 0.6rem; transform: none !important;
+        color: #1db954;
+    }
+    .music-card:hover .music-play-btn { transform: scale(1.06) !important; }
+
+    .search-bar { width: 22rem; }
+    #progressBar { width: 100%; max-width: 420px; }
+
+    .playlists-view-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+}
+
+/* ---------- Phone (<=768px): navbar wrap, player-bar stack, 2-column grid ---------- */
+@media (max-width: 768px) {
+    body { overflow-x: hidden; }
+
+    /* --- Navbar: hamburger icon dikhao, Premium/Support/Playlist/Download
+       text-links ab side-menu ke andar chale gaye hain (isi liye poori
+       .right-half-p1 row chupa di) - navbar clean rehta hai: hamburger,
+       logo, search, phir Sign up/Log in.
+
+       BUG FIX: pehle .left-half khud wrap nahi karta tha, is liye search-bar
+       (jiski width:100% thi) hamburger/logo/home ke saath usi row me fit
+       hone ki koshish karta reh jata tha aur row poori page ko viewport se
+       chaudi (wider) kar deta tha - isi wajah se puri screen ko side me
+       scroll/move karna parta tha. Ab .left-half khud wrap karta hai, is
+       liye search-bar apni alag/nayi row me neeche chala jata hai aur kabhi
+       bhi viewport se bahar nahi jata. --- */
+    /* Navbar (hamburger, logo, search, account) fixed rakhte hain taake scroll
+       karne par bhi hamesha upar hi rahe - search/account/menu ke liye upar
+       jaana na pare. .main ko utni hi padding-top di hai jitni nav ki height
+       hai, taake content nav ke neeche chupe na. */
+    nav {
+        flex-wrap: nowrap;
+        height: auto;
+        padding: 0.6rem 0.7rem;
+        gap: 0.4rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        box-sizing: border-box;
+        z-index: 4500;
+        padding-top: calc(0.6rem + env(safe-area-inset-top, 0px));
+        transition: background-color 0.4s ease;
+    }
+    /* Theme change (red-theme) ke baad bhi upar wala poora section (hamburger,
+       M logo, search bar, account) - solid black hi rehta hai. */
+    body.red-theme nav {
+        background-color: #000;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+    }
+    .mobile-menu-btn { display: flex; margin-left: 0; }
+    /* "M" logo mobile nav ki chhoti height ke hisaab se translateY(20px)
+       (jo desktop ke bade 4rem-height nav ke liye tha) bahut neeche le jata
+       tha - hamburger/search/account ke sath align karne ke liye hata di. */
+    .logo-m { transform: translateY(5px); }
+    .logo-wrap:hover .logo-m,
+   .logo-m { transform: translateY(5px); width: 4rem; height: 2.96rem; }
+    /* --- Sab kuch (hamburger, logo, search, profile/login) ab ek hi seedhi
+       line mein rehta hai - koi bhi hissa neeche wrap nahi hota. --- */
+    .left-half { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; justify-content: flex-start; height: auto; gap: 0.35rem; }
+    .logo { margin: 0 0.15rem 0 0; } /* hamburger ke aur qareeb - beech ki khaali jagah kam ki */
+
+    /* Search bar: chhota, sirf "Search.." input - icon/folder/divider line
+       sab hata diye taake jagah bache (JS placeholder text bhi badalta hai). */
+    .search-bar {
+        order: 0;
+        flex: 1 1 auto;
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        height: 2.2rem;
+        margin-top: 0;
+        box-sizing: border-box;
+    }
+    /* Desktop jaisa hi chhota search (magnifying-glass) icon wapas dikhao -
+       sirf folder/browse icon aur divider line hata rehne dete hain taake
+       jagah bache. */
+    .search-bar .search-icon {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        padding: 0 0.4rem 0 0.7rem;
+        color: rgb(179, 179, 179);
+    }
+    .search-bar .browse { display: none; } /* folder icon hata diya */
+    .search-bar .input-box {
+        width: 100%;
+        border-right: none; /* vertical line hata di */
+        font-size: 0.82rem;
+        padding-left: 0.2rem;
+    }
+
+    .right-half { flex: 0 0 auto; width: auto; justify-content: flex-end; flex-wrap: nowrap; }
+    .right-half-p1 { display: none; } /* Premium/Download/Playlist/Support - ab hamburger menu me hain */
+    .right-half-p2 { flex-wrap: nowrap; justify-content: flex-end; }
+    .right-half-p2 .nav-text:has(i.fa-circle-down) { display: none; } /* "Install App" text - jagah bachane ke liye */
+    /* "Sign up" bhi "Log in" ke sath wapas dikhao - dono chhote font/padding
+       me taake overflow na ho. */
+    .right-half-p2 .guest-auth-buttons { gap: 0.3rem; }
+    .right-half-p2 .guest-auth-buttons .nav-text#open-signup-btn {
+        display: block;
+        font-size: 0.76rem;
+        padding: 0 0.3rem;
+        white-space: nowrap;
+    }
+    .login-btn { height: 2.2rem; width: auto; padding: 0 0.9rem; font-size: 0.82rem; margin: 0; white-space: nowrap; }
+    .user-profile-box { margin: 0; padding: 0.2rem 0.5rem 0.2rem 0.2rem; gap: 0.4rem; }
+    .user-avatar { width: 1.8rem; height: 1.8rem; }
+    .user-name { max-width: 3.6rem; font-size: 0.78rem; }
+    .admin-panel-btn { width: 1.6rem; height: 1.6rem; font-size: 0.72rem; margin: 0; }
+
+    /* --- Your Playlists / Downloads full-screen view: neeche "Leave" button
+       dikhao taake wapas Home jaane ka saaf tareeqa ho (desktop pe hamesha
+       chupa rehta hai - wahan Home icon nav me maujood hi hai). --- */
+    .view-leave-btn {
+        display: block;
+        margin: 1.6rem auto 0;
+        background-color: #2a2a2a;
+        color: #fff;
+        border: none;
+        border-radius: 25rem;
+        padding: 0.7rem 2.2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+    }
+    .view-leave-btn:hover { background-color: #3a3a3a; }
+
+    /* nav ab fixed hai (~3.7rem height + safe-area, jo nav khud apni
+       padding-top me add karta hai) - utni hi jagah upar chhod dete hain
+       taake page ka content nav ke neeche chup na jaye. */
+    .main { min-width: 96vw; margin-top: 0; padding-top: calc(3.7rem + env(safe-area-inset-top, 0px)); box-sizing: border-box; }
+    /* Home icon ab hamburger menu ke andar bhi hai - navbar mein dobara
+       dikhane ki zaroorat nahi, jagah bachti hai. */
+    .home-icon { display: none; }
+    /* "Your Library" (Create Playlist/Browse Podcasts quick box) - ye sab
+       hamburger menu se already milte hain (Create Playlist, Browse
+       Podcasts, Playlist), is liye mobile par poora sidebar hata dete hain
+       taake banner aur Recommended Songs upar khisak ke us khaali jagah ko
+       khud use kar len. */
+    .main-left-part { display: none; }
+    .main-right-part { padding-bottom: 9rem; }
+
+    .music-section { margin: 1.4rem 0 1.4rem 1rem; }
+    .songs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
+    .img-title { font-size: 1rem; }
+
+    /* --- Your Playlists / Downloads: sketch jaisi full-screen takeover -
+       poori screen cover karti hai (nav/player-bar ke upar), 2x3 grid me
+       sirf cover cards (naam/count/edit-delete jaisi extra cheezen hata di
+       gayi hain), aur neeche "Leave" button. Ek hi screen me fit ho jata
+       hai - page ko scroll karne ki zaroorat nahi. --- */
+    /* --- Your Playlists / Downloads: ab full-screen nahi - hamburger menu
+       wale hi red-marked rectangle (top-left, navbar ke neeche se same
+       bottom boundary tak) ke andar khulti hai, poori screen cover nahi
+       karti. 2x1 grid me sirf cover cards, aur neeche "Leave" button. --- */
+    #playlists-view-section,
+    #downloads-view-section {
+        position: static;
+        width: 100%;
+        height: auto;
+        min-height: calc(100vh - var(--mobile-navbar-h, calc(3.7rem + env(safe-area-inset-top, 0px))) - 10.5rem);
+        z-index: auto;
+        background: #141414;
+        border-radius: 12px;
+        margin: 0 0 1.5rem 0;
+        padding: 1.1rem 1rem 1.3rem;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        overflow: visible;
+    }
+    #playlists-view-section h2,
+    #downloads-view-section h2 { margin: 0 0 1rem 0; flex-shrink: 0; font-size: 1.15rem; }
+    .downloads-view-empty { flex-shrink: 0; }
+
+    .playlists-view-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.9rem;
+    }
+    .playlist-view-card { padding: 0.7rem; background: #181818; border-radius: 8px; display: flex; flex-direction: column; }
+    .playlist-view-card:hover { background-color: #222; }
+    .playlist-view-cover { width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 6px; font-size: 1.8rem; }
+    /* Naam/count ab hamesha nazar aayein (hover touch pe kaam nahi karta,
+       is liye card ke neeche caption ki tarah dikhate hain). Edit/Delete
+       clutter se bachne ke liye chupe rehte hain - card tap karne se
+       playlist khulti hai. */
+    .playlists-view-grid .playlist-view-info { display: block; opacity: 1; margin-top: 0.6rem; padding: 0; min-width: 0; }
+    .playlist-view-name { font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .playlist-view-count { font-size: 0.75rem; margin-top: 0.15rem; }
+    .playlists-view-grid .playlist-view-actions { display: none; }
+    /* Cover ke upar play button ab hamesha nazar aata hai (touch pe hover kaam nahi karta) */
+    .playlists-view-grid .playlist-view-play { opacity: 1; transform: translateY(0); width: 2.3rem; height: 2.3rem; font-size: 1rem; }
+
+    .view-leave-btn { flex-shrink: 0; margin: 1.2rem auto 0; }
+
+    /* --- Player-bar: teeno hisse (now-playing / controls / volume) apni
+       apni poori row lein, taake har cheez ko saans lene ki jagah mile. --- */
+    .player-bar { height: auto; flex-wrap: wrap; padding: 0.6rem 0.7rem calc(0.9rem + env(safe-area-inset-bottom, 0px)); row-gap: 0.5rem; }
+    .now-bar { flex: 1 1 100%; order: 1; padding-left: 0.2rem; }
+    .music-controller { flex: 1 1 100%; order: 2; }
+    .player-btns { margin: 0.3rem 0.5rem; font-size: 0.95rem; }
+    #play { font-size: 1.8rem; }
+    .volume-container { flex: 1 1 100%; order: 3; justify-content: center; padding-right: 0; gap: 1rem; }
+    #progressBar { width: 100%; max-width: 92vw; }
+    .player-bar img { height: 3.2rem; width: 3.2rem; }
+    .img-title-info, .img-des-info { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Song name/description apni normal (left-aligned) jagah par hi rehte
+       hain - download button ab is row ke right edge (card ke top-right,
+       "marked" jagah) par hai, khud apna margin-left:auto lagate hain taake
+       sirf wahi end tak push ho, baaki (img/title/artist) apni asal jagah
+       par rahe. */
+    .now-bar { justify-content: flex-start; padding-right: 0.4rem; box-sizing: border-box; }
+    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-right: 2px; }
+
+    /* Projector (exit-projector-btn) - jahan pehle download button tha wahan
+       ab ye chhota sa button aata hai (mobile-menu.js isse yahan move karta
+       hai). Fixed floating position/heavy glow-ring/pulse animation sab hata
+       diye - mobile pe simple, kam-animated chhota icon bas. */
+    .volume-container .exit-projector-btn {
+        position: static;
+        display: none; /* sirf .visible hone par dikhta hai - is se khaali gap nahi banta */
+        order: -1;
+        width: 1.9rem;
+        height: 1.9rem;
+        border-radius: 50%;
+        margin: 0;
+        box-shadow: none;
+        transform: none !important;
+        opacity: 1;
+        animation: none !important;
+    }
+    .volume-container .exit-projector-btn.visible { display: flex; }
+    .volume-container .exit-projector-btn::before { display: none; } /* ghumti hui color ring hata di */
+    .volume-container .exit-projector-btn .exit-icon { width: 12px; height: 12px; }
+    .volume-container .exit-projector-btn .exit-icon::before { width: 12px; }
+    .volume-container .exit-projector-btn .exit-icon::after { height: 12px; }
+
+    /* Projector background video: mobile pe poori screen (edge-to-edge)
+       cover kare - "puri video bhi chahiye" (letterbox/khaali bars na hon)
+       aur "area cover bhi ho" (kahin se khaali/black na dikhe) dono ek sath
+       sirf tab mumkin hain jab video screen ka poora area bhare - is liye
+       object-fit:cover use kiya (thoda edges se crop hota hai, lekin na to
+       khaali patti dikhti hai na hi video chhoti/off-center lagti hai). */
+    .projector-container {
+        top: 0;
+        left: 0;
+        transform: none;
+        width: 100vw;
+        height: 100dvh;
+        height: 100vh;
+    }
+    .projector-mask {
+        width: 100%;
+        height: 100%;
+    }
+    #projector-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+    }
+
+    /* ==================== Playlist Detail Module (playlist open karne
+       par khulne wala box) - mobile par ye pehle poori screen (edge-to-edge,
+       full height) le raha tha jaisa create/edit playlist modal karta hai.
+       Ab ise ek chhota, screen ke center me tairta hua (floating/centered)
+       card bana diya - jaisa auth modal hai. ==================== */
+    #playlist-detail-modal.playlist-modal {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 92vw;
+        max-width: 26rem;
+        height: auto;
+        max-height: 82vh;
+        border-radius: 14px;
+        border: 1px solid #2a2a2a;
+        padding: 0;
+    }
+    body.red-theme #playlist-detail-modal.playlist-modal { border-color: #4e0000; }
+
+    #playlist-detail-modal.playlist-modal.playlist-detail-modal-large {
+        width: 92vw;
+        max-width: 28rem;
+        height: auto;
+        max-height: 85vh;
+    }
+
+    #playlist-detail-modal .playlist-modal-header { padding: 1rem 1.1rem 0 1.1rem; }
+
+    /* Cover + naam ab chhoti/centered card ke mutabiq - center-aligned taake
+       compact box me acha lage. */
+    .playlist-detail-top {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 0.7rem;
+        padding: 0.9rem 1.1rem 1.1rem;
+        background: linear-gradient(180deg, rgba(29,185,84,0.28), rgba(24,24,24,0) 85%);
+    }
+    body.red-theme .playlist-detail-top { background: linear-gradient(180deg, rgba(255,77,77,0.28), rgba(26,0,0,0) 85%); }
+    .playlist-detail-cover { width: 6rem; height: 6rem; font-size: 1.8rem; }
+    .playlist-detail-meta { align-items: center; }
+    .playlist-detail-name { font-size: 1.25rem; text-align: center; }
+    .playlist-detail-count { text-align: center; }
+    .playlist-detail-meta-actions { justify-content: center; }
+
+    #playlist-detail-modal .playlist-modal-divider { margin: 0 1.1rem; }
+
+    .playlist-detail-song-list { padding: 0.4rem 1.1rem 1.1rem; max-height: 46vh; }
+
+    /* Song row: pehle "Added <date>" ki lambi text fixed-width hone ki wajah
+       se song ka naam (.playlist-detail-song-info) bilkul squeeze/hide ho
+       jata tha. Ab grid se naam aur date ek dusre ke NEECHE (upar-neeche)
+       rakhte hain, dono hamesha poori tarah nazar aate hain. */
+    .playlist-detail-song-row {
+        display: grid;
+        grid-template-columns: 2.8rem 1fr auto;
+        grid-template-areas: "img info play" "img added play";
+        column-gap: 0.7rem;
+        row-gap: 0.15rem;
+        align-items: center;
+    }
+    .playlist-detail-song-row img { grid-area: img; width: 2.8rem; height: 2.8rem; }
+    .playlist-detail-song-info { grid-area: info; min-width: 0; }
+    .playlist-detail-song-added { grid-area: added; text-align: left; }
+    .playlist-detail-song-play { grid-area: play; opacity: 1; } /* touch par hover nahi hota - hamesha dikhe */
+
+    /* Modals thora aur tight ho jayein */
+    .admin-panel { padding: 18px; }
+
+    /* Sign in / Sign up module - mobile par thora chota (compact) taake
+       user ko poora box aasani se dikhe, extra scroll na karna pare. */
+    .auth-modal-content { width: 92vw; max-height: 85vh; padding: 22px 18px; }
+    .auth-modal-content .modal-header h2 { font-size: 1.4rem; }
+    .auth-tabs { margin-bottom: 1.1rem; padding: 4px; }
+    .auth-tab { font-size: 0.85rem; padding: 0.55rem 0; }
+    .auth-oauth-buttons { gap: 0.55rem; margin-bottom: 1rem; }
+    .oauth-btn { padding: 0.65rem; font-size: 0.85rem; }
+    .auth-divider { margin: 0.9rem 0; font-size: 0.7rem; }
+    .auth-form { gap: 0.8rem; }
+    .auth-form input[type="text"],
+    .auth-form input[type="email"],
+    .auth-form input[type="password"] { padding: 0.75rem 0.9rem 0.75rem 2.4rem; font-size: 0.88rem; }
+    .auth-submit-btn { padding: 0.75rem; font-size: 0.9rem; }
+    .auth-switch-hint { font-size: 0.78rem; margin-top: 1rem; }
+    .avatar-upload-wrapper, .avatar-upload img { width: 72px; height: 72px; }
+}
+
+/* ---------- Chhota phone (<=480px): 2-column hi rahega lekin sab aur compact ---------- */
+@media (max-width: 480px) {
+    nav { padding: 0.6rem 0.6rem; gap: 0.3rem; padding-top: calc(0.6rem + env(safe-area-inset-top, 0px)); }
+    .logo-tooltip { display: none; } /* hover tooltip chhoti screen pe useless hai (touch) */
+    .login-btn { padding: 0 0.7rem; font-size: 0.78rem; }
+    .user-name { max-width: 2.6rem; }
+
+    .songs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+    .music-section { margin-left: 0.6rem; }
+    .img-title { font-size: 0.9rem; }
+    .img-description { font-size: 0.72rem; }
+
+    .playlist-banner { height: 170px; }
+    .playlist-banner-slide-info h3 { font-size: 1.15rem; }
+    .playlist-banner-slide-info p { display: none; } /* bohot chhoti screen pe description ki jagah nahi */
+
+    .player-btns { margin: 0.4rem 0.55rem; font-size: 1rem; }
+    #play { font-size: 1.9rem; }
+    #volumeBar { width: 64px; }
+    .now-bar .player-download-btn { width: 1.8rem; height: 1.8rem; font-size: 1.15rem; }
+    .volume-container .exit-projector-btn { width: 1.8rem; height: 1.8rem; }
+
+    .playlists-view-grid,
+    .downloads-view-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    /* Sign in / Sign up module - chhoti screen par aur bhi compact */
+    .auth-modal-content { padding: 18px 14px; }
+    .auth-modal-content .modal-header h2 { font-size: 1.25rem; }
+    .avatar-upload-wrapper, .avatar-upload img { width: 64px; height: 64px; }
+}

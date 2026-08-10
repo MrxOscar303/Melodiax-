@@ -1,0 +1,19 @@
+# Secrets - kabhi GitHub par push na karein
+.env
+
+# Dependencies - Render/hosting khud install kar leta hai npm install se
+node_modules/
+
+# Purani local media folders - ab Cloudinary use ho raha hai, inki zaroorat nahi
+# (agar aap inhe rakhna chahte hain apne paas backup ke taur par to koi masla nahi,
+# bas GitHub par jaane ki zaroorat nahi kyunke bohot bhaari hain)
+Audio/
+Images/
+Videos/
+
+# Purana local uploads folder (agar bacha hai to)
+public/uploads/
+
+# OS/editor junk files
+.DS_Store
+Thumbs.db

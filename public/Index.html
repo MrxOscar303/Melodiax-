@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melodiax - Music Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+        integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="Style.css?v=3">
+    <link rel="icon" id="favicon-ico" href="favicon.ico?v=2" type="image/x-icon">
+    <link rel="shortcut icon" id="favicon-shortcut" href="favicon.ico?v=2" type="image/x-icon">
+    <link rel="icon" id="favicon-16" type="image/png" sizes="16x16" href="favicon-16x16.png?v=2">
+    <link rel="icon" id="favicon-32" type="image/png" sizes="32x32" href="favicon-32x32.png?v=2">
+    <link rel="icon" id="favicon-48" type="image/png" sizes="48x48" href="favicon-48x48.png?v=2">
+    <link rel="apple-touch-icon" id="favicon-apple" sizes="180x180" href="apple-touch-icon.png?v=2">
+    <link rel="icon" id="favicon-192" type="image/png" sizes="192x192" href="android-chrome-192x192.png?v=2">
+    <link rel="icon" id="favicon-512" type="image/png" sizes="512x512" href="android-chrome-512x512.png?v=2">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+</head>
+
+<body>
+
+    <div id="projector-overlay" class="projector-container">
+        <div class="projector-mask">
+    
+            <video id="projector-video" muted playsinline loop></video>
+
+        </div>
+    </div>
+
+    <!-- Exit Projector Mode button: sirf projector video chalte waqt nazar aata ha -->
+    <button id="exit-projector-btn" class="exit-projector-btn" type="button" title="Exit Projector Mode" aria-label="Exit Projector Mode">
+        <span class="exit-icon"></span>
+    </button>
+    <!-- Navbar -->
+
+    <nav>
+        <div class="left-half">
+            <!-- Sirf mobile pe nazar aata hai - click karne se side menu (Home/Premium/Downloads/Playlist/Support) khulta hai -->
+            <button id="mobile-menu-btn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu-panel">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="logo logo-wrap" tabindex="0">
+                <span class="logo-m"></span>
+                <span class="logo-tooltip">Melodiax</span>
+            </div>
+            <div class="home-icon"><i class="fa-solid fa-house"></i></div>
+            <div class="search-bar">
+                <div class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+
+                <input type="text" id="search-input" class="input-box" placeholder="What do you want to play?">
+
+                <div class="browse"><i class="fa-solid fa-folder-open"></i></div>
+
+                <div id="search-results" class="search-results-slide"></div>
+            </div>
+
+
+        </div>
+        <div class="right-half">
+            <div class="right-half-p1">
+                <p class="nav-text">Premium</p>
+                <p class="nav-text" id="nav-downloads-btn" title="Your downloaded songs" style="display:none;">Downloads</p>
+                <p class="nav-text" id="nav-playlist-btn" title="View and manage your playlists">Playlist</p>
+                <p class="nav-text">Support</p>
+            </div>
+            <div class="right-half-p2">
+                <div class="nav-text"><i class="fa-regular fa-circle-down"></i>Install App</div>
+
+                <!-- Guest state: jab tak user login/signup nahi karta, ye dikhega -->
+                <div id="guest-auth-buttons" class="guest-auth-buttons">
+                    <div class="nav-text" id="open-signup-btn">Sign up</div>
+                    <button class="login-btn" id="open-login-btn">Log in</button>
+                </div>
+
+                <!-- Logged-in state: login/signup ke baad sirf ye dikhega, upar wale buttons gayab ho jayenge -->
+                <div id="user-profile-box" class="user-profile-box" style="display:none;">
+                    <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
+                    <span id="user-name" class="user-name"></span>
+                    <!-- Sirf admin accounts ko ye button nazar aata hai (auth.js/admin.js control karte hain) -->
+                    <button id="admin-panel-btn" class="admin-panel-btn" type="button" title="Add Song" style="display:none;">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <div class="user-dropdown">
+                        <button id="logout-btn" type="button">Log out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </nav>
+
+    <!-- ==================== MOBILE SIDE MENU ====================
+         Sirf mobile screens (<=768px) pe hamburger icon se khulta hai - smooth
+         slide-in transition ke sath. Home/Premium/Downloads/Playlist/Support
+         + Create Playlist/Browse Podcasts, sab yahan se bhi chalte hain
+         (neeche wale asal buttons ko hi JS se click karte hain, taake
+         behavior bilkul same rahe). -->
+    <div id="mobile-menu-overlay" class="mobile-menu-overlay"></div>
+    <aside id="mobile-menu-panel" class="mobile-menu-panel" aria-hidden="true">
+        <button id="mobile-menu-close" class="mobile-menu-close" type="button" aria-label="Close menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div class="mobile-menu-body">
+            <nav class="mobile-menu-links">
+                <a href="#" class="mobile-menu-link" id="mobile-menu-home"><i class="fa-solid fa-house"></i><span>Home</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-downloads" style="display:none;"><i class="fa-solid fa-download"></i><span>Downloads</span></a>
+                <a href="#" class="mobile-menu-link mobile-menu-group-2" id="mobile-menu-playlist"><i class="fa-solid fa-compact-disc"></i><span>Playlist</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-premium"><i class="fa-solid fa-crown"></i><span>Premium</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
+            </nav>
+            <div class="mobile-menu-actions">
+                <button type="button" id="mobile-menu-create-playlist" class="mobile-menu-action-btn">Create Playlist</button>
+                <button type="button" id="mobile-menu-browse-podcasts" class="mobile-menu-action-btn">Browse Podcasts</button>
+            </div>
+            <button type="button" id="mobile-menu-exit" class="mobile-menu-exit-btn"><i class="fa-solid fa-right-from-bracket"></i><span>Exit</span></button>
+        </div>
+    </aside>
+
+    <!-- Main - Left part -->
+    <div class="main">
+        <div class="main-left-part">
+            <div class="library">
+                <p>Your Library</p>
+                <div>+</div>
+            </div>
+
+
+            <div class="box-container">
+                <div class="box">
+                    <h4>Create your first playlist</h4>
+                    <p>It's easy we'll help you</p>
+                    <button id="create-playlist-btn" type="button">Create Playlist</button>
+                </div>
+                <div class="box">
+                    <h4>Let's find some podcast to follow</h4>
+                    <p>We'll keep you updated on new updates</p>
+                    <button id="browse-podcasts-btn">Browse Podcasts</button>
+                </div>
+            </div>
+
+            <!-- User ki apni banayi hui playlists yahan (Browse Podcasts ke box ke neeche) aati hain.
+                 Jitni zyada hongi, sirf isi div me scroll aayega - baaki left part disturb nahi hoga. -->
+            <div id="user-playlists-list" class="user-playlists-list"></div>
+        </div>
+
+        <!-- main: right-part -->
+
+
+
+        <div class="main-right-part">
+            <!-- Admin-managed "Playlists" slide banner - homepage ke bilkul top par.
+                 Public: sirf slides + chhote backward/forward buttons dikhte hain.
+                 Admin: top-right corner par chhota pencil (edit) button, jisse
+                 manage panel khulta hai (add/edit/delete slides). -->
+            <div id="playlist-banner" class="playlist-banner" style="display:none;">
+                <div id="playlist-banner-track" class="playlist-banner-track"></div>
+
+                <!-- 1st slide pe chupa rehta hai, 2nd/3rd/... slide se dikhta hai (playlist-banner.js control karta hai) -->
+                <button id="playlist-banner-prev" class="playlist-banner-nav playlist-banner-prev" type="button"
+                    aria-label="Previous playlist" style="display:none;">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button id="playlist-banner-next" class="playlist-banner-nav playlist-banner-next" type="button"
+                    aria-label="Next playlist">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+
+                <div id="playlist-banner-dots" class="playlist-banner-dots"></div>
+
+                <!-- Sirf logged-in admin account ko nazar aata hai (playlist-banner.js control karta hai) -->
+                <button id="playlist-banner-edit-btn" class="playlist-banner-edit-btn" type="button"
+                    title="Manage playlists banner" style="display:none;">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+            </div>
+
+            <!-- "Playlist" nav button click karne par ye section dikhta hai aur neeche wale
+                 saare song-sections (Recommended Songs se lekar aakhir tak) chupa diye jate hain.
+                 Home icon click karne se wapas normal view aa jati hai. -->
+            <div id="playlists-view-section" class="playlists-view-section" style="display:none;">
+                <h2>Your Playlists</h2>
+                <div id="playlists-view-grid" class="playlists-view-grid"></div>
+                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+                <button type="button" id="playlists-view-leave-btn" class="view-leave-btn">Leave</button>
+            </div>
+
+            <!-- "Download" nav button click karne par ye section dikhta hai - Playlist
+                 section jaisa hi grid, lekin isme sirf offline-downloaded songs (individual
+                 gaane, playlists nahi) show hote hain. Ye button khud tab dikhta hai
+                 jab kam se kam 1 gaana download ho chuka ho (offline.js control karta hai). -->
+            <div id="downloads-view-section" class="playlists-view-section" style="display:none;">
+                <h2>Your Downloads</h2>
+                <p id="downloads-view-empty" class="downloads-view-empty" style="display:none;">Koi gaana offline download nahi kiya hua - kisi bhi song par hover karke download icon se save karein.</p>
+                <div id="downloads-view-grid" class="playlists-view-grid"></div>
+                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+                <button type="button" id="downloads-view-leave-btn" class="view-leave-btn">Leave</button>
+            </div>
+            <div class="music-section">
+                <h2>Trending Songs</h2></div>
+            <div class="music-section">
+                <h2>Recommended Songs</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/1.jpg" alt="">
+                        <div class="music-play-btn"><i id="1" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+
+                        <div class="img-title">Die For You</div>
+                        <div class="img-description">VALORANT, Grabbitz</div>
+
+
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/2.jpg" alt="">
+                        <div class="music-play-btn"><i id="2" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">La leçon particulière - Bande originale du film "La leçon particulière"
+                        </div>
+                        <div class="img-description">Francis Lai</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/3.jpg" alt="">
+                        <div class="music-play-btn"><i id="3" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Maand</div>
+                        <div class="img-description">Bayaan,Hassan Raheem,Rovalio</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/4.jpg" alt="">
+                        <div class="music-play-btn"><i id="4" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Roi - Instrumental Slowed</div>
+                        <div class="img-description">Mckyyy</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/5.jpg" alt="">
+                        <div class="music-play-btn"><i id="5" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Solitude - Slowed</div>
+                        <div class="img-description">juno, blindheart</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/6.jpg" alt="">
+                        <div class="music-play-btn"><i id="6" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Ticking Away </div>
+                        <div class="img-description">VALORANT, Grabbitz</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/7.jpg" alt="">
+                        <div class="music-play-btn"><i id="7" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Chess - Super Slowed</div>
+                        <div class="img-description">joyful</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/8.jpg" alt="">
+                        <div class="music-play-btn"><i id="8" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Softcore</div>
+                        <div class="img-description">The Neighbourhood</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>New Arrivals</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/9.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="9" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/10.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="10" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/11.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="11" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/12.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="12" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Chill Music</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/13.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="13" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/14.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="14" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/15.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="15" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/16.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="16" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>P1 Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/17.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="17" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/18.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="18" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/19.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="19" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/20.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="20" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>P2 Playlist </h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/21.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="21" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/22.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="22" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/23.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="23" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/24.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="24" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>P3 Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/25.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="25" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/26.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="26" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/27.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="27" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/28.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="28" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Zeenu's Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/29.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="29" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/30.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="30" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/31.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="31" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/32.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="32" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/33.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="33" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/34.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="34" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/35.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="35" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/36.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="36" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/37.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="37" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/38.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="38" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/39.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="39" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/40.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="40" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Nova's Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/41.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="41" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/42.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="42" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/43.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="43" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/44.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="44" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/45.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="45" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/46.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="46" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/47.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="47" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/48.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="48" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/49.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="49" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/50.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="50" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/51.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="51" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/52.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="52" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/53.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="53" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/54.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="54" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/55.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="55" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/56.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="56" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/57.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="57" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/58.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="58" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/59.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="59" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/60.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="60" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/61.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="61" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/62.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="62" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/63.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="63" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/64.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="64" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="music-section">
+                <h2>AI's Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/65.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="65" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/66.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="66" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/67.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="67" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/68.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="68" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/69.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="69" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/70.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="70" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/71.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="71" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/72.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="72" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/73.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="73" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/74.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="74" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/75.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="75" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/76.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="76" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/77.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="77" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/78.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="78" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/79.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="79" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/80.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="80" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/81.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="81" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/82.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="82" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/83.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="83" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/60.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="84" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Aiyz's Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/85.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="85" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/86.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="86" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/87.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="87" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/88.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="88" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/89.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="89" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/90.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="90" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/91.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="91" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/92.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="92" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/93.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="93" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/94.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="94" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/95.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="95" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/96.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="96" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <h2>Random Playlist</h2>
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/89.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="97" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/90.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="98" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/91.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="99" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/92.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="100" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+            <div class="music-section">
+                <div class="songs">
+                    <div class="music-card">
+                        <img src="Images/93.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="101" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Starboy</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/94.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="102" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Blinding Lights</div>
+                        <div class="img-description">The Weeknd</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/95.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="103" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Heat Waves</div>
+                        <div class="img-description">Glass Animals</div>
+                    </div>
+                    <div class="music-card">
+                        <img src="Images/96.jpg" alt="">
+                        <div class="music-play-btn">
+                            <i id="104" class="playMusic fa-sharp fa-solid fa-circle-play"></i>
+                        </div>
+                        <div class="img-title">Stay</div>
+                        <div class="img-description">The Kid LAROI, Justin Bieber</div>
+                    </div>
+                </div>
+            </div>
+                  <div class="music-section">
+                <h2>Russian Mix</h2></div>
+                      <div class="music-section">
+                <h2>Daily Mix</h2></div>
+                      <div class="music-section">
+                <h2>Electronic Mix</h2></div>
+        </div>
+    </div>
+
+
+
+    <!-- Player -->
+    <div class="player-bar">
+        <div class="now-bar">
+            <img src="Images/1.jpg" alt="">
+
+            <div class="now-bar-info">
+                <div class="img-title-info">Die For You</div>
+                <div class="img-des-info">VALORANT, Grabbitz</div>
+            </div>
+            <i class="fa-solid fa-download player-download-btn" id="player-download-btn" title="Download for offline" style="display:none;"></i>
+        </div>
+        <div class="music-controller">
+            <div class="player">
+                <i id="shuffle" class="player-btns fa-solid fa-shuffle"></i>
+                <i id="backward" class="player-btns fa-sharp fa-solid fa-backward-step"></i>
+                <i id="play" class="player-btns fa-solid fa-circle-play"></i>
+                <i id="forward" class="player-btns fa-sharp fa-solid fa-forward-step"></i>
+                <i id="repeat" class="player-btns fa-solid fa-repeat"></i>
+            </div>
+
+            <div class="spotify-timer-row">
+                <span class="time-label" id="track-current">0:00</span>
+                <input type="range" id="progressBar" value="0">
+                <span class="time-label" id="track-total">0:00</span>
+            </div>
+        </div>
+
+
+        <div class="volume-container">
+            <i class="fa-solid fa-moon" id="theme-toggle" title="Switch Theme"></i>
+            <i id="vol-icon" class="fa-solid fa-volume-high"></i>
+            <input type="range" id="volumeBar" min="0" max="100" value="100">
+        </div>
+
+
+
+    </div>
+
+    <!-- Login / Signup Modal -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content auth-modal-content">
+            <div class="modal-header">
+                <h2 id="auth-modal-title">Log in</h2>
+                <span class="close-btn" id="auth-close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="auth-tabs">
+                    <button type="button" class="auth-tab active" data-tab="login" id="tab-login">Log in</button>
+                    <button type="button" class="auth-tab" data-tab="signup" id="tab-signup">Sign up</button>
+                </div>
+
+                <div class="auth-oauth-buttons">
+                    <a href="/api/auth/google" id="google-oauth-btn" class="oauth-btn google-btn"><i class="fa-brands fa-google"></i> Continue with Google</a>
+                    <a href="/api/auth/facebook" id="facebook-oauth-btn" class="oauth-btn facebook-btn"><i class="fa-brands fa-facebook"></i> Continue with Facebook</a>
+                </div>
+                <div class="auth-divider"><span>OR</span></div>
+
+                <p id="auth-error" class="auth-error"></p>
+                <p id="auth-success" class="auth-success"></p>
+                <p id="resend-verification-hint" class="auth-resend-hint" style="display:none;">
+                    Didn't get the email? <a id="resend-verification-link">Resend verification email</a>
+                </p>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form" class="auth-form">
+                    <div class="auth-input-group">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="login-identifier" placeholder="Email or username" required autocomplete="username">
+                    </div>
+                    <div class="auth-input-group">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Log in</button>
+                    <p class="auth-switch-hint">Don't have an account? <a id="switch-to-signup">Sign up</a></p>
+                </form>
+
+                <!-- SIGNUP FORM -->
+                <form id="signup-form" class="auth-form" style="display:none;">
+                    <div class="avatar-upload">
+                        <label for="signup-avatar" class="avatar-upload-wrapper">
+                            <img id="avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Profile picture preview">
+                            <span class="avatar-upload-overlay"><i class="fa-solid fa-camera"></i></span>
+                        </label>
+                        <label for="signup-avatar" class="avatar-upload-label">Add a profile picture (optional)</label>
+                        <input type="file" id="signup-avatar" accept="image/*">
+                    </div>
+                    <div class="auth-input-group">
+                        <i class="fa-solid fa-user"></i>
+                        <input type="text" id="signup-username" placeholder="Username" required minlength="3" autocomplete="username">
+                    </div>
+                    <div class="auth-input-group">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="signup-email" placeholder="Email" required autocomplete="email">
+                    </div>
+                    <div class="auth-input-group">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="signup-password" placeholder="Password (min. 6 characters)" required minlength="6" autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="auth-submit-btn">Sign up</button>
+                    <p class="auth-switch-hint">Already have an account? <a id="switch-to-login">Log in</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ ADMIN PANEL (song add karne ka form) ============ -->
+    <!-- ==================== PLAYLIST CREATE / EDIT MODULE ====================
+         "Create Playlist" (ya kisi playlist ka Edit icon) click karne par khulta hai.
+         Screen ka ~70% cover karta hai, theme (dark/red) ke hisaab se apna color badalta hai. -->
+    <div id="playlist-modal-overlay" class="playlist-modal-overlay"></div>
+    <div id="playlist-modal" class="playlist-modal">
+        <div class="playlist-modal-header">
+            <h3 id="playlist-modal-title"><i class="fa-solid fa-list-ul"></i> Create Playlist</h3>
+            <button id="playlist-modal-close" type="button" class="playlist-modal-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="playlist-modal-top">
+            <div class="playlist-name-field">
+                <label for="playlist-name-input">Name</label>
+                <input type="text" id="playlist-name-input" placeholder="My Playlist #1" maxlength="60">
+                <span class="playlist-field-hint">Picture is optional — if not provided, the default playlist cover will be used</span>
+            </div>
+
+            <div class="playlist-cover-upload" id="playlist-cover-upload" title="Choose cover picture (optional)">
+                <img id="playlist-cover-preview" class="playlist-cover-preview" style="display:none;" alt="">
+                <div id="playlist-cover-default" class="playlist-cover-default">
+                    <i class="fa-solid fa-music"></i>
+                    <span class="playlist-cover-label">Cover Image</span>
+                </div>
+                <span class="playlist-cover-edit"><i class="fa-solid fa-camera"></i></span>
+                <input type="file" id="playlist-cover-input" accept="image/*" style="display:none;">
+            </div>
+        </div>
+
+        <div class="playlist-modal-divider"></div>
+
+        <div class="playlist-songs-header">
+            <h4>Add songs</h4>
+            <span id="playlist-selected-count" class="playlist-selected-count">0 selected</span>
+        </div>
+        <label class="playlist-search-label" for="playlist-song-search">Search</label>
+        <div class="playlist-song-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="playlist-song-search" class="playlist-song-search" placeholder="Search songs...">
+        </div>
+        <div id="playlist-song-picker" class="playlist-song-picker"></div>
+        <p id="playlist-song-picker-empty" class="playlist-song-picker-empty" style="display:none;">No songs match your search.</p>
+
+        <div id="playlist-modal-error" class="playlist-modal-error"></div>
+
+        <div class="playlist-modal-actions">
+            <button type="button" id="playlist-create-btn" class="playlist-create-btn">Create</button>
+            <button type="button" id="playlist-cancel-btn" class="playlist-cancel-btn">
+                <span class="btn-label-desktop">Cancel</span><span class="btn-label-mobile">Leave</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== PLAYLIST DETAIL MODULE ====================
+         Playlist card/sidebar item pe click karne se (play button pe nahi) ye khulta hai -
+         playlist ke sab songs, aur har song kab (date + time) playlist me add hua tha, wo dikhata hai. -->
+    <div id="playlist-detail-overlay" class="playlist-modal-overlay"></div>
+    <div id="playlist-detail-modal" class="playlist-modal playlist-detail-modal">
+        <div class="playlist-modal-header">
+            <h3 id="playlist-detail-title"><i class="fa-solid fa-list-ul"></i> Playlist</h3>
+            <button id="playlist-detail-close" type="button" class="playlist-modal-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="playlist-detail-top">
+            <div id="playlist-detail-cover" class="playlist-detail-cover"><i class="fa-solid fa-music"></i></div>
+            <div class="playlist-detail-meta">
+                <div id="playlist-detail-name" class="playlist-detail-name">Playlist</div>
+                <div id="playlist-detail-count" class="playlist-detail-count">0 songs</div>
+                <div class="playlist-detail-meta-actions">
+                    <button type="button" id="playlist-detail-edit-btn" class="playlist-detail-edit-btn"><i class="fa-solid fa-pen"></i> Edit</button>
+                    <button type="button" id="playlist-detail-delete-btn" class="playlist-detail-delete-btn"><i class="fa-solid fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="playlist-modal-divider"></div>
+
+        <div id="playlist-detail-song-list" class="playlist-detail-song-list"></div>
+    </div>
+
+    <div id="admin-panel-overlay" class="admin-panel-overlay"></div>
+    <div id="admin-panel" class="admin-panel">
+        <div class="admin-panel-header">
+            <h3 id="admin-panel-title"><i class="fa-solid fa-music"></i> Add Song</h3>
+            <button id="admin-panel-close" type="button" class="admin-panel-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="admin-song-form" class="admin-song-form">
+            <div class="admin-projector-toggle">
+                <div class="admin-projector-toggle-label">
+                    Song Source <span class="admin-field-hint">(YouTube link ya khud Mp3 upload karein)</span>
+                </div>
+                <div class="admin-yesno" id="song-source-yesno">
+                    <button type="button" class="admin-yesno-btn" data-value="youtube">YouTube Link</button>
+                    <button type="button" class="admin-yesno-btn" data-value="mp3">Mp3 Upload</button>
+                </div>
+                <input type="hidden" id="song-source-type" value="youtube">
+            </div>
+
+            <label id="song-youtube-url-field">
+                YouTube Link
+                <input type="url" id="song-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+            </label>
+
+            <label id="song-audio-file-field" style="display:none;">
+                Mp3 File <span class="admin-field-hint">(mp3 / wav / ogg / m4a, max 40MB)</span>
+                <span class="admin-file-btn admin-file-btn-audio">
+                    <i class="fa-solid fa-file-audio"></i> Choose Mp3
+                    <input type="file" id="song-audio-file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a">
+                </span>
+                <span id="song-audio-file-name" class="admin-field-hint"></span>
+            </label>
+
+            <label>
+                Title
+                <input type="text" id="song-title" placeholder="Song title" required>
+            </label>
+
+            <label>
+                Description
+                <input type="text" id="song-description" placeholder="Artist / details">
+            </label>
+
+            <label>
+                Section
+                <input type="text" id="song-section" list="song-section-list" placeholder="e.g. Chill Music" required>
+                <datalist id="song-section-list"></datalist>
+            </label>
+
+            <label>
+                Cover Image <span class="admin-field-hint">(optional - YouTube thumbnail / default cover is used otherwise)</span>
+                <span class="admin-file-btn admin-file-btn-image">
+                    <i class="fa-solid fa-image"></i> Choose Image
+                    <input type="file" id="song-image" accept="image/*">
+                </span>
+            </label>
+            <img id="song-image-preview" class="song-image-preview" style="display:none;">
+
+            <div class="admin-projector-toggle">
+                <div class="admin-projector-toggle-label">
+                    Projector Video <span class="admin-field-hint">(background video jo audio ke sath sync play ho)</span>
+                </div>
+                <div class="admin-yesno" id="song-projector-yesno">
+                    <button type="button" class="admin-yesno-btn" data-value="no">No</button>
+                    <button type="button" class="admin-yesno-btn" data-value="yes">Yes</button>
+                </div>
+                <input type="hidden" id="song-projector-enabled" value="false">
+            </div>
+
+            <label id="song-projector-video-field" style="display:none;">
+                Projector Video File <span class="admin-field-hint">(mp4 / webm / mov, max 40MB)</span>
+                <span class="admin-file-btn admin-file-btn-video">
+                    <i class="fa-solid fa-clapperboard"></i> Choose Video
+                    <input type="file" id="song-projector-video" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+                </span>
+            </label>
+            <video id="song-projector-video-preview" class="song-projector-video-preview" muted loop playsinline controls style="display:none;"></video>
+
+            <div id="admin-form-error" class="admin-form-error"></div>
+            <div id="admin-form-success" class="admin-form-success"></div>
+
+            <div class="admin-form-actions">
+                <button type="submit" id="admin-submit-btn" class="admin-submit-btn">Add Song</button>
+                <button type="button" id="admin-cancel-edit" class="admin-cancel-edit-btn" style="display:none;">Cancel</button>
+            </div>
+        </form>
+
+        <div class="admin-panel-divider"></div>
+
+        <h4 class="admin-existing-title">Your added songs</h4>
+        <div id="admin-song-list" class="admin-song-list"></div>
+    </div>
+
+    <!-- Admin-only panel: homepage ke top wale "Playlists" slide banner ko
+         manage karne ke liye (add/edit/delete slides). playlist-banner.js
+         isko playlist-banner-edit-btn click par khol/band karta hai. -->
+    <div id="pbanner-panel-overlay" class="admin-panel-overlay"></div>
+    <div id="pbanner-panel" class="admin-panel pbanner-panel">
+        <div class="admin-panel-header">
+            <h3 id="pbanner-panel-title"><i class="fa-solid fa-images"></i> Playlists Banner</h3>
+            <button id="pbanner-panel-close" type="button" class="admin-panel-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="pbanner-form" class="admin-song-form">
+            <input type="hidden" id="pbanner-edit-id" value="">
+
+            <label>
+                Title
+                <input type="text" id="pbanner-title" maxlength="80" placeholder="e.g. Weekend Chill" required>
+            </label>
+
+            <label>
+                Description <span class="admin-field-hint">(optional, chhota subtitle)</span>
+                <input type="text" id="pbanner-description" maxlength="120" placeholder="e.g. Handpicked lo-fi tracks">
+            </label>
+
+            <label>
+                Cover Image <span class="admin-field-hint">(edit karte waqt optional - purani image bani rahegi)</span>
+                <span class="admin-file-btn admin-file-btn-image">
+                    <i class="fa-solid fa-image"></i> Choose Image
+                    <input type="file" id="pbanner-image" accept="image/*">
+                </span>
+            </label>
+            <img id="pbanner-image-preview" class="song-image-preview" style="display:none;">
+
+            <label>
+                Background Color
+                <div id="pbanner-swatches" class="pbanner-swatches">
+                    <button type="button" class="pbanner-swatch active" data-color="#2563eb" style="background:#2563eb;" title="Blue"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#16a34a" style="background:#16a34a;" title="Green"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#dc2626" style="background:#dc2626;" title="Red"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#ca8a04" style="background:#ca8a04;" title="Yellow"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#9333ea" style="background:#9333ea;" title="Purple"></button>
+                    <input type="color" id="pbanner-color-custom" class="pbanner-color-custom" value="#2563eb" title="Custom color">
+                </div>
+                <input type="hidden" id="pbanner-color" value="#2563eb">
+            </label>
+
+            <label>
+                Link to Section <span class="admin-field-hint">(optional - is naam ka section click par khulega)</span>
+                <input type="text" id="pbanner-section" list="song-section-list" placeholder="e.g. Chill Music">
+            </label>
+
+            <label>
+                Order <span class="admin-field-hint">(chhota number pehle dikhta hai)</span>
+                <input type="text" id="pbanner-order" inputmode="numeric" placeholder="0">
+            </label>
+
+            <div id="pbanner-form-error" class="admin-form-error"></div>
+            <div id="pbanner-form-success" class="admin-form-success"></div>
+
+            <div class="admin-form-actions">
+                <button type="submit" id="pbanner-submit-btn" class="admin-submit-btn">Add Slide</button>
+                <button type="button" id="pbanner-cancel-edit" class="admin-cancel-edit-btn" style="display:none;">Cancel</button>
+            </div>
+        </form>
+
+        <div class="admin-panel-divider"></div>
+
+        <h4 class="admin-existing-title">Existing slides</h4>
+        <div id="pbanner-list" class="admin-song-list"></div>
+    </div>
+
+    <!-- Hidden YouTube IFrame API target: admin-added (YouTube) songs are streamed
+         through this hidden player, but controlled from the SAME player-bar below
+         (now-bar + music-controller) that manual songs use - no separate widget. -->
+    <div id="yt-player-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;"></div>
+
+    <!-- Custom confirm dialog: replaces the native browser confirm() popup for
+         every delete action (admin songs, playlists). Always centered on screen
+         and follows the current theme (dark / red). Controlled by confirm.js. -->
+    <div id="confirm-dialog-overlay" class="confirm-dialog-overlay">
+        <div id="confirm-dialog" class="confirm-dialog" role="alertdialog" aria-modal="true">
+            <div class="confirm-dialog-icon"><i class="fa-solid fa-trash"></i></div>
+            <p id="confirm-dialog-message" class="confirm-dialog-message"></p>
+            <div class="confirm-dialog-actions">
+                <button type="button" id="confirm-dialog-cancel" class="confirm-dialog-btn confirm-dialog-cancel">Cancel</button>
+                <button type="button" id="confirm-dialog-confirm" class="confirm-dialog-btn confirm-dialog-confirm">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="Script.js"></script>
+    <script src="confirm.js"></script>
+    <script src="auth.js"></script>
+    <script src="admin.js"></script>
+    <script src="playlist.js"></script>
+    <script src="playlist-banner.js"></script>
+    <script src="offline.js"></script>
+    <script src="mobile-menu.js?v=2"></script>
+    <script>
+        // App shell (HTML/CSS/JS/icons) ko cache karta hai taake site khud
+        // bina internet ke bhi khul sake - offline.js (IndexedDB) alag se
+        // individual gaanon ko offline-playable banata hai.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').catch((err) => {
+                    console.warn('Service worker register nahi ho saka:', err);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>
