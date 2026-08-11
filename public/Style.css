@@ -3104,7 +3104,7 @@ body.red-theme .pbanner-swatch.active { box-shadow: 0 0 0 2px #ff4d4d; }
        sirf wahi end tak push ho, baaki (img/title/artist) apni asal jagah
        par rahe. */
     .now-bar { justify-content: flex-start; padding-right: 0.4rem; box-sizing: border-box; }
-    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: auto; }
+    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: 3px; }
 
     /* Projector (exit-projector-btn) - jahan pehle download button tha wahan
        ab ye chhota sa button aata hai (mobile-menu.js isse yahan move karta
