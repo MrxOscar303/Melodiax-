@@ -933,6 +933,10 @@ document.addEventListener('click', async (e) => {
         audio.src = src;
         audio.currentTime = 0;
         audio.play();
+        // Bara (main) play/pause button bhi turant "pause" dikhaye - warna
+        // audio bajta rehta tha lekin button "play" hi dikhata reh jata tha.
+        play.classList.remove('fa-circle-play');
+        play.classList.add('fa-circle-pause');
     }
 
     // now-bar (bottom-left) update - seedha clicked track se, order/shuffle se
