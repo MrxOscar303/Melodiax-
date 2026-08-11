@@ -1,4 +1,13 @@
 // ============================================================
+
+// Ye track karta hai ke user ne khud koi song click karke play ki hai ya
+// nahi - agar nahi ki, to jab asal songs load ho jayein, now-bar (neeche
+// wala mini-player) ko pehli asal (real) song se update kar dete hain,
+// taake purani/local placeholder ki jagah hamesha sahi (Cloudinary wali)
+// cover aur naam dikhe.
+let userHasManuallyPlayed = false;
+
+// ============================================================
 // Admin panel (add songs via YouTube link) + unified playback
 // ------------------------------------------------------------
 // Admin/YouTube songs ab bilkul manual (Audio/*.mp3) songs jaisa
@@ -403,6 +412,15 @@ function renderSongsList(list) {
     // naye tracks ko bhi dekh sakein.
     if (typeof songOnShuffle !== 'undefined' && !songOnShuffle) {
         order = [...songs];
+    }
+    // Agar user ne abhi tak khud koi song play nahi ki, to neeche wala
+    // mini-player (now-bar) hamesha ek purani/broken local image dikhata
+    // tha - ab pehli asal (real) song se update kar dete hain.
+    if (!userHasManuallyPlayed && songs.length && nowBar) {
+        const first = songs[0];
+        nowBar.getElementsByTagName('img')[0].src = first.songImage;
+        nowBar.getElementsByClassName('img-title-info')[0].innerText = first.songName;
+        nowBar.getElementsByClassName('img-des-info')[0].innerText = first.songDes;
     }
 }
 
@@ -886,6 +904,8 @@ document.addEventListener('click', async (e) => {
     const icon = e.target.closest('.playMusic');
     if (!icon || !icon.dataset.dbId) return;
     if (icon.dataset.type !== 'youtube' && icon.dataset.type !== 'local') return;
+
+    userHasManuallyPlayed = true;
 
     const id = parseInt(icon.id, 10);
     const data = songs[id - 1];
