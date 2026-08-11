@@ -69,9 +69,9 @@
         <div class="right-half">
             <div class="right-half-p1">
                 <p class="nav-text">Premium</p>
-                <p class="nav-text" id="nav-downloads-btn" title="Your downloaded songs" style="display:none;">Download</p>
+                <p class="nav-text" id="nav-downloads-btn" title="Your downloaded songs" style="display:none;">Downloads</p>
                 <p class="nav-text" id="nav-playlist-btn" title="View and manage your playlists">Playlist</p>
-                <p class="nav-text">Support</p>
+                <p class="nav-text" id="nav-about-btn" title="About Melodiax and contact us">About us</p>
             </div>
             <div class="right-half-p2">
                 <div class="nav-text"><i class="fa-regular fa-circle-down"></i>Install App</div>
@@ -117,7 +117,7 @@
                 <a href="#" class="mobile-menu-link" id="mobile-menu-downloads" style="display:none;"><i class="fa-solid fa-download"></i><span>Downloads</span></a>
                 <a href="#" class="mobile-menu-link mobile-menu-group-2" id="mobile-menu-playlist"><i class="fa-solid fa-compact-disc"></i><span>Playlist</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-premium"><i class="fa-solid fa-crown"></i><span>Premium</span></a>
-                <a href="#" class="mobile-menu-link" id="mobile-menu-support"><i class="fa-solid fa-headset"></i><span>Support</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-about"><i class="fa-solid fa-circle-info"></i><span>About us</span></a>
             </nav>
             <div class="mobile-menu-actions">
                 <button type="button" id="mobile-menu-create-playlist" class="mobile-menu-action-btn">Create Playlist</button>
@@ -206,14 +206,30 @@
                 <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
                 <button type="button" id="downloads-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
-            <div class="music-section">
-                <h2>Trending Songs</h2>
-                <div class="songs">
-                    
-                    
-                    
-                    
-                </div>
+            <!-- "About us" nav button click karne par ye section dikhta hai - baaki
+                 sab (home sections, playlist, downloads) chupa diye jate hain. -->
+            <div id="about-view-section" class="playlists-view-section about-view-section" style="display:none;">
+                <h1 class="about-hero-title">Melodiax</h1>
+                <p class="about-description">
+                    Melodiax is a personal music player built for listening to the songs you
+                    actually love, all in one place - your own uploads and YouTube tracks,
+                    organized into custom sections and playlists. It was inspired by the
+                    clean, familiar feel of apps like Spotify, then built from scratch as a
+                    web app with its own player, offline downloads, and admin tools for
+                    adding new music.
+                </p>
+
+                <h2 class="about-contact-heading">Contact Us</h2>
+                <form id="contact-form" class="contact-form" novalidate>
+                    <input type="text" id="contact-name" placeholder="Your name" required maxlength="200">
+                    <input type="email" id="contact-email" placeholder="Your email" required maxlength="200">
+                    <textarea id="contact-message" placeholder="Tell us about your issue or feedback..." rows="5" required maxlength="5000"></textarea>
+                    <button type="submit" id="contact-submit-btn" class="contact-submit-btn">Send Message</button>
+                    <p id="contact-form-status" class="contact-form-status" style="display:none;"></p>
+                </form>
+
+                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+                <button type="button" id="about-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
             <div class="music-section">
                 <h2>Recommended Songs</h2>
@@ -825,6 +841,7 @@
     <script src="playlist.js"></script>
     <script src="playlist-banner.js"></script>
     <script src="offline.js"></script>
+    <script src="about.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script>
         // App shell (HTML/CSS/JS/icons) ko cache karta hai taake site khud

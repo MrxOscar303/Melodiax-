@@ -55,4 +55,33 @@ async function sendVerificationEmail(to, username, verifyUrl) {
     });
 }
 
-module.exports = { sendVerificationEmail };
+async function sendContactMessage({ name, email, message }) {
+    const t = getTransporter();
+    const to = process.env.CONTACT_EMAIL || process.env.EMAIL_USER;
+
+    if (!t || !to) {
+        // SMTP configured nahi hai - message console mein print kar dete hain
+        // taake abhi bhi kahin dikh jaye (local testing ke liye kaafi hai).
+        console.warn('⚠️  EMAIL_HOST/EMAIL_USER/EMAIL_PASS (ya CONTACT_EMAIL) .env mein set nahi hain.');
+        console.warn(`   Contact form message from ${name} <${email}>: ${message}`);
+        return;
+    }
+
+    await t.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to,
+        replyTo: email,
+        subject: `Melodiax contact form - ${name}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
+                <h2>New message from the Melodiax contact form</h2>
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Message:</strong></p>
+                <p style="white-space: pre-wrap;">${message}</p>
+            </div>
+        `,
+    });
+}
+
+module.exports = { sendVerificationEmail, sendContactMessage };

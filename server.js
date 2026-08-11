@@ -46,7 +46,8 @@ app.use(passport.initialize());
 const SHELL_FILES_FOR_HASH = [
     'Index.html', 'Style.css', 'Script.js',
     'playlist.js', 'playlist-banner.js', 'admin.js',
-    'auth.js', 'confirm.js', 'offline.js', 'manifest.json',
+    'auth.js', 'confirm.js', 'offline.js', 'about.js',
+    'mobile-menu.js', 'manifest.json',
 ];
 
 function getShellHash() {
@@ -78,6 +79,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/playlists', playlistRoutes);
+app.use('/api/contact', require('./routes/contact'));
 
 // Kisi bhi na-milne wali route pe frontend ka index.html hi bhej do (SPA-style fallback)
 app.get('*', (req, res, next) => {
