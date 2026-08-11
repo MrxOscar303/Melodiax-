@@ -239,8 +239,25 @@ function updateNowBar(songData) {
 // notification par gaana ka naam, cover aur play/pause/next/prev controls
 // dikhane ke liye Media Session API set karna zaroori hai, warna kai
 // devices/browsers thori dair baad audio ko background me rok bhi dete hain.
+//
+// iOS (Safari aur Chrome, dono WebKit use karte hain) me ek known bug hai -
+// naya gaana bajne par metadata turant set karne se Control Center/lock-screen
+// widget purani metadata (pichla gaana) dikhata reh jata hai. Fix: pehle
+// purani metadata ko null karo taake iOS "clean slate" se refresh kare, phir
+// asal audio actually chalna start hone ("playing" event) ke baad naya
+// metadata set karo - turant play() call ke baad set karne se race lagti hai.
+let pendingSessionData = null;
+
 function setMediaSessionMetadata(data) {
     if (!('mediaSession' in navigator) || !data) return;
+    pendingSessionData = data;
+    navigator.mediaSession.metadata = null; // purani (stuck) metadata clear
+    applySessionMetadata();
+}
+
+function applySessionMetadata() {
+    if (!('mediaSession' in navigator) || !pendingSessionData) return;
+    const data = pendingSessionData;
     navigator.mediaSession.metadata = new MediaMetadata({
         title: data.songName || 'Melodiax',
         artist: data.songDes || '',
@@ -271,6 +288,13 @@ if ('mediaSession' in navigator) {
     // audio kahin se bhi (button, hardware control, ended/repeat) chale/ruke.
     audio.addEventListener('play', () => { navigator.mediaSession.playbackState = 'playing'; });
     audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
+
+    // Asal fix: audio actually chalna shuru hone par (naye src ke liye) ek
+    // baar phir metadata apply karo. Isi waqt iOS Control Center widget ko
+    // reliably refresh karta hai - turant play() call ke waqt nahi.
+    audio.addEventListener('playing', () => {
+        applySessionMetadata();
+    });
 }
 
 forward = document.getElementById('forward');
