@@ -447,6 +447,8 @@
         const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));
         const playlistsSection = document.getElementById('playlists-view-section');
         if (typeof window.melodiaxSetHomeBannerVisible === 'function') window.melodiaxSetHomeBannerVisible(false);
+        // About tab agar khula ho to usko bhi chupa do.
+        if (typeof window.melodiaxHideAboutTab === 'function') window.melodiaxHideAboutTab();
 
         await renderDownloadsGrid();
 

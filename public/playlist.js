@@ -261,6 +261,8 @@
         if (typeof window.melodiaxSetHomeBannerVisible === 'function') window.melodiaxSetHomeBannerVisible(false);
         // Download tab agar khula ho to usko bhi chupa do.
         if (typeof window.melodiaxHideDownloadsTab === 'function') window.melodiaxHideDownloadsTab();
+        // About tab agar khula ho to usko bhi chupa do.
+        if (typeof window.melodiaxHideAboutTab === 'function') window.melodiaxHideAboutTab();
         fadeOutThen(homeSections, () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });
             renderPlaylistsView();

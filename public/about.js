@@ -47,6 +47,10 @@
     if (aboutNavBtn) aboutNavBtn.addEventListener('click', showAboutTab);
     if (homeIconEl) homeIconEl.addEventListener('click', hideAboutTab);
 
+    // Playlist/Downloads tabs ko available karwana taake wo bhi About tab ko
+    // hide kar saken jab unpar seedha (home icon use kiye baghair) switch kiya jaye.
+    window.melodiaxHideAboutTab = hideAboutTab;
+
     // ---------------- Contact form ----------------
     const form = document.getElementById('contact-form');
     const statusEl = document.getElementById('contact-form-status');
