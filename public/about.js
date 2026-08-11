@@ -27,6 +27,14 @@
         });
     }
 
+    // Turant (bina fade animation ke) chupa deta hai - jab koi doosra tab
+    // (Playlist/Downloads) already apna fade-in animation kar raha ho, tab
+    // About section ko alag se animate karna sirf overlap/flash create karta
+    // hai. Isliye wahan ye instant version use hoti hai.
+    function hideAboutTabInstant() {
+        if (aboutSection) aboutSection.style.display = 'none';
+    }
+
     function showAboutTab() {
         const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));
         const playlistsSection = document.getElementById('playlists-view-section');
@@ -50,6 +58,7 @@
     // Playlist/Downloads tabs ko available karwana taake wo bhi About tab ko
     // hide kar saken jab unpar seedha (home icon use kiye baghair) switch kiya jaye.
     window.melodiaxHideAboutTab = hideAboutTab;
+    window.melodiaxHideAboutTabInstant = hideAboutTabInstant;
 
     // ---------------- Contact form ----------------
     const form = document.getElementById('contact-form');

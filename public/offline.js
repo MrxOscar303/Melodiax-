@@ -447,8 +447,10 @@
         const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));
         const playlistsSection = document.getElementById('playlists-view-section');
         if (typeof window.melodiaxSetHomeBannerVisible === 'function') window.melodiaxSetHomeBannerVisible(false);
-        // About tab agar khula ho to usko bhi chupa do.
-        if (typeof window.melodiaxHideAboutTab === 'function') window.melodiaxHideAboutTab();
+        // About tab agar khula ho to usko turant chupa do (naya tab khud
+        // apna fade-in karega, isliye yahan animation ki zaroorat nahi -
+        // warna overlap ki wajah se "jhalak" dikhti hai).
+        if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
 
         await renderDownloadsGrid();
 

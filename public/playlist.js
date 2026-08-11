@@ -261,8 +261,10 @@
         if (typeof window.melodiaxSetHomeBannerVisible === 'function') window.melodiaxSetHomeBannerVisible(false);
         // Download tab agar khula ho to usko bhi chupa do.
         if (typeof window.melodiaxHideDownloadsTab === 'function') window.melodiaxHideDownloadsTab();
-        // About tab agar khula ho to usko bhi chupa do.
-        if (typeof window.melodiaxHideAboutTab === 'function') window.melodiaxHideAboutTab();
+        // About tab agar khula ho to usko turant chupa do (naya tab khud
+        // apna fade-in karega, isliye yahan animation ki zaroorat nahi -
+        // warna overlap ki wajah se "jhalak" dikhti hai).
+        if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
         fadeOutThen(homeSections, () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });
             renderPlaylistsView();
