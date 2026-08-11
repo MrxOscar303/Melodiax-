@@ -1,3 +1,9 @@
+# Melodiax
+
+Melodiax is a full-stack web music player featuring a library of over 1,000 songs. Built using Node.js and MongoDB Atlas with the help of AI tools, the entire project—including both the frontend and backend—was independently developed by Aiyz.
+
+---
+
 # Account System — Setup Guide (Roman Urdu)
 
 Ye backend (Node.js + Express + MongoDB) aapki website mein add kar diya gaya
