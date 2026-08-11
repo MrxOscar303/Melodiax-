@@ -244,14 +244,14 @@
         btn.classList.remove('downloading', 'downloaded');
         if (state === 'downloaded') {
             btn.classList.add('downloaded');
-            btn.title = 'Offline copy available - hataane ke liye click karein';
+            btn.title = 'Offline copy available - click to remove';
             btn.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
         } else if (state === 'downloading') {
             btn.classList.add('downloading');
-            btn.title = 'Download ho raha hai...';
+            btn.title = 'Downloading...';
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         } else {
-            btn.title = 'Offline ke liye download karein';
+            btn.title = 'Download for offline';
             btn.innerHTML = '<i class="fa-solid fa-download"></i>';
         }
     }
@@ -260,7 +260,7 @@
         const isDownloaded = btn.classList.contains('downloaded');
         if (isDownloaded) {
             const ok = window.showConfirm
-                ? await window.showConfirm('Ye offline copy delete kar dein?', { confirmText: 'Delete' })
+                ? await window.showConfirm('Delete this offline copy?', { confirmText: 'Delete' })
                 : window.confirm('Delete this offline copy?');
             if (!ok) return;
             await deleteOfflineSong(id);
@@ -369,7 +369,7 @@
             card.querySelector('.playlist-view-delete').addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const ok = window.showConfirm
-                    ? await window.showConfirm('Ye offline copy delete kar dein?', { confirmText: 'Delete' })
+                    ? await window.showConfirm('Delete this offline copy?', { confirmText: 'Delete' })
                     : window.confirm('Delete this offline copy?');
                 if (!ok) return;
                 await deleteOfflineSong(rec.id);
@@ -526,7 +526,7 @@
             const isDownloaded = playerDownloadBtn.classList.contains('downloaded');
             if (isDownloaded) {
                 const ok = window.showConfirm
-                    ? await window.showConfirm('Ye offline copy delete kar dein?', { confirmText: 'Delete' })
+                    ? await window.showConfirm('Delete this offline copy?', { confirmText: 'Delete' })
                     : window.confirm('Delete this offline copy?');
                 if (!ok) return;
                 await deleteOfflineSong(id);

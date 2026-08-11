@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
         res.json({ songs });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Songs load nahi ho sakin' });
+        res.status(500).json({ message: 'Could not load songs' });
     }
 });
 
@@ -144,7 +144,7 @@ router.post(
             const sourceType = req.body.sourceType === 'mp3' ? 'mp3' : 'youtube';
 
             if (!title || !section) {
-                return res.status(400).json({ message: 'Title aur section zaroori hain' });
+                return res.status(400).json({ message: 'Title and section are required' });
             }
 
             const imageFile = req.files && req.files.image ? req.files.image[0] : null;
@@ -158,7 +158,7 @@ router.post(
             // Projector video - optional feature. ON hai to video upload zaroori hai.
             const projectorEnabled = parseBoolean(req.body.projectorEnabled);
             if (projectorEnabled && !videoFile) {
-                return res.status(400).json({ message: 'Projector video ON kiya hai to ek video file upload karein' });
+                return res.status(400).json({ message: 'Projector video is ON - please upload a video file' });
             }
 
             // Uploaded files (agar hain) Cloudinary par bhej dete hain - pehle
@@ -171,7 +171,7 @@ router.post(
 
             if (sourceType === 'mp3') {
                 if (!uploadedAudioUrl) {
-                    return res.status(400).json({ message: 'Mp3 file upload karna zaroori hai' });
+                    return res.status(400).json({ message: 'Mp3 file upload is required' });
                 }
                 audioFile = uploadedAudioUrl;
                 // YouTube thumbnail fallback yahan possible nahi - agar admin
@@ -179,11 +179,11 @@ router.post(
                 image = uploadedImageUrl || '/assets/default-song-cover.svg';
             } else {
                 if (!youtubeUrl) {
-                    return res.status(400).json({ message: 'YouTube link zaroori hai' });
+                    return res.status(400).json({ message: 'YouTube link is required' });
                 }
                 youtubeId = extractYoutubeId(youtubeUrl.trim());
                 if (!youtubeId) {
-                    return res.status(400).json({ message: 'Ye YouTube link samajh nahi aaya, sahi link daalein' });
+                    return res.status(400).json({ message: 'Could not understand this YouTube link, please enter a valid one' });
                 }
                 // Agar admin ne khud image upload ki to wahi save hoti hai, warna
                 // YouTube ki default thumbnail ka URL seedha database mein save
@@ -211,7 +211,7 @@ router.post(
             res.status(201).json({ message: 'Song add ho gaya!', song });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ message: 'Song add nahi ho saka, dobara try karein' });
+            res.status(500).json({ message: 'Could not add song, please try again' });
         }
     }
 );
@@ -226,7 +226,7 @@ router.put(
         try {
             const song = await Song.findById(req.params.id);
             if (!song) {
-                return res.status(404).json({ message: 'Ye song nahi mila' });
+                return res.status(404).json({ message: 'Song not found' });
             }
 
             const { title, description, section, youtubeUrl } = req.body;
@@ -259,13 +259,13 @@ router.put(
                 // values saaf karo taake mixed/stale data na reh jaye.
                 if (sourceType === 'mp3') {
                     if (!uploadedAudioUrl && !song.audioFile) {
-                        return res.status(400).json({ message: 'Mp3 file upload karna zaroori hai' });
+                        return res.status(400).json({ message: 'Mp3 file upload is required' });
                     }
                     song.youtubeId = '';
                     song.youtubeUrl = '';
                 } else {
                     if ((!youtubeUrl || !youtubeUrl.trim()) && !song.youtubeUrl) {
-                        return res.status(400).json({ message: 'YouTube link zaroori hai' });
+                        return res.status(400).json({ message: 'YouTube link is required' });
                     }
                     deleteOldLocalFileIfAny(song.audioFile);
                     song.audioFile = '';
@@ -284,7 +284,7 @@ router.put(
             } else if (youtubeUrl !== undefined && youtubeUrl.trim() !== '') {
                 const youtubeId = extractYoutubeId(youtubeUrl.trim());
                 if (!youtubeId) {
-                    return res.status(400).json({ message: 'Ye YouTube link samajh nahi aaya, sahi link daalein' });
+                    return res.status(400).json({ message: 'Could not understand this YouTube link, please enter a valid one' });
                 }
                 song.youtubeId = youtubeId;
                 song.youtubeUrl = youtubeUrl.trim();
@@ -321,7 +321,7 @@ router.put(
                     song.projectorVideo = uploadedVideoUrl;
                 } else if (!song.projectorVideo) {
                     // Feature ON karna chahte hain lekin na purani video hai na nayi upload hui
-                    return res.status(400).json({ message: 'Projector video ON kiya hai to ek video file upload karein' });
+                    return res.status(400).json({ message: 'Projector video is ON - please upload a video file' });
                 } else {
                     // ON hi rehne dena hai, koi nayi video nahi aayi - purani wahi rehne do
                     song.projectorEnabled = true;
@@ -332,7 +332,7 @@ router.put(
             res.json({ message: 'Song update ho gaya!', song });
         } catch (err) {
             console.error(err);
-            res.status(500).json({ message: 'Song update nahi ho saka' });
+            res.status(500).json({ message: 'Could not update song' });
         }
     }
 );
@@ -342,7 +342,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const song = await Song.findByIdAndDelete(req.params.id);
         if (!song) {
-            return res.status(404).json({ message: 'Ye song nahi mila' });
+            return res.status(404).json({ message: 'Song not found' });
         }
         // Projector video / mp3 audio - agar purani (pre-Cloudinary) local file hai
         // to disk se orphan hone se bacha lein. Cloudinary URLs ke liye kuch nahi karte.
@@ -351,7 +351,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
         res.json({ message: 'Song delete ho gaya' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Song delete nahi ho saka' });
+        res.status(500).json({ message: 'Could not delete song' });
     }
 });
 

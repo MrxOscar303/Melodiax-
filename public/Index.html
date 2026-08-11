@@ -201,19 +201,10 @@
                  jab kam se kam 1 gaana download ho chuka ho (offline.js control karta hai). -->
             <div id="downloads-view-section" class="playlists-view-section" style="display:none;">
                 <h2>Your Downloads</h2>
-                <p id="downloads-view-empty" class="downloads-view-empty" style="display:none;">Koi gaana offline download nahi kiya hua - kisi bhi song par hover karke download icon se save karein.</p>
+                <p id="downloads-view-empty" class="downloads-view-empty" style="display:none;">No songs downloaded for offline yet - hover over any song and click the download icon to save it.</p>
                 <div id="downloads-view-grid" class="playlists-view-grid"></div>
                 <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
                 <button type="button" id="downloads-view-leave-btn" class="view-leave-btn">Leave</button>
-            </div>
-            <div class="music-section">
-                <h2>Trending Songs</h2>
-                <div class="songs">
-                    
-                    
-                    
-                    
-                </div>
             </div>
             <div class="music-section">
                 <h2>Recommended Songs</h2>
@@ -643,7 +634,7 @@
         <form id="admin-song-form" class="admin-song-form">
             <div class="admin-projector-toggle">
                 <div class="admin-projector-toggle-label">
-                    Song Source <span class="admin-field-hint">(YouTube link ya khud Mp3 upload karein)</span>
+                    Song Source <span class="admin-field-hint">(YouTube link or upload your own Mp3)</span>
                 </div>
                 <div class="admin-yesno" id="song-source-yesno">
                     <button type="button" class="admin-yesno-btn" data-value="youtube">YouTube Link</button>
@@ -693,7 +684,7 @@
 
             <div class="admin-projector-toggle">
                 <div class="admin-projector-toggle-label">
-                    Projector Video <span class="admin-field-hint">(background video jo audio ke sath sync play ho)</span>
+                    Projector Video <span class="admin-field-hint">(background video that plays in sync with the audio)</span>
                 </div>
                 <div class="admin-yesno" id="song-projector-yesno">
                     <button type="button" class="admin-yesno-btn" data-value="no">No</button>
@@ -774,12 +765,12 @@
             </label>
 
             <label>
-                Link to Section <span class="admin-field-hint">(optional - is naam ka section click par khulega)</span>
+                Link to Section <span class="admin-field-hint">(optional - clicking this will open the section with this name)</span>
                 <input type="text" id="pbanner-section" list="song-section-list" placeholder="e.g. Chill Music">
             </label>
 
             <label>
-                Order <span class="admin-field-hint">(chhota number pehle dikhta hai)</span>
+                Order <span class="admin-field-hint">(lower numbers appear first)</span>
                 <input type="text" id="pbanner-order" inputmode="numeric" placeholder="0">
             </label>
 

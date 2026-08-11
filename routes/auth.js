@@ -121,7 +121,7 @@ router.post('/signup', authLimiter, upload.single('profilePicture'), async (req,
         // NOTE: yahan login cookie nahi di jaati - jab tak email verify nahi
         // hoti, account "pending" rehta hai (login route usko block karega).
         res.status(201).json({
-            message: 'Account create ho gaya! Apna inbox check karein aur verification link par click karke email confirm karein.',
+            message: 'Account created! Check your inbox and click the verification link to confirm your email.',
             requiresVerification: true,
             email: user.email,
         });
@@ -166,12 +166,12 @@ router.get('/verify-email', async (req, res) => {
 router.post('/resend-verification', authLimiter, async (req, res) => {
     try {
         const { email } = req.body;
-        if (!email) return res.status(400).json({ message: 'Email zaroori hai' });
+        if (!email) return res.status(400).json({ message: 'Email is required' });
 
         const user = await User.findOne({ email: email.toLowerCase() });
         // Privacy ke liye hamesha same generic message - taake pata na chale
         // ke koi email registered hai ya nahi.
-        const generic = { message: 'Agar ye email registered hai to verification link bhej diya gaya hai.' };
+        const generic = { message: 'If this email is registered, a verification link has been sent.' };
         if (!user || user.isVerified || user.authProvider !== 'local') {
             return res.json(generic);
         }
@@ -180,7 +180,7 @@ router.post('/resend-verification', authLimiter, async (req, res) => {
         res.json(generic);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Kuch masla ho gaya, dobara try karein' });
+        res.status(500).json({ message: 'Something went wrong, please try again' });
     }
 });
 
@@ -207,7 +207,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
         if (user.authProvider === 'local' && !user.isVerified) {
             return res.status(403).json({
-                message: 'Login se pehle apna email verify karna zaroori hai. Inbox check karein ya verification email dobara bhejwayein.',
+                message: 'Please verify your email before logging in. Check your inbox or resend the verification email.',
                 requiresVerification: true,
                 email: user.email,
             });

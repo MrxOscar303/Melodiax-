@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
         res.json({ playlists });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Playlists load nahi ho sakin' });
+        res.status(500).json({ message: 'Could not load playlists' });
     }
 });
 
@@ -57,15 +57,15 @@ router.post('/', requireAuth, requireAdmin, playlistLimiter, upload.single('imag
         const { title, description, bgColor, linkedSection, order } = req.body;
 
         if (!title || !title.trim()) {
-            return res.status(400).json({ message: 'Title zaroori hai' });
+            return res.status(400).json({ message: 'Title is required' });
         }
         if (!req.file) {
-            return res.status(400).json({ message: 'Playlist ki cover image zaroori hai' });
+            return res.status(400).json({ message: 'Playlist cover image is required' });
         }
 
         const color = (bgColor || '').trim();
         if (color && !HEX_COLOR_RE.test(color)) {
-            return res.status(400).json({ message: 'Background color valid hex code honi chahiye' });
+            return res.status(400).json({ message: 'Background color must be a valid hex code' });
         }
 
         const playlist = await Playlist.create({
@@ -81,7 +81,7 @@ router.post('/', requireAuth, requireAdmin, playlistLimiter, upload.single('imag
         res.status(201).json({ message: 'Playlist banner add ho gaya!', playlist });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Playlist add nahi ho saka, dobara try karein' });
+        res.status(500).json({ message: 'Could not add playlist, please try again' });
     }
 });
 
@@ -90,13 +90,13 @@ router.put('/:id', requireAuth, requireAdmin, upload.single('image'), async (req
     try {
         const playlist = await Playlist.findById(req.params.id);
         if (!playlist) {
-            return res.status(404).json({ message: 'Ye playlist nahi mili' });
+            return res.status(404).json({ message: 'Playlist not found' });
         }
 
         const { title, description, bgColor, linkedSection, order } = req.body;
 
         if (title !== undefined) {
-            if (!title.trim()) return res.status(400).json({ message: 'Title khaali nahi ho sakta' });
+            if (!title.trim()) return res.status(400).json({ message: 'Title cannot be empty' });
             playlist.title = title.trim();
         }
         if (description !== undefined) playlist.description = description.trim();
@@ -108,7 +108,7 @@ router.put('/:id', requireAuth, requireAdmin, upload.single('image'), async (req
         if (bgColor !== undefined && bgColor.trim() !== '') {
             const color = bgColor.trim();
             if (!HEX_COLOR_RE.test(color)) {
-                return res.status(400).json({ message: 'Background color valid hex code honi chahiye' });
+                return res.status(400).json({ message: 'Background color must be a valid hex code' });
             }
             playlist.bgColor = color;
         }
@@ -124,7 +124,7 @@ router.put('/:id', requireAuth, requireAdmin, upload.single('image'), async (req
         res.json({ message: 'Playlist banner update ho gaya!', playlist });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Playlist update nahi ho saka' });
+        res.status(500).json({ message: 'Could not update playlist' });
     }
 });
 
@@ -133,7 +133,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
     try {
         const playlist = await Playlist.findByIdAndDelete(req.params.id);
         if (!playlist) {
-            return res.status(404).json({ message: 'Ye playlist nahi mili' });
+            return res.status(404).json({ message: 'Playlist not found' });
         }
         if (playlist.image) {
             const imgPath = path.join(__dirname, '..', 'public', playlist.image);
@@ -142,7 +142,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
         res.json({ message: 'Playlist banner delete ho gaya' });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Playlist delete nahi ho saka' });
+        res.status(500).json({ message: 'Could not delete playlist' });
     }
 });
 

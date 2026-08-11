@@ -385,7 +385,7 @@ if (pbannerForm) {
         if (pbannerImageInput.files[0]) formData.append('image', pbannerImageInput.files[0]);
 
         if (!id && !pbannerImageInput.files[0]) {
-            showPbannerError('Playlist ki cover image zaroori hai');
+            showPbannerError('Playlist cover image is required');
             return;
         }
 
@@ -416,7 +416,7 @@ if (pbannerForm) {
             cancelPbannerEdit();
         } catch (err) {
             console.error(err);
-            showPbannerError('Server se connect nahi ho saka');
+            showPbannerError('Could not connect to the server');
         } finally {
             pbannerSubmitBtn.disabled = false;
         }
@@ -425,13 +425,13 @@ if (pbannerForm) {
 
 // ---------------- Delete ----------------
 async function deletePbannerSlide(id, row) {
-    const ok = await window.showConfirm('Ye playlist slide delete karna hai?', { confirmText: 'Delete' });
+    const ok = await window.showConfirm('Delete this playlist slide?', { confirmText: 'Delete' });
     if (!ok) return;
     try {
         const res = await fetch(`${PLAYLISTS_API}/${id}`, { method: 'DELETE', credentials: 'include' });
         const data = await res.json();
         if (!res.ok) {
-            showPbannerError(data.message || 'Delete nahi ho saka');
+            showPbannerError(data.message || 'Could not delete');
             return;
         }
         pbannerSlides = pbannerSlides.filter((p) => p._id !== id);
@@ -440,7 +440,7 @@ async function deletePbannerSlide(id, row) {
         if (pbannerEditId.value === id) cancelPbannerEdit();
     } catch (err) {
         console.error(err);
-        showPbannerError('Server se connect nahi ho saka');
+        showPbannerError('Could not connect to the server');
     }
 }
 

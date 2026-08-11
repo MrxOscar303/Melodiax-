@@ -528,12 +528,12 @@ if (adminSongForm) {
         // Basic client-side validation - taake galat/adhoora form server tak
         // jaane se pehle hi pakda jaye.
         if (sourceType === 'youtube' && !songYoutubeUrlInput.value.trim()) {
-            showFormError('YouTube link zaroori hai');
+            showFormError('YouTube link is required');
             submitBtn.disabled = false;
             return;
         }
         if (sourceType === 'mp3' && !isEditing && !songAudioFileInput.files[0]) {
-            showFormError('Mp3 file upload karna zaroori hai');
+            showFormError('Mp3 file upload is required');
             submitBtn.disabled = false;
             return;
         }
