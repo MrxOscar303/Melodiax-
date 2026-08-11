@@ -738,12 +738,12 @@
             </label>
 
             <label>
-                Description <span class="admin-field-hint">(optional, chhota subtitle)</span>
+                Description <span class="admin-field-hint">(optional, short subtitle)</span>
                 <input type="text" id="pbanner-description" maxlength="120" placeholder="e.g. Handpicked lo-fi tracks">
             </label>
 
             <label>
-                Cover Image <span class="admin-field-hint">(edit karte waqt optional - purani image bani rahegi)</span>
+                Cover Image <span class="admin-field-hint">(optional when editing - old image stays if left blank)</span>
                 <span class="admin-file-btn admin-file-btn-image">
                     <i class="fa-solid fa-image"></i> Choose Image
                     <input type="file" id="pbanner-image" accept="image/*">
@@ -824,7 +824,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js').catch((err) => {
-                    console.warn('Service worker register nahi ho saka:', err);
+                    console.warn('Service worker registration failed:', err);
                 });
             });
         }

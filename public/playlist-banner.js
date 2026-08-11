@@ -56,7 +56,7 @@ async function loadPlaylistBanner() {
         const data = await res.json();
         pbannerSlides = (data.playlists || []);
     } catch (err) {
-        console.warn('Playlist banner load nahi ho saka:', err);
+        console.warn('Playlist banner failed to load:', err);
         pbannerSlides = [];
     }
     // Fresh load hamesha pehli slide se shuru ho (next/prev buttons is

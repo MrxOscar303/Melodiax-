@@ -242,10 +242,10 @@ router.post('/logout', (req, res) => {
 function sendOauthPopupResponse(res, success) {
     const type = success ? 'oauth-success' : 'oauth-failed';
     const fallbackUrl = success ? '/?auth=success' : '/?auth=failed';
-    const heading = success ? 'Login successful!' : 'Login nahi ho saka';
+    const heading = success ? 'Login successful!' : 'Login failed';
     const message = success
-        ? 'Aap login ho chuke hain. Ye tab ab band kar sakte hain.'
-        : 'Kuch masla ho gaya, dobara try karein. Ye tab band kar dein.';
+        ? 'You are now logged in. You can close this tab.'
+        : 'Something went wrong, please try again. You can close this tab.';
 
     res.send(`<!DOCTYPE html>
 <html>

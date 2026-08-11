@@ -240,7 +240,7 @@ function getOrCreateSection(name) {
     // crash na ho - safe fallback container dhoondo ya khud bana lo.
     let mainRight = document.querySelector('.main-right-part');
     if (!mainRight) {
-        console.warn('.main-right-part nahi mila - fallback container use ho raha hai');
+        console.warn('.main-right-part not found - using fallback container');
         mainRight = document.querySelector('main') || document.body;
     }
     const section = document.createElement('div');
@@ -274,7 +274,7 @@ function buildSongCard(song, trackId) {
 function renderSongOnHomepage(song, trackId) {
     const container = getOrCreateSection(song.section);
     if (!container) {
-        console.warn('Song homepage par render nahi ho saka (container nahi mila), lekin save ho chuka hai:', song);
+        console.warn('Could not render song on homepage (container not found), but it was saved:', song);
         return;
     }
     container.appendChild(buildSongCard(song, trackId));
@@ -727,9 +727,9 @@ function onYtError(event) {
 setTimeout(() => {
     if (!ytPlayerReady) {
         console.error(
-            'YouTube player 8 second baad bhi ready nahi hua. Agar YouTube songs bilkul play nahi ho rahe to iski wajah ye ho sakti hai: ' +
-            '(1) koi ad-blocker/extension youtube.com ko block kar raha hai, (2) network/firewall youtube.com tak access nahi de raha, ' +
-            'ya (3) "https://www.youtube.com/iframe_api" load hi nahi ho saka - Network tab me check karein.'
+            'YouTube player was still not ready after 8 seconds. If YouTube songs are not playing at all, this could be because: ' +
+            '(1) an ad-blocker/extension is blocking youtube.com, (2) the network/firewall is not allowing access to youtube.com, ' +
+            'or (3) "https://www.youtube.com/iframe_api" itself could not load - check the Network tab.'
         );
     }
 }, 8000);
@@ -828,7 +828,7 @@ function startYoutubeTrack(data) {
         clearTimeout(pendingYoutubeTimeout);
         pendingYoutubeTimeout = setTimeout(() => {
             if (pendingYoutubeId === data.youtubeId && !ytPlayerReady) {
-                console.error('YouTube player load nahi ho saka (5s timeout) - agla gaana try kar rahe hain.');
+                console.error('YouTube player failed to load (5s timeout) - trying the next song.');
                 pendingYoutubeId = null;
                 onYtError({ data: -1 });
             }

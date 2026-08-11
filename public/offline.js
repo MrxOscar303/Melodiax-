@@ -287,7 +287,7 @@
             setBtnState(btn, 'downloaded');
             afterOfflineChange(id);
         } catch (err) {
-            console.warn('Offline download nahi ho saka:', err);
+            console.warn('Offline download failed:', err);
             setBtnState(btn, 'idle');
         }
     }
@@ -566,7 +566,7 @@
                 if (homeCardBtn) setBtnState(homeCardBtn, 'downloaded');
                 afterOfflineChange(id);
             } catch (err) {
-                console.warn('Offline download nahi ho saka:', err);
+                console.warn('Offline download failed:', err);
                 setPlayerBtnState('idle');
             }
         });

@@ -32,7 +32,7 @@ self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => cache.addAll(APP_SHELL))
-            .catch((err) => console.warn('SW: app shell cache nahi ho saka', err))
+            .catch((err) => console.warn('SW: app shell cache failed', err))
     );
     self.skipWaiting();
 });
