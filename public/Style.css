@@ -40,7 +40,7 @@ nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 1rem;
+    margin: 0 0.5rem;
     cursor: pointer;
 }
 
@@ -238,8 +238,8 @@ nav {
 
 .logo-m {
     display: inline-block;
-    width: 3.6rem;
-    height: 2.67rem;
+    width: 5.6rem;
+    height: 4.67rem;
     -webkit-mask-image: url('assets/m-logo-mask.png');
     mask-image: url('assets/m-logo-mask.png');
     -webkit-mask-size: contain;
@@ -320,7 +320,7 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     background-color: #1f1f1f;
     padding: 8px;
     border-radius: 50%;
-    margin: 0 1rem;
+    margin: 0 0.5rem;
     color: rgb(179, 179, 179);
     transition: 0.2;
     cursor: pointer;
