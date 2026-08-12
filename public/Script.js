@@ -95,7 +95,7 @@ makeAllPlay = () => {
     })
 }
 playMusic.forEach((element) => {
-    element.addEventListener('click', async (e) => {
+    element.addEventListener('click', (e) => {
         makeAllPlay();
         e.target.classList.remove('fa-circle-play');
         e.target.classList.add('fa-circle-pause');
@@ -105,20 +105,32 @@ playMusic.forEach((element) => {
         index = parseInt(e.target.id);
         currentSong = index;
 
-        // Pehle offline (IndexedDB) copy check karo - agar gaana download
-        // kiya hua hai to wahi (bina internet) chalao, warna normal network path.
-        let src = `Audio/${index}.mp3`;
-        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
-            try {
-                const offlineUrl = await window.melodiaxOffline.getPlayUrl(index);
-                if (offlineUrl) src = offlineUrl;
-            } catch (err) { /* offline lookup fail - normal network path use karlo */ }
-        }
-        audio.src = src;
+        // Mobile browsers (khaas kar iOS Safari) audio.play() ko sirf tab
+        // allow karte hain jab wo click ke andar turant/synchronously call
+        // ho - koi "await" beech mein aa jaye to "user gesture" ka permission
+        // toot jata hai aur play() silently block ho jata hai. Isliye yahan
+        // pehle turant normal (network) src se play karo.
+        audio.src = `Audio/${index}.mp3`;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(err => console.warn('Play blocked:', err));
         updateNowBar();
         if (typeof window.melodiaxUpdatePlayerDownloadBtn === 'function') window.melodiaxUpdatePlayerDownloadBtn(index, false);
+
+        // Offline (IndexedDB) copy check baad mein (async) karo - agar mil
+        // jaye to usi gaane par silently switch kar do. Ye ab user-gesture
+        // ki zaroorat ke bagair chalta hai kyunki audio pehle se play ho
+        // chuka hota hai.
+        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
+            const clickedIndex = index;
+            window.melodiaxOffline.getPlayUrl(clickedIndex).then((offlineUrl) => {
+                if (offlineUrl && currentSong === clickedIndex) {
+                    const resumeAt = audio.currentTime;
+                    audio.src = offlineUrl;
+                    audio.currentTime = resumeAt;
+                    audio.play().catch(() => {});
+                }
+            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+        }
     })
 })
 
@@ -300,11 +312,15 @@ if ('mediaSession' in navigator) {
 forward = document.getElementById('forward');
 backward = document.getElementById('backward');
 
-forward.addEventListener('click', () => {
-    playNextSong();
-})
+// NOTE: Gaana khatam hone (ended) ka asal agle-gaane-par-jaana wala logic
+// neeche (dusre 'ended' listener) mein hai jo forward.click() simulate karta
+// hai. Yahan dobara playNextSong() call karne se ek hi 'ended' event par
+// agla gaana DO baar advance ho raha tha (audio.src turant do baar badalta
+// tha, jisse pehla play() request interrupt ho jata tha - mobile par yahi
+// wajah thi ke agla gaana bhi nahi chalta tha). Isliye ye duplicate call
+// hata di gayi hai.
 
-audio.addEventListener('ended', () => {
+forward.addEventListener('click', () => {
     playNextSong();
 })
 
