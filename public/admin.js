@@ -870,23 +870,33 @@ playPrevSong = () => {
     playTrackData(order[currentSong - 1] || songs[currentSong - 1]);
 };
 
-async function playTrackData(data) {
+function playTrackData(data) {
     if (!data) return;
     if (data.type === 'youtube') {
         startYoutubeTrack(data);
     } else {
-        // currentSong is waqt tak (playNextSong/playPrevSong ne) is track ki
-        // id set kar chuka hota hai - offline (IndexedDB) copy check karlo.
-        let src = data.songPath;
-        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
-            try {
-                const offlineUrl = await window.melodiaxOffline.getPlayUrl(currentSong);
-                if (offlineUrl) src = offlineUrl;
-            } catch (err) { /* offline lookup fail - normal network path use karlo */ }
-        }
-        audio.src = src;
+        // Mobile browsers (khaas kar iOS - Safari aur Chrome dono, kyunki
+        // dono WebKit use karte hain) audio.play() ko sirf turant/sync tarah
+        // allow karte hain - "await" beech me aane se silently block ho jata
+        // hai. Isliye pehle turant network src se play karo.
+        const playForId = currentSong;
+        audio.src = data.songPath;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(err => console.warn('Play blocked:', err));
+
+        // Offline (IndexedDB) copy baad me (async) check karo - mil jaye to
+        // usi gaane par silently switch kardo (ab user-gesture zaroori nahi,
+        // audio pehle se play ho chuka hota hai).
+        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
+            window.melodiaxOffline.getPlayUrl(playForId).then((offlineUrl) => {
+                if (offlineUrl && currentSong === playForId) {
+                    const resumeAt = audio.currentTime;
+                    audio.src = offlineUrl;
+                    audio.currentTime = resumeAt;
+                    audio.play().catch(() => {});
+                }
+            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+        }
     }
     // `data` yahan already maujood hai (jis track ko chalaya ja raha hai) -
     // seedha wahi pass kardo taake `order[currentSong-1]` par depend na karna
@@ -900,7 +910,7 @@ async function playTrackData(data) {
 // hain, unhe yahan double-handle nahi karte. data-db-id sirf admin-added
 // tracks par hota hai (chahe type youtube ho ya local/mp3) - isi se manual
 // songs se differentiate karte hain.
-document.addEventListener('click', async (e) => {
+document.addEventListener('click', (e) => {
     const icon = e.target.closest('.playMusic');
     if (!icon || !icon.dataset.dbId) return;
     if (icon.dataset.type !== 'youtube' && icon.dataset.type !== 'local') return;
@@ -922,21 +932,28 @@ document.addEventListener('click', async (e) => {
         startYoutubeTrack(data);
     } else {
         // Admin-uploaded Mp3 - bilkul manual songs jaisa hi local <audio>
-        // playback, offline (IndexedDB) copy check karke.
-        let src = data.songPath;
-        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
-            try {
-                const offlineUrl = await window.melodiaxOffline.getPlayUrl(id);
-                if (offlineUrl) src = offlineUrl;
-            } catch (err) { /* offline lookup fail - normal network path use karlo */ }
-        }
-        audio.src = src;
+        // playback. Mobile (khaas kar iOS) par audio.play() sirf click ke
+        // andar TURANT/sync call hone par allow hota hai - isliye pehle
+        // turant network src se play karo, offline (IndexedDB) copy check
+        // baad me (async) karo.
+        audio.src = data.songPath;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(err => console.warn('Play blocked:', err));
         // Bara (main) play/pause button bhi turant "pause" dikhaye - warna
         // audio bajta rehta tha lekin button "play" hi dikhata reh jata tha.
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
+
+        if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
+            window.melodiaxOffline.getPlayUrl(id).then((offlineUrl) => {
+                if (offlineUrl && currentSong === id) {
+                    const resumeAt = audio.currentTime;
+                    audio.src = offlineUrl;
+                    audio.currentTime = resumeAt;
+                    audio.play().catch(() => {});
+                }
+            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+        }
     }
 
     // now-bar (bottom-left) update - seedha clicked track se, order/shuffle se
