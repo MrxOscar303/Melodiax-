@@ -759,6 +759,8 @@ function verifyYtPlaybackStarted(expectedId) {
     }, 1800);
 }
 
+let consecutiveYtErrors = 0;
+
 function onYtError(event) {
     // 2/100/101/150 = embedding disallowed/blocked/video removed - is video ko
     // bajaya hi nahi ja sakta chahe link sahi ho. Pehle ye chup-chaap fail ho
@@ -767,6 +769,16 @@ function onYtError(event) {
     stopYtProgressPolling();
     play.classList.remove('fa-circle-pause');
     play.classList.add('fa-circle-play');
+
+    // Safety: agar lagataar kai YouTube gaane fail hon (jaise embedding
+    // disabled links add ho gaye hon), to hamesha ke liye auto-skip loop mat
+    // karo - kahin ruk kar user ko pata chale ke masla hai.
+    consecutiveYtErrors++;
+    if (consecutiveYtErrors >= 4) {
+        console.error('Multiple YouTube songs in a row failed to embed - stopping auto-skip. In inko dobara check karein (ho sakta hai in videos par embedding disabled ho).');
+        consecutiveYtErrors = 0;
+        return;
+    }
     if (typeof playNextSong === 'function') playNextSong();
 }
 
@@ -787,6 +799,7 @@ setTimeout(() => {
 function onYtStateChange(event) {
     if (currentPlaybackType !== 'youtube') return;
     if (event.data === YT.PlayerState.PLAYING) {
+        consecutiveYtErrors = 0;
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
         startYtProgressPolling();

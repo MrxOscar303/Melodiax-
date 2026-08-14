@@ -205,17 +205,23 @@ repeat.addEventListener('click', () => {
 
 playNextSong = () => {
     if (!songOnRepeat) {
-
         let nextSong = (currentSong + 1) % playMusic.length;
         currentSong = nextSong == 0 ? 104 : nextSong;
-        audio.src = order[currentSong - 1].songPath;
-        audio.currentTime = 0;
-        audio.play();
-        updateNowBar();
+    }
+    // Agla gaana YouTube type ka bhi ho sakta hai (admin ne YouTube link se
+    // add kiya ho) - pehle ye hamesha maan leta tha ke agla gaana local mp3
+    // hai aur seedha audio.src par daal deta tha. Agar wo asal mein YouTube
+    // track hota, to ye fail ho jata (ya kabhi kabhi galat/random gaana chal
+    // jata) - ab type check karke sahi player (local <audio> ya YouTube)
+    // istemal karte hain, bilkul waisa hi jaisa pehli baar click karne par
+    // hota hai.
+    const nextData = order[currentSong - 1];
+    if (nextData && nextData.type === 'youtube' && typeof playTrackData === 'function') {
+        playTrackData(nextData);
     } else {
-        audio.src = order[currentSong - 1].songPath;
+        audio.src = nextData ? nextData.songPath : `Audio/${currentSong}.mp3`;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch(err => console.warn('Play blocked:', err));
         updateNowBar();
     }
 }
@@ -224,9 +230,16 @@ playNextSong = () => {
 playPrevSong = () => {
     let prevSong = (currentSong - 1);
     currentSong = prevSong == 0 ? 104 : prevSong;
-    audio.src = `Audio/${currentSong}.mp3`
+    // playNextSong jaisa hi type-aware fix - pichla gaana bhi YouTube ho
+    // sakta hai.
+    const prevData = order[currentSong - 1];
+    if (prevData && prevData.type === 'youtube' && typeof playTrackData === 'function') {
+        playTrackData(prevData);
+        return;
+    }
+    audio.src = prevData ? prevData.songPath : `Audio/${currentSong}.mp3`;
     audio.currentTime = 0;
-    audio.play();
+    audio.play().catch(err => console.warn('Play blocked:', err));
     updateNowBar();
 }
 
