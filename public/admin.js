@@ -687,6 +687,12 @@ window.onYouTubeIframeAPIReady = function () {
     ytPlayer = new YT.Player('yt-player-hidden', {
         height: '0',
         width: '0',
+        playerVars: {
+            // iOS Safari/Chrome (WebKit) is param ke bagair video ko forced
+            // full-screen mein khol deta hai - hum audio-jaisa hidden inline
+            // playback chahte hain, is liye ye zaroori hai.
+            playsinline: 1,
+        },
         events: {
             onReady: () => {
                 ytPlayerReady = true;
@@ -700,6 +706,12 @@ window.onYouTubeIframeAPIReady = function () {
                     if (currentPlaybackType === 'youtube' && currentYoutubeId === idToPlay) {
                         ytPlayer.loadVideoById(idToPlay);
                         ytPlayer.playVideo();
+                        // Ye call ab user ke asal tap se kaafi der baad (YT
+                        // iframe API load hone ke baad) ho rahi hai - iOS is
+                        // "der se aayi" playVideo() request ko silently block
+                        // kar sakta hai (koi error nahi, bas kabhi PLAYING
+                        // state par nahi jata). Verify karke UI ko honest rakho.
+                        verifyYtPlaybackStarted(idToPlay);
                     }
                 }
             },
@@ -708,6 +720,28 @@ window.onYouTubeIframeAPIReady = function () {
         },
     });
 };
+
+// playVideo() call karne ke thodi der baad check karo ke player asal mein
+// PLAYING state mein gaya ya nahi. iOS par kabhi kabhi (khaas kar jab
+// playVideo() user ke turant tap ke bagair, baad mein/async call hoti hai)
+// ye silently block ho jata hai - koi onError bhi nahi aata, bas state
+// hamesha "cued/buffering" par atka reh jata hai. Aisa ho to UI ko turant
+// "play" par wapas reset kar do (warna "pause" icon hamesha ke liye ghalat
+// dikhata rahega) aur user ko console mein wajah bata do.
+function verifyYtPlaybackStarted(expectedId) {
+    setTimeout(() => {
+        if (currentPlaybackType !== 'youtube' || currentYoutubeId !== expectedId) return;
+        if (!ytPlayer || !ytPlayer.getPlayerState) return;
+        const state = ytPlayer.getPlayerState();
+        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
+            console.warn('YouTube playback did not start (blocked by browser) - resetting UI. Try tapping play again.');
+            play.classList.remove('fa-circle-pause');
+            play.classList.add('fa-circle-play');
+            makeAllPlay();
+            stopYtProgressPolling();
+        }
+    }, 1800);
+}
 
 function onYtError(event) {
     // 2/100/101/150 = embedding disallowed/blocked/video removed - is video ko
@@ -816,6 +850,7 @@ function startYoutubeTrack(data) {
             ytPlayer.loadVideoById(data.youtubeId);
             ytPlayer.playVideo();
         }
+        verifyYtPlaybackStarted(data.youtubeId);
     } else {
         pendingYoutubeId = data.youtubeId;
         currentYoutubeId = data.youtubeId;
