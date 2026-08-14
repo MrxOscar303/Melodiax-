@@ -704,6 +704,11 @@ window.onYouTubeIframeAPIReady = function () {
                     // ho sakta hai - sirf tab play karo jab wo abhi bhi
                     // YouTube track hi sunna chahta ho.
                     if (currentPlaybackType === 'youtube' && currentYoutubeId === idToPlay) {
+                        // iOS par "unmuted autoplay" (bina kisi turant tap ke)
+                        // block ho jata hai - muted start hamesha allowed
+                        // hoti hai, PLAYING state milte hi (onYtStateChange
+                        // mein) khud unmute ho jayega.
+                        if (ytPlayer.mute) ytPlayer.mute();
                         ytPlayer.loadVideoById(idToPlay);
                         ytPlayer.playVideo();
                         // Ye call ab user ke asal tap se kaafi der baad (YT
@@ -774,6 +779,17 @@ function onYtStateChange(event) {
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
         startYtProgressPolling();
+        // iOS par muted state me hi playback allow hoti hai (autoplay-with-
+        // sound block ho jata hai) - is liye humne mute karke play() call
+        // kiya tha (neeche startYoutubeTrack me). Ab jab video WAKAI PLAYING
+        // ho chuka hai (ye guaranteed callback hai), turant unmute kar do aur
+        // user ka pehle se chuna hua volume wapas laga do. Ye ek chalte hue
+        // video ko unmute karna hai, naya (blocked) autoplay-with-sound nahi
+        // - is liye iOS ye allow karta hai.
+        if (ytPlayer && ytPlayer.unMute) {
+            ytPlayer.unMute();
+            if (ytPlayer.setVolume && volumeBar) ytPlayer.setVolume(volumeBar.value);
+        }
     } else if (event.data === YT.PlayerState.PAUSED) {
         play.classList.remove('fa-circle-pause');
         play.classList.add('fa-circle-play');
@@ -840,6 +856,11 @@ function startYoutubeTrack(data) {
     currentPlaybackType = 'youtube';
     if (!audio.paused) audio.pause();
     if (ytPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
+        // iOS par direct tap ke bawajood "unmuted autoplay" kabhi kabhi block
+        // ho jata hai (YouTube apni khud ki autoplay policy bhi lagata hai) -
+        // muted start hamesha allowed hoti hai; onYtStateChange PLAYING milte
+        // hi khud unmute kar dega.
+        if (ytPlayer.mute) ytPlayer.mute();
         if (currentYoutubeId === data.youtubeId && ytPlayer.seekTo) {
             // Wahi song dobara click hua - naya network fetch karne ki
             // zaroorat nahi, bas shuru se dobara chala do (turant hota hai).
