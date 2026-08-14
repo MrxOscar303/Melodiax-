@@ -684,9 +684,20 @@ let pendingYoutubeTimeout = null;
 
 // YouTube API isko khud call karta hai jab script load ho jata hai (global function honi zaroori hai)
 window.onYouTubeIframeAPIReady = function () {
+    // Index.html mein container div 1x1px (bilkul chhota) hai - JS se hi
+    // thoda barha dete hain (2x2px) taake purane iOS/WebKit (jaise iPhone 7)
+    // bilkul 0x0 (zero-size) video ko block na kare (muted hone ke bawajood
+    // bhi kar deta hai). Div ab bhi opacity:0 + off-screen hone ki wajah se
+    // poori tarah invisible rahega - koi visual/layout farak nahi padega.
+    const ytContainer = document.getElementById('yt-player-hidden');
+    if (ytContainer) {
+        ytContainer.style.width = '2px';
+        ytContainer.style.height = '2px';
+    }
+
     ytPlayer = new YT.Player('yt-player-hidden', {
-        height: '0',
-        width: '0',
+        height: '2',
+        width: '2',
         playerVars: {
             // iOS Safari/Chrome (WebKit) is param ke bagair video ko forced
             // full-screen mein khol deta hai - hum audio-jaisa hidden inline
