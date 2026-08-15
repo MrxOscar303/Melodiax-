@@ -57,6 +57,10 @@ const upload = multer({
             if (allowed.includes(file.mimetype)) return cb(null, true);
             return cb(new Error('Only audio files (mp3, wav, ogg, m4a) allowed hain'));
         }
+        if (file.fieldname === 'mp4File') {
+            if (file.mimetype === 'video/mp4') return cb(null, true);
+            return cb(new Error('Only mp4 files allowed hain'));
+        }
         cb(new Error('Unexpected upload field'));
     },
 });
@@ -65,6 +69,7 @@ const uploadPodcastFiles = upload.fields([
     { name: 'image', maxCount: 1 },
     { name: 'projectorVideo', maxCount: 1 },
     { name: 'audio', maxCount: 1 },
+    { name: 'mp4File', maxCount: 1 },
 ]);
 
 function parseBoolean(value) {
@@ -96,6 +101,37 @@ function youtubeThumbnailUrl(youtubeId) {
     return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
 }
 
+// mp3/mp4 file ki actual duration (seconds) uski buffer se nikalta hai -
+// koi ffmpeg install ki zaroorat nahi, pure-JS parser hai.
+async function getAudioDurationFromBuffer(buffer, mimeType) {
+    try {
+        const { parseBuffer } = await import('music-metadata');
+        const metadata = await parseBuffer(buffer, mimeType);
+        return Math.round(metadata.format.duration || 0);
+    } catch (err) {
+        console.warn('Duration nahi nikal saka (mp3/mp4):', err.message);
+        return 0;
+    }
+}
+
+// YouTube Data API key ke bina duration - watch page ke HTML se
+// "lengthSeconds" nikal lete hain (YouTube khud ye apne player data mein
+// bhejta hai). Agar YouTube ne format badal diya to bas duration 0 rahegi -
+// baaki sab kaam normal chalta rahega.
+async function getYoutubeDurationSeconds(youtubeId) {
+    try {
+        const res = await fetch(`https://www.youtube.com/watch?v=${youtubeId}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+        });
+        const html = await res.text();
+        const match = html.match(/"lengthSeconds":"(\d+)"/);
+        return match ? parseInt(match[1], 10) : 0;
+    } catch (err) {
+        console.warn('YouTube duration nahi nikal saka:', err.message);
+        return 0;
+    }
+}
+
 // ============ LIST ALL PODCASTS (public - Educational Hub inhe render karta hai) ============
 router.get('/', async (req, res) => {
     try {
@@ -117,7 +153,8 @@ router.post(
     async (req, res) => {
         try {
             const { title, description, category, youtubeUrl } = req.body;
-            const sourceType = req.body.sourceType === 'mp3' ? 'mp3' : 'youtube';
+            const rawSourceType = req.body.sourceType;
+            const sourceType = (rawSourceType === 'mp3' || rawSourceType === 'mp4') ? rawSourceType : 'youtube';
 
             if (!title || !category) {
                 return res.status(400).json({ message: 'Title and category are required' });
@@ -126,28 +163,45 @@ router.post(
             const imageFile = req.files && req.files.image ? req.files.image[0] : null;
             const videoFile = req.files && req.files.projectorVideo ? req.files.projectorVideo[0] : null;
             const audioFileUpload = req.files && req.files.audio ? req.files.audio[0] : null;
+            const mp4FileUpload = req.files && req.files.mp4File ? req.files.mp4File[0] : null;
 
             let youtubeId = '';
             let image = '';
             let audioFile = '';
 
-            const projectorEnabled = parseBoolean(req.body.projectorEnabled);
-            if (projectorEnabled && !videoFile) {
+            // Mp4 mode ke liye projector hamesha "on" hi hota hai (khud video se
+            // auto-set), is liye us mode mein manually bheja gaya projectorEnabled ignore karte hain.
+            const projectorEnabled = sourceType === 'mp4' ? true : parseBoolean(req.body.projectorEnabled);
+            if (sourceType !== 'mp4' && projectorEnabled && !videoFile) {
                 return res.status(400).json({ message: 'Projector video is ON - please upload a video file' });
             }
+            if (sourceType === 'mp4' && !mp4FileUpload) {
+                return res.status(400).json({ message: 'Mp4 file upload is required' });
+            }
 
-            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl] = await Promise.all([
+            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4Url] = await Promise.all([
                 imageFile ? uploadBufferToCloudinary(imageFile.buffer, 'podcasts', 'image') : Promise.resolve(null),
-                projectorEnabled && videoFile ? uploadBufferToCloudinary(videoFile.buffer, 'podcast-videos', 'video') : Promise.resolve(null),
+                sourceType !== 'mp4' && projectorEnabled && videoFile ? uploadBufferToCloudinary(videoFile.buffer, 'podcast-videos', 'video') : Promise.resolve(null),
                 audioFileUpload ? uploadBufferToCloudinary(audioFileUpload.buffer, 'podcast-audio', 'video') : Promise.resolve(null),
+                mp4FileUpload ? uploadBufferToCloudinary(mp4FileUpload.buffer, 'podcast-mp4', 'video') : Promise.resolve(null),
             ]);
 
-            if (sourceType === 'mp3') {
+            let projectorVideo = '';
+
+            if (sourceType === 'mp4') {
+                // Ek hi mp4 file - iski audio hi bajti hai (<audio> tag video
+                // file se bhi sirf audio track decode kar leta hai), aur
+                // wahi file khud projector video ban jati hai (visual ke liye).
+                audioFile = uploadedMp4Url;
+                projectorVideo = uploadedMp4Url;
+                image = uploadedImageUrl || '/assets/default-song-cover.svg';
+            } else if (sourceType === 'mp3') {
                 if (!uploadedAudioUrl) {
                     return res.status(400).json({ message: 'Mp3 file upload is required' });
                 }
                 audioFile = uploadedAudioUrl;
                 image = uploadedImageUrl || '/assets/default-song-cover.svg';
+                projectorVideo = projectorEnabled && uploadedVideoUrl ? uploadedVideoUrl : '';
             } else {
                 if (!youtubeUrl || !youtubeUrl.trim()) {
                     return res.status(400).json({ message: 'YouTube link is required' });
@@ -157,9 +211,17 @@ router.post(
                     return res.status(400).json({ message: 'Could not understand this YouTube link, please enter a valid one' });
                 }
                 image = uploadedImageUrl || youtubeThumbnailUrl(youtubeId);
+                projectorVideo = projectorEnabled && uploadedVideoUrl ? uploadedVideoUrl : '';
             }
 
-            const projectorVideo = projectorEnabled && uploadedVideoUrl ? uploadedVideoUrl : '';
+            let duration = 0;
+            if (sourceType === 'mp4' && mp4FileUpload) {
+                duration = await getAudioDurationFromBuffer(mp4FileUpload.buffer, mp4FileUpload.mimetype);
+            } else if (sourceType === 'mp3' && audioFileUpload) {
+                duration = await getAudioDurationFromBuffer(audioFileUpload.buffer, audioFileUpload.mimetype);
+            } else if (sourceType === 'youtube' && youtubeId) {
+                duration = await getYoutubeDurationSeconds(youtubeId);
+            }
 
             const podcast = await Podcast.create({
                 title: title.trim(),
@@ -172,6 +234,7 @@ router.post(
                 image,
                 projectorEnabled,
                 projectorVideo,
+                duration,
                 addedBy: req.user._id,
             });
 
@@ -197,17 +260,19 @@ router.put(
             }
 
             const { title, description, category, youtubeUrl } = req.body;
-            const sourceType = req.body.sourceType === 'mp3' || req.body.sourceType === 'youtube'
+            const sourceType = ['mp3', 'mp4', 'youtube'].includes(req.body.sourceType)
                 ? req.body.sourceType
                 : podcast.sourceType;
             const imageFile = req.files && req.files.image ? req.files.image[0] : null;
             const videoFile = req.files && req.files.projectorVideo ? req.files.projectorVideo[0] : null;
             const audioFileUpload = req.files && req.files.audio ? req.files.audio[0] : null;
+            const mp4FileUpload = req.files && req.files.mp4File ? req.files.mp4File[0] : null;
 
-            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl] = await Promise.all([
+            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4Url] = await Promise.all([
                 imageFile ? uploadBufferToCloudinary(imageFile.buffer, 'podcasts', 'image') : Promise.resolve(null),
                 videoFile ? uploadBufferToCloudinary(videoFile.buffer, 'podcast-videos', 'video') : Promise.resolve(null),
                 audioFileUpload ? uploadBufferToCloudinary(audioFileUpload.buffer, 'podcast-audio', 'video') : Promise.resolve(null),
+                mp4FileUpload ? uploadBufferToCloudinary(mp4FileUpload.buffer, 'podcast-mp4', 'video') : Promise.resolve(null),
             ]);
 
             if (title !== undefined) podcast.title = title.trim();
@@ -217,7 +282,13 @@ router.put(
             const hadManualImage = !!podcast.image && podcast.image.startsWith('/uploads/podcasts/');
 
             if (sourceType !== podcast.sourceType) {
-                if (sourceType === 'mp3') {
+                if (sourceType === 'mp4') {
+                    if (!uploadedMp4Url) {
+                        return res.status(400).json({ message: 'Mp4 file upload is required' });
+                    }
+                    podcast.youtubeId = '';
+                    podcast.youtubeUrl = '';
+                } else if (sourceType === 'mp3') {
                     if (!uploadedAudioUrl && !podcast.audioFile) {
                         return res.status(400).json({ message: 'Mp3 file upload is required' });
                     }
@@ -233,10 +304,24 @@ router.put(
                 podcast.sourceType = sourceType;
             }
 
-            if (sourceType === 'mp3') {
+            if (sourceType === 'mp4') {
+                if (uploadedMp4Url) {
+                    deleteOldLocalFileIfAny(podcast.audioFile);
+                    podcast.audioFile = uploadedMp4Url;
+                    // Mp4 mode mein projector hamesha khud isi file se auto-set hota hai.
+                    deleteOldLocalFileIfAny(podcast.projectorVideo);
+                    podcast.projectorEnabled = true;
+                    podcast.projectorVideo = uploadedMp4Url;
+                    podcast.duration = await getAudioDurationFromBuffer(mp4FileUpload.buffer, mp4FileUpload.mimetype);
+                }
+                if (!imageFile && !hadManualImage && !podcast.image) {
+                    podcast.image = '/assets/default-song-cover.svg';
+                }
+            } else if (sourceType === 'mp3') {
                 if (uploadedAudioUrl) {
                     deleteOldLocalFileIfAny(podcast.audioFile);
                     podcast.audioFile = uploadedAudioUrl;
+                    podcast.duration = await getAudioDurationFromBuffer(audioFileUpload.buffer, audioFileUpload.mimetype);
                 }
                 if (!imageFile && !hadManualImage && !podcast.image) {
                     podcast.image = '/assets/default-song-cover.svg';
@@ -245,6 +330,9 @@ router.put(
                 const youtubeId = extractYoutubeId(youtubeUrl.trim());
                 if (!youtubeId) {
                     return res.status(400).json({ message: 'Could not understand this YouTube link, please enter a valid one' });
+                }
+                if (youtubeId !== podcast.youtubeId) {
+                    podcast.duration = await getYoutubeDurationSeconds(youtubeId);
                 }
                 podcast.youtubeId = youtubeId;
                 podcast.youtubeUrl = youtubeUrl.trim();
@@ -260,7 +348,8 @@ router.put(
                 podcast.image = uploadedImageUrl;
             }
 
-            if (req.body.projectorEnabled !== undefined) {
+            // Mp4 mode ke ilawa - projector ka normal (manual yes/no) toggle
+            if (sourceType !== 'mp4' && req.body.projectorEnabled !== undefined) {
                 const projectorEnabled = parseBoolean(req.body.projectorEnabled);
 
                 if (!projectorEnabled) {

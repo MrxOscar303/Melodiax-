@@ -28,7 +28,7 @@ const podcastSchema = new mongoose.Schema(
         },
         sourceType: {
             type: String,
-            enum: ['youtube', 'mp3'],
+            enum: ['youtube', 'mp3', 'mp4'],
             default: 'youtube',
         },
         youtubeId: {
@@ -56,6 +56,11 @@ const podcastSchema = new mongoose.Schema(
         projectorVideo: {
             type: String,
             default: '',
+        },
+        // Seconds mein - card pe (YouTube jaisa) duration badge dikhane ke liye.
+        duration: {
+            type: Number,
+            default: 0,
         },
         addedBy: {
             type: mongoose.Schema.Types.ObjectId,

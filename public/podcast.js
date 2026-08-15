@@ -57,6 +57,11 @@ const podcastYoutubeUrlInput = document.getElementById('podcast-youtube-url');
 const podcastAudioFileField = document.getElementById('podcast-audio-file-field');
 const podcastAudioFileInput = document.getElementById('podcast-audio-file');
 const podcastAudioFileName = document.getElementById('podcast-audio-file-name');
+const podcastMp4FileField = document.getElementById('podcast-mp4-file-field');
+const podcastMp4FileInput = document.getElementById('podcast-mp4-file');
+const podcastMp4FileName = document.getElementById('podcast-mp4-file-name');
+const podcastProjectorSection = document.getElementById('podcast-projector-section');
+const podcastMp4ProjectorNote = document.getElementById('podcast-mp4-projector-note');
 
 function setPodcastSourceType(type) {
     podcastSourceTypeInput.value = type;
@@ -65,13 +70,27 @@ function setPodcastSourceType(type) {
             btn.classList.toggle('active', btn.dataset.value === type);
         });
     }
-    const isMp3 = type === 'mp3';
-    if (podcastYoutubeUrlField) podcastYoutubeUrlField.style.display = isMp3 ? 'none' : '';
-    if (podcastAudioFileField) podcastAudioFileField.style.display = isMp3 ? '' : 'none';
-    if (!isMp3) {
+    if (podcastYoutubeUrlField) podcastYoutubeUrlField.style.display = type === 'youtube' ? '' : 'none';
+    if (podcastAudioFileField) podcastAudioFileField.style.display = type === 'mp3' ? '' : 'none';
+    if (podcastMp4FileField) podcastMp4FileField.style.display = type === 'mp4' ? '' : 'none';
+    if (type !== 'mp3') {
         if (podcastAudioFileInput) podcastAudioFileInput.value = '';
         if (podcastAudioFileName) podcastAudioFileName.textContent = '';
     }
+    if (type !== 'mp4') {
+        if (podcastMp4FileInput) podcastMp4FileInput.value = '';
+        if (podcastMp4FileName) podcastMp4FileName.textContent = '';
+    }
+    // Mp4 mode mein projector automatic hai - manual toggle chupa do
+    if (podcastProjectorSection) podcastProjectorSection.style.display = type === 'mp4' ? 'none' : '';
+    if (podcastMp4ProjectorNote) podcastMp4ProjectorNote.style.display = type === 'mp4' ? 'block' : 'none';
+    if (type === 'mp4') setPodcastProjectorEnabled(false); // form submit ke waqt purani value bhej kar backend confuse na kare
+}
+if (podcastMp4FileInput) {
+    podcastMp4FileInput.addEventListener('change', () => {
+        const file = podcastMp4FileInput.files[0];
+        if (podcastMp4FileName) podcastMp4FileName.textContent = file ? file.name : '';
+    });
 }
 if (podcastSourceYesNo) {
     podcastSourceYesNo.querySelectorAll('.admin-yesno-btn').forEach((btn) => {
@@ -186,6 +205,37 @@ function podcastThumbnail(p) {
     return '/assets/default-song-cover.svg';
 }
 
+// Seconds ko YouTube jaisa "m:ss" ya "h:mm:ss" format mein dikhata hai.
+function formatPodcastDuration(totalSeconds) {
+    const secs = Math.round(totalSeconds || 0);
+    if (!secs) return '';
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    const pad = (n) => String(n).padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
+
+// Cross-origin (Cloudinary) file ko force-download karta hai - sirf naya tab
+// kholne ki bajaye seedha device par save karwata hai.
+async function downloadPodcastFile(url, filename) {
+    try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename || 'download';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+        console.warn('Download failed, opening in new tab instead:', err);
+        window.open(url, '_blank');
+    }
+}
+
 function renderPodcastGrid() {
     const term = podcastSearchTerm.trim().toLowerCase();
     const filtered = podcastItems.filter((p) => {
@@ -209,14 +259,26 @@ function renderPodcastGrid() {
             <div class="podcast-hub-card-thumb">
                 <img src="${escapeHtml(podcastThumbnail(p))}" alt="">
                 <div class="podcast-hub-card-play"><i class="fa-solid fa-play"></i></div>
+                ${formatPodcastDuration(p.duration) ? `<span class="podcast-hub-card-duration">${formatPodcastDuration(p.duration)}</span>` : ''}
             </div>
             <div class="podcast-hub-card-info">
                 <span class="podcast-hub-card-cat">${escapeHtml(p.category)}</span>
                 <h4>${escapeHtml(p.title)}</h4>
                 ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
+                ${p.sourceType !== 'youtube' && p.audioFile ? `
+                <button type="button" class="podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}">
+                    <i class="fa-solid fa-download"></i>
+                </button>` : ''}
             </div>
         </div>
     `).join('');
+
+    podcastHubGrid.querySelectorAll('.podcast-hub-card-download').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // card ka play click trigger na ho
+            downloadPodcastFile(btn.dataset.url, btn.dataset.name);
+        });
+    });
 
     podcastHubGrid.querySelectorAll('.podcast-hub-card').forEach((card) => {
         card.addEventListener('click', () => {
@@ -242,6 +304,10 @@ if (podcastHubSearchInput) {
 // ============================================================
 function playPodcast(p) {
     if (typeof makeAllPlay === 'function') makeAllPlay();
+
+    // Module band kar do taake user ko sirf neeche wala music player (aur
+    // agar projector video hai to wo) dikhe - module khud disturb na kare.
+    closePodcastHub();
 
     // ---------- Projector video (agar admin ne ON kiya ho) ----------
     const projectorContainer = document.getElementById('projector-overlay');
@@ -279,15 +345,6 @@ function playPodcast(p) {
         songImage: podcastThumbnail(p),
         songName: p.title,
         songDes: p.category,
-    });
-
-    // Hub grid ke andar clicked card ka icon bhi "pause" dikhao
-    podcastHubGrid.querySelectorAll('.podcast-hub-card').forEach((card) => {
-        const icon = card.querySelector('.podcast-hub-card-play i');
-        if (!icon) return;
-        const isThis = card.dataset.id === p._id;
-        icon.classList.toggle('fa-play', !isThis);
-        icon.classList.toggle('fa-pause', isThis);
     });
 }
 
@@ -374,6 +431,8 @@ function startPodcastEdit(p) {
     podcastYoutubeUrlInput.value = p.youtubeUrl || '';
     podcastAudioFileInput.value = '';
     podcastAudioFileName.textContent = '';
+    podcastMp4FileInput.value = '';
+    podcastMp4FileName.textContent = '';
     document.getElementById('podcast-title').value = p.title || '';
     document.getElementById('podcast-description').value = p.description || '';
     document.getElementById('podcast-category').value = p.category || '';
@@ -428,6 +487,8 @@ if (podcastAdminForm) {
 
         if (sourceType === 'mp3') {
             if (podcastAudioFileInput.files[0]) formData.append('audio', podcastAudioFileInput.files[0]);
+        } else if (sourceType === 'mp4') {
+            if (podcastMp4FileInput.files[0]) formData.append('mp4File', podcastMp4FileInput.files[0]);
         } else {
             formData.append('youtubeUrl', podcastYoutubeUrlInput.value.trim());
         }
@@ -436,6 +497,10 @@ if (podcastAdminForm) {
 
         if (!id && sourceType === 'mp3' && !podcastAudioFileInput.files[0]) {
             showPodcastAdminError('Mp3 file upload is required');
+            return;
+        }
+        if (!id && sourceType === 'mp4' && !podcastMp4FileInput.files[0]) {
+            showPodcastAdminError('Mp4 file upload is required');
             return;
         }
         if (!id && sourceType === 'youtube' && !podcastYoutubeUrlInput.value.trim()) {
