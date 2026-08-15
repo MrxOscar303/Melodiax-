@@ -784,11 +784,12 @@
         <form id="podcast-admin-form" class="admin-song-form">
             <div class="admin-projector-toggle">
                 <div class="admin-projector-toggle-label">
-                    Content Source <span class="admin-field-hint">(YouTube link or upload your own Mp3)</span>
+                    Content Source <span class="admin-field-hint">(YouTube link, upload Mp3, or upload Mp4 video - audio + projector video both auto-set)</span>
                 </div>
-                <div class="admin-yesno" id="podcast-source-yesno">
+                <div class="admin-yesno admin-yesno-3" id="podcast-source-yesno">
                     <button type="button" class="admin-yesno-btn" data-value="youtube">YouTube Link</button>
                     <button type="button" class="admin-yesno-btn" data-value="mp3">Mp3 Upload</button>
+                    <button type="button" class="admin-yesno-btn" data-value="mp4">Mp4 Upload</button>
                 </div>
                 <input type="hidden" id="podcast-source-type" value="youtube">
             </div>
@@ -805,6 +806,15 @@
                     <input type="file" id="podcast-audio-file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a">
                 </span>
                 <span id="podcast-audio-file-name" class="admin-field-hint"></span>
+            </label>
+
+            <label id="podcast-mp4-file-field" style="display:none;">
+                Mp4 File <span class="admin-field-hint">(max 40MB - iski audio bajegi aur video khud projector ban jayegi)</span>
+                <span class="admin-file-btn admin-file-btn-video">
+                    <i class="fa-solid fa-film"></i> Choose Mp4
+                    <input type="file" id="podcast-mp4-file" accept="video/mp4">
+                </span>
+                <span id="podcast-mp4-file-name" class="admin-field-hint"></span>
             </label>
 
             <label>
@@ -838,7 +848,7 @@
             </label>
             <img id="podcast-image-preview" class="song-image-preview" style="display:none;">
 
-            <div class="admin-projector-toggle">
+            <div class="admin-projector-toggle" id="podcast-projector-section">
                 <div class="admin-projector-toggle-label">
                     Projector Video <span class="admin-field-hint">(background video that plays in sync with the audio)</span>
                 </div>
@@ -848,6 +858,8 @@
                 </div>
                 <input type="hidden" id="podcast-projector-enabled" value="false">
             </div>
+
+            <p id="podcast-mp4-projector-note" class="admin-field-hint" style="display:none;">Projector video is auto-set from your Mp4 file - no separate upload needed.</p>
 
             <label id="podcast-projector-video-field" style="display:none;">
                 Projector Video File <span class="admin-field-hint">(mp4 / webm / mov, max 40MB)</span>

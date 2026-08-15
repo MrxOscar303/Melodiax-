@@ -1980,10 +1980,10 @@ body.red-theme .admin-song-row .admin-song-edit:hover { color: #ff4d4d; }
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 82%;
-    max-width: 1080px;
-    height: 85%;
-    max-height: 760px;
+    width: 85%;
+    max-width: 1150px;
+    height: 92%;
+    max-height: 920px;
     background: #121212;
     border: 1px solid #2c2c2c;
     border-radius: 16px;
@@ -2043,24 +2043,27 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
 .podcast-hub-search-wrap {
     display: flex;
     align-items: center;
-    gap: 10px;
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 10px;
-    padding: 0.7rem 1rem;
+    gap: 12px;
+    background: #1f1f1f;
+    border-radius: 20rem;
+    padding: 0 1.2rem;
+    height: 3.2rem;
     margin-bottom: 18px;
-    max-width: 480px;
+    max-width: 32rem;
+    transition: background 0.2s ease;
 }
-.podcast-hub-search-wrap i { color: #8a8a8a; }
+.podcast-hub-search-wrap:hover { background: #2c2c2c; }
+.podcast-hub-search-wrap i { color: #b3b3b3; font-size: 1.2rem; }
 .podcast-hub-search-wrap input {
     flex: 1;
     background: none;
     border: none;
     outline: none;
+    height: 100%;
     color: #fff;
-    font-size: 0.9rem;
+    font-size: 1.05rem;
 }
-.podcast-hub-search-wrap input::placeholder { color: #777; }
+.podcast-hub-search-wrap input::placeholder { color: #888; }
 
 .podcast-hub-tabs {
     display: flex;
