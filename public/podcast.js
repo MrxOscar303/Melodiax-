@@ -257,15 +257,13 @@ function renderPodcastGrid() {
                 <img src="${escapeHtml(podcastThumbnail(p))}" alt="">
                 <div class="podcast-hub-card-play"><i class="fa-solid fa-play"></i></div>
                 ${formatPodcastDuration(p.duration) ? `<span class="podcast-hub-card-duration">${formatPodcastDuration(p.duration)}</span>` : ''}
-                ${p.sourceType !== 'youtube' && p.audioFile ? `
-                <button type="button" class="podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}">
-                    <i class="fa-solid fa-arrow-down"></i>
-                </button>` : ''}
             </div>
             <div class="podcast-hub-card-info">
                 <span class="podcast-hub-card-cat">${escapeHtml(p.category)}</span>
                 <h4>${escapeHtml(p.title)}</h4>
                 ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
+                ${p.sourceType !== 'youtube' && p.audioFile ? `
+                <i class="fa-solid fa-download podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}"></i>` : ''}
             </div>
         </div>
     `).join('');

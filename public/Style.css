@@ -1997,9 +1997,17 @@ body.red-theme .admin-song-row .admin-song-edit:hover { color: #ff4d4d; }
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
+    /* % ki bajaye vw/vh use kiya - agar beech mein koi parent element
+       transform wala ho (jaisa is site mein '.songs-fade-out' waghera) to
+       fixed-position element ka % width/height us parent ke hisaab se
+       resolve hone lagta hai (viewport ke hisaab se nahi) - jis se box
+       expected se bara/edge-to-edge dikh sakta tha. vw/vh hamesha seedha
+       screen ke hisaab se hi calculate hote hain, is liye "90%" reliably
+       lagta hai chahe DOM mein kahin bhi ho.
+    */
+    width: 90vw;
     max-width: 1300px;
-    height: 85%;
+    height: 85vh;
     max-height: 760px;
     background: #121212;
     border: 1px solid #2c2c2c;
@@ -2168,28 +2176,33 @@ body.red-theme .podcast-hub-card:hover { border-color: #ff4d4d; }
     letter-spacing: 0.02em;
 }
 .podcast-hub-card-play {
+    /* Bilkul normal music-card ka hover-play-button pattern (bottom-right
+       corner se peek karta hua chota green circle, koi full-image dark
+       overlay nahi) - is se pura design site ke baaki hisso se consistent lagta hai. */
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
+    right: 10px;
+    bottom: 10px;
     opacity: 0;
-    transition: opacity 0.2s ease;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
-.podcast-hub-card:hover .podcast-hub-card-play { opacity: 1; }
+.podcast-hub-card:hover .podcast-hub-card-play {
+    opacity: 1;
+    transform: translateY(0);
+}
 .podcast-hub-card-play i {
-    width: 56px;
-    height: 56px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: #1db954;
-    color: #fff;
+    color: #000;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.05rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
-body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
+body.red-theme .podcast-hub-card-play i { background: #ff4d4d; color: #fff; }
 
 .podcast-hub-card-info { padding: 16px 18px; position: relative; }
 .podcast-hub-card-cat {
@@ -2201,9 +2214,10 @@ body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
     margin-bottom: 6px;
 }
 body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
-.podcast-hub-card-info h4 { margin: 0 0 6px; font-size: 1.05rem; color: #fff; }
+.podcast-hub-card-info h4 { margin: 0 0 6px; padding-right: 30px; font-size: 1.05rem; color: #fff; }
 .podcast-hub-card-info p {
     margin: 0;
+    padding-right: 30px;
     font-size: 0.82rem;
     color: #999;
     display: -webkit-box;
@@ -2212,40 +2226,20 @@ body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
     overflow: hidden;
 }
 
-/* Thumbnail ke top-right corner par - glassy/blurred "pill" jaisa lagta hai,
-   duration badge aur play-overlay dono se saaf alag rehta hai. */
+/* Music-controller (now-bar) ke download icon jaisa hi - plain icon, koi
+   circle/background/border nahi, sirf hover par color change - bas chota
+   size mein aur card ke right-bottom corner par, text ke sath align. */
 .podcast-hub-card-download {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(20, 20, 20, 0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    right: 16px;
+    bottom: 14px;
+    font-size: 0.95rem;
+    color: #ccc;
     cursor: pointer;
-    font-size: 0.78rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-    z-index: 2;
+    transition: color 0.2s ease, transform 0.15s ease;
 }
-.podcast-hub-card-download:hover {
-    background: #1db954;
-    border-color: #1db954;
-    transform: translateY(-2px) scale(1.08);
-    box-shadow: 0 4px 14px rgba(29, 185, 84, 0.45);
-}
-body.red-theme .podcast-hub-card-download:hover {
-    background: #ff4d4d;
-    border-color: #ff4d4d;
-    box-shadow: 0 4px 14px rgba(255, 77, 77, 0.45);
-}
+.podcast-hub-card-download:hover { color: #1db954; transform: scale(1.1); }
+body.red-theme .podcast-hub-card-download:hover { color: #ff4d4d; }
 
 .podcast-hub-empty { text-align: center; color: #888; margin-top: 60px; font-size: 0.95rem; }
 
@@ -2259,7 +2253,7 @@ body.red-theme .podcast-hub-card-download:hover {
     .podcast-hub-card-info { padding: 10px 12px; }
     .podcast-hub-card-info h4 { font-size: 0.9rem; }
     .podcast-hub-card-info p { font-size: 0.75rem; }
-    .podcast-hub-card-download { width: 28px; height: 28px; right: 8px; top: 8px; }
+    .podcast-hub-card-download { font-size: 0.85rem; right: 12px; bottom: 10px; }
 }
 
 /* ==========================================================================
