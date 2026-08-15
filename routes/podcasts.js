@@ -121,11 +121,20 @@ async function getAudioDurationFromBuffer(buffer, mimeType) {
 async function getYoutubeDurationSeconds(youtubeId) {
     try {
         const res = await fetch(`https://www.youtube.com/watch?v=${youtubeId}`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
         });
         const html = await res.text();
-        const match = html.match(/"lengthSeconds":"(\d+)"/);
-        return match ? parseInt(match[1], 10) : 0;
+        const match = html.match(/"lengthSeconds":"(\d+)"/) || html.match(/"approxDurationMs":"(\d+)"/);
+        if (!match) {
+            console.warn('YouTube duration: pattern not found in page HTML (video id:', youtubeId, ')');
+            return 0;
+        }
+        const value = parseInt(match[1], 10);
+        // approxDurationMs milliseconds mein hota hai - seconds mein convert karo
+        return match[0].startsWith('"approxDurationMs"') ? Math.round(value / 1000) : value;
     } catch (err) {
         console.warn('YouTube duration nahi nikal saka:', err.message);
         return 0;

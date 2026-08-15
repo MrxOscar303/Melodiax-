@@ -1980,10 +1980,10 @@ body.red-theme .admin-song-row .admin-song-edit:hover { color: #ff4d4d; }
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 85%;
-    max-width: 1150px;
-    height: 92%;
-    max-height: 920px;
+    width: 90%;
+    max-width: 1300px;
+    height: 85%;
+    max-height: 760px;
     background: #121212;
     border: 1px solid #2c2c2c;
     border-radius: 16px;
@@ -2041,6 +2041,7 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
 .podcast-hub-close:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
 
 .podcast-hub-search-wrap {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -2064,6 +2065,39 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
     font-size: 1.05rem;
 }
 .podcast-hub-search-wrap input::placeholder { color: #888; }
+
+/* Search suggestions - home page ke .search-results-slide jaisa hi (chota
+   dropdown, search bar ke bilkul niche) */
+.podcast-hub-search-results {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 0;
+    width: 100%;
+    background: #121212;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    z-index: 10460;
+    max-height: 360px;
+    overflow-y: auto;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+}
+.podcast-hub-search-results.active { display: block; }
+.podcast-hub-search-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.podcast-hub-search-item:last-child { border-bottom: none; }
+.podcast-hub-search-item:hover { background: #282828; }
+.podcast-hub-search-item img { width: 48px; height: 48px; border-radius: 4px; margin-right: 12px; object-fit: cover; flex-shrink: 0; }
+.podcast-hub-search-item-info { display: flex; flex-direction: column; min-width: 0; }
+.podcast-hub-search-item-info strong { color: #fff; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.podcast-hub-search-item-info span { color: #b3b3b3; font-size: 0.78rem; }
+.podcast-hub-search-empty { padding: 14px; color: #888; font-size: 0.85rem; text-align: center; }
 
 .podcast-hub-tabs {
     display: flex;

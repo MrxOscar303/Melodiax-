@@ -288,12 +288,65 @@ function renderPodcastGrid() {
     });
 }
 
+const podcastHubSearchResults = document.getElementById('podcast-hub-search-results');
+
 if (podcastHubSearchInput) {
     podcastHubSearchInput.addEventListener('input', () => {
         podcastSearchTerm = podcastHubSearchInput.value;
         renderPodcastGrid();
+        renderPodcastSearchSuggestions();
     });
 }
+
+// Search bar ke bilkul niche chota dropdown - keyword type karte hi live
+// suggestions (bilkul home page ke search jaisa).
+function renderPodcastSearchSuggestions() {
+    const term = podcastSearchTerm.trim().toLowerCase();
+    if (!term) {
+        podcastHubSearchResults.classList.remove('active');
+        podcastHubSearchResults.innerHTML = '';
+        return;
+    }
+
+    const matches = podcastItems.filter((p) =>
+        (p.title && p.title.toLowerCase().includes(term))
+        || (p.description && p.description.toLowerCase().includes(term))
+        || (p.category && p.category.toLowerCase().includes(term))
+    ).slice(0, 8);
+
+    podcastHubSearchResults.classList.add('active');
+    if (!matches.length) {
+        podcastHubSearchResults.innerHTML = '<div class="podcast-hub-search-empty">No matches found</div>';
+        return;
+    }
+
+    podcastHubSearchResults.innerHTML = matches.map((p) => `
+        <div class="podcast-hub-search-item" data-id="${p._id}">
+            <img src="${escapeHtml(podcastThumbnail(p))}" alt="">
+            <div class="podcast-hub-search-item-info">
+                <strong>${escapeHtml(p.title)}</strong>
+                <span>${escapeHtml(p.category)}</span>
+            </div>
+        </div>
+    `).join('');
+
+    podcastHubSearchResults.querySelectorAll('.podcast-hub-search-item').forEach((item) => {
+        item.addEventListener('click', () => {
+            const p = podcastItems.find((entry) => entry._id === item.dataset.id);
+            if (p) playPodcast(p);
+            podcastHubSearchResults.classList.remove('active');
+            podcastHubSearchInput.value = '';
+            podcastSearchTerm = '';
+        });
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (podcastHubSearchResults && podcastHubSearchInput
+        && !podcastHubSearchInput.contains(e.target) && !podcastHubSearchResults.contains(e.target)) {
+        podcastHubSearchResults.classList.remove('active');
+    }
+});
 
 // ============================================================
 // ---------------- Playback ----------------
@@ -361,6 +414,7 @@ function closePodcastHub() {
     podcastHubModal.classList.remove('open');
     podcastHubOverlay.classList.remove('open');
     podcastHubModal.setAttribute('aria-hidden', 'true');
+    if (podcastHubSearchResults) podcastHubSearchResults.classList.remove('active');
 }
 const browsePodcastsBtn = document.getElementById('browse-podcasts-btn');
 if (browsePodcastsBtn) browsePodcastsBtn.addEventListener('click', openPodcastHub);
