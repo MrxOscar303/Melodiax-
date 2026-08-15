@@ -2075,7 +2075,8 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
     padding: 0 1.2rem;
     height: 3.2rem;
     margin-bottom: 18px;
-    max-width: 32rem;
+    max-width: 100%;
+    width: 100%;
     transition: background 0.2s ease;
 }
 .podcast-hub-search-wrap:hover { background: #2c2c2c; }
@@ -2144,11 +2145,13 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
 .podcast-hub-tab.active { background: #1db954; border-color: #1db954; color: #fff; }
 body.red-theme .podcast-hub-tab:hover { border-color: #ff4d4d; }
 body.red-theme .podcast-hub-tab.active { background: #ff4d4d; border-color: #ff4d4d; }
+.podcast-hub-tab-downloads { border-style: dashed; }
+.podcast-hub-tab-downloads i { margin-right: 4px; }
 
 .podcast-hub-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 .podcast-hub-card {
     background: #1a1a1a;
@@ -2161,7 +2164,7 @@ body.red-theme .podcast-hub-tab.active { background: #ff4d4d; border-color: #ff4
 .podcast-hub-card:hover { transform: translateY(-4px); border-color: #1db954; }
 body.red-theme .podcast-hub-card:hover { border-color: #ff4d4d; }
 
-.podcast-hub-card-thumb { position: relative; width: 100%; aspect-ratio: 16 / 8; overflow: hidden; }
+.podcast-hub-card-thumb { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; }
 .podcast-hub-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .podcast-hub-card-duration {
     position: absolute;
@@ -2169,40 +2172,35 @@ body.red-theme .podcast-hub-card:hover { border-color: #ff4d4d; }
     bottom: 8px;
     background: rgba(0, 0, 0, 0.8);
     color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 2px 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 3px 8px;
     border-radius: 4px;
     letter-spacing: 0.02em;
 }
 .podcast-hub-card-play {
-    /* Bilkul normal music-card ka hover-play-button pattern (bottom-right
-       corner se peek karta hua chota green circle, koi full-image dark
-       overlay nahi) - is se pura design site ke baaki hisso se consistent lagta hai. */
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.podcast-hub-card:hover .podcast-hub-card-play {
-    opacity: 1;
-    transform: translateY(0);
-}
-.podcast-hub-card-play i {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #1db954;
-    color: #000;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.05rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
-body.red-theme .podcast-hub-card-play i { background: #ff4d4d; color: #fff; }
+.podcast-hub-card:hover .podcast-hub-card-play { opacity: 1; }
+.podcast-hub-card-play i {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1db954;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
 
 .podcast-hub-card-info { padding: 16px 18px; position: relative; }
 .podcast-hub-card-cat {
@@ -2227,12 +2225,13 @@ body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
 }
 
 /* Music-controller (now-bar) ke download icon jaisa hi - plain icon, koi
-   circle/background/border nahi, sirf hover par color change - bas chota
-   size mein aur card ke right-bottom corner par, text ke sath align. */
+   circle/background/border nahi, sirf hover par color change - title ke
+   sath (upar) align, right corner par. Downloading/downloaded states bhi
+   player-download-btn jaisi hi (pulse animation / green tick). */
 .podcast-hub-card-download {
     position: absolute;
     right: 16px;
-    bottom: 14px;
+    top: 24px;
     font-size: 0.95rem;
     color: #ccc;
     cursor: pointer;
@@ -2240,6 +2239,10 @@ body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
 }
 .podcast-hub-card-download:hover { color: #1db954; transform: scale(1.1); }
 body.red-theme .podcast-hub-card-download:hover { color: #ff4d4d; }
+.podcast-hub-card-download.downloading { color: #1db954; animation: mldx-dl-pulse 0.9s ease-in-out infinite; }
+body.red-theme .podcast-hub-card-download.downloading { color: #ff4d4d; }
+.podcast-hub-card-download.downloaded { color: #1db954; }
+body.red-theme .podcast-hub-card-download.downloaded { color: #ff4d4d; }
 
 .podcast-hub-empty { text-align: center; color: #888; margin-top: 60px; font-size: 0.95rem; }
 
@@ -2247,13 +2250,13 @@ body.red-theme .podcast-hub-card-download:hover { color: #ff4d4d; }
 .admin-yesno-3 .admin-yesno-btn { flex: 1 1 auto; }
 
 @media (max-width: 768px) {
-    .podcast-hub-modal { padding: 18px 16px; width: 94%; height: 90%; max-height: none; }
+    .podcast-hub-modal { padding: 18px 16px; width: 92vw; height: 88vh; max-height: none; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     .podcast-hub-header h2 { font-size: 1.2rem; }
-    .podcast-hub-grid { gap: 14px; }
+    .podcast-hub-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
     .podcast-hub-card-info { padding: 10px 12px; }
     .podcast-hub-card-info h4 { font-size: 0.9rem; }
     .podcast-hub-card-info p { font-size: 0.75rem; }
-    .podcast-hub-card-download { font-size: 0.85rem; right: 12px; bottom: 10px; }
+    .podcast-hub-card-download { font-size: 0.85rem; right: 12px; top: 18px; }
 }
 
 /* ==========================================================================

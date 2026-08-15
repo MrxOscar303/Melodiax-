@@ -20,8 +20,9 @@
 
     if (!('indexedDB' in window)) return; // bohot purana browser - chup-chaap skip
 
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     const STORE = 'songs';
+    const PODCAST_STORE = 'podcasts';
 
     // Currently-playing gaane ka naam/image/desc capture karne ke liye - ye
     // hamesha now-bar se lete hain (home-card dhoondne ke bajaye), kyunki
@@ -89,6 +90,13 @@
                 const db = req.result;
                 if (!db.objectStoreNames.contains(STORE)) {
                     db.createObjectStore(STORE, { keyPath: 'id' });
+                }
+                // Podcasts (mp3/mp4 - YouTube-type kabhi offline nahi ho
+                // sakte) ke liye alag store, songs se bilkul independent -
+                // taake kisi ID clash (song id vs podcast id same number ho)
+                // ka koi khatra na ho.
+                if (!db.objectStoreNames.contains(PODCAST_STORE)) {
+                    db.createObjectStore(PODCAST_STORE, { keyPath: 'id' });
                 }
             };
             req.onsuccess = () => resolve(req.result);
@@ -218,17 +226,93 @@
     function revokeAllOfflineUrls() {
         blobUrlCache.forEach((url) => URL.revokeObjectURL(url));
         blobUrlCache.clear();
+        revokeAllPodcastOfflineUrls();
     }
 
     // Script.js/admin.js is se offline copy check karke Audio/N.mp3 ki jagah
     // istemal karte hain (agar mojood ho).
+    // ---------------- Podcast offline storage (mp3/mp4 - YouTube nahi) ----------------
+    function savePodcastOffline(id, blob, meta) {
+        return openDb().then((db) => new Promise((resolve, reject) => {
+            const tx = db.transaction(PODCAST_STORE, 'readwrite');
+            tx.objectStore(PODCAST_STORE).put({
+                id: String(id),
+                blob,
+                title: (meta && meta.title) || '',
+                category: (meta && meta.category) || '',
+                image: (meta && meta.image) || '',
+                sourceType: (meta && meta.sourceType) || 'mp3',
+                downloadedAt: Date.now()
+            });
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        }));
+    }
+
+    function getPodcastOffline(id) {
+        return openDb().then((db) => new Promise((resolve, reject) => {
+            const tx = db.transaction(PODCAST_STORE, 'readonly');
+            const req = tx.objectStore(PODCAST_STORE).get(String(id));
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        }));
+    }
+
+    function deletePodcastOffline(id) {
+        return openDb().then((db) => new Promise((resolve, reject) => {
+            const tx = db.transaction(PODCAST_STORE, 'readwrite');
+            tx.objectStore(PODCAST_STORE).delete(String(id));
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => reject(tx.error);
+        }));
+    }
+
+    function listAllOfflinePodcasts() {
+        return openDb().then((db) => new Promise((resolve, reject) => {
+            const tx = db.transaction(PODCAST_STORE, 'readonly');
+            const req = tx.objectStore(PODCAST_STORE).getAll();
+            req.onsuccess = () => {
+                const list = (req.result || []).map((r) => ({
+                    id: r.id, title: r.title, category: r.category, image: r.image,
+                    sourceType: r.sourceType, downloadedAt: r.downloadedAt
+                }));
+                list.sort((a, b) => (b.downloadedAt || 0) - (a.downloadedAt || 0));
+                resolve(list);
+            };
+            req.onerror = () => reject(req.error);
+        }));
+    }
+
+    const podcastBlobUrlCache = new Map();
+    async function getPodcastOfflinePlayUrl(id) {
+        id = String(id);
+        if (podcastBlobUrlCache.has(id)) return podcastBlobUrlCache.get(id);
+        const rec = await getPodcastOffline(id);
+        if (!rec) return null;
+        const url = URL.createObjectURL(rec.blob);
+        podcastBlobUrlCache.set(id, url);
+        return url;
+    }
+
+    function revokeAllPodcastOfflineUrls() {
+        podcastBlobUrlCache.forEach((url) => URL.revokeObjectURL(url));
+        podcastBlobUrlCache.clear();
+    }
+
     window.melodiaxOffline = {
         save: saveOfflineSong,
         get: getOfflineSong,
         delete: deleteOfflineSong,
         listIds: listOfflineIds,
         listAll: listAllOfflineSongs,
-        getPlayUrl: getOfflinePlayUrl
+        getPlayUrl: getOfflinePlayUrl,
+        podcasts: {
+            save: savePodcastOffline,
+            get: getPodcastOffline,
+            delete: deletePodcastOffline,
+            listAll: listAllOfflinePodcasts,
+            getPlayUrl: getPodcastOfflinePlayUrl
+        }
     };
 
     // ---------------- Download button UI ----------------

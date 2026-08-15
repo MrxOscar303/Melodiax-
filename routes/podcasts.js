@@ -160,14 +160,25 @@ async function getYoutubeDurationSeconds(youtubeId) {
             },
         });
         const html = await res.text();
-        const match = html.match(/"lengthSeconds":"(\d+)"/) || html.match(/"approxDurationMs":"(\d+)"/);
-        if (!match) {
-            console.warn('YouTube duration: pattern not found in page HTML (video id:', youtubeId, ')');
-            return 0;
+        // Kai alag patterns try karte hain (YouTube ka page format waqt ke
+        // sath badalta rehta hai) - jo bhi pehle mil jaye wahi use kar lete hain.
+        const lengthSecondsMatch = html.match(/"lengthSeconds":"(\d+)"/);
+        if (lengthSecondsMatch) return parseInt(lengthSecondsMatch[1], 10);
+
+        const approxMsMatch = html.match(/"approxDurationMs":"(\d+)"/);
+        if (approxMsMatch) return Math.round(parseInt(approxMsMatch[1], 10) / 1000);
+
+        // Schema.org microdata fallback: <meta itemprop="duration" content="PT1H2M10S">
+        const isoMatch = html.match(/itemprop="duration"\s+content="PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?"/);
+        if (isoMatch) {
+            const h = parseInt(isoMatch[1] || '0', 10);
+            const m = parseInt(isoMatch[2] || '0', 10);
+            const s = parseInt(isoMatch[3] || '0', 10);
+            return h * 3600 + m * 60 + s;
         }
-        const value = parseInt(match[1], 10);
-        // approxDurationMs milliseconds mein hota hai - seconds mein convert karo
-        return match[0].startsWith('"approxDurationMs"') ? Math.round(value / 1000) : value;
+
+        console.warn('YouTube duration: pattern not found in page HTML (video id:', youtubeId, ')');
+        return 0;
     } catch (err) {
         console.warn('YouTube duration nahi nikal saka:', err.message);
         return 0;

@@ -53,7 +53,10 @@ const storage = multer.memoryStorage();
 // ke liye video mimetypes, aur audio field ke liye sirf mp3/audio mimetypes.
 const upload = multer({
     storage,
-    limits: { fileSize: 40 * 1024 * 1024 }, // 40MB (projector video ke liye)
+    // Cloudinary ke FREE plan ka video upload limit khud 100MB hai (isse
+    // upar chunked/paid upload chahiye hoti) - is liye 100MB is exact
+    // "ceiling" hai, thoda bhi upar jane wali file fail ho jayegi.
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
     fileFilter: (req, file, cb) => {
         if (file.fieldname === 'image') {
             const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];

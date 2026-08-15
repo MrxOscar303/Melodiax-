@@ -186,9 +186,11 @@ function getAllCategories() {
 }
 
 function renderPodcastTabs() {
-    const categories = ['All', ...getAllCategories()];
+    // 'Downloads' hamesha aakhir mein - kisi bhi category se collide na ho,
+    // aur ye server data se nahi, IndexedDB (offline) se render hoti hai.
+    const categories = ['All', ...getAllCategories(), 'Downloads'];
     podcastHubTabs.innerHTML = categories.map((cat) => `
-        <button type="button" class="podcast-hub-tab${cat === podcastActiveCategory ? ' active' : ''}" data-cat="${escapeHtml(cat)}">${escapeHtml(cat)}</button>
+        <button type="button" class="podcast-hub-tab${cat === podcastActiveCategory ? ' active' : ''}${cat === 'Downloads' ? ' podcast-hub-tab-downloads' : ''}" data-cat="${escapeHtml(cat)}">${cat === 'Downloads' ? '<i class="fa-solid fa-download"></i> ' : ''}${escapeHtml(cat)}</button>
     `).join('');
     podcastHubTabs.querySelectorAll('.podcast-hub-tab').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -216,27 +218,55 @@ function formatPodcastDuration(totalSeconds) {
     return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
 }
 
-// Cross-origin (Cloudinary) file ko force-download karta hai - sirf naya tab
-// kholne ki bajaye seedha device par save karwata hai.
-async function downloadPodcastFile(url, filename) {
+// Cross-origin (Cloudinary) file ko fetch karke offline (IndexedDB) me save
+// karta hai - bilkul mp3 songs ke offline-download pattern jaisa (device ke
+// "Downloads" folder me file save NAHI hoti, sirf app ke andar offline
+// available hoti hai). Login zaroori hai (guest kuch download nahi kar sakta).
+async function handlePodcastDownloadClick(iconEl, id, meta) {
+    if (!(window.currentUser && window.currentUser.id)) {
+        if (typeof window.openModal === 'function') window.openModal('login');
+        return;
+    }
+    if (!window.melodiaxOffline || !window.melodiaxOffline.podcasts) return;
+
+    if (iconEl.classList.contains('downloaded')) {
+        const ok = window.showConfirm
+            ? await window.showConfirm('Remove this offline copy?', { confirmText: 'Remove' })
+            : window.confirm('Remove this offline copy?');
+        if (!ok) return;
+        await window.melodiaxOffline.podcasts.delete(id);
+        iconEl.classList.remove('downloaded');
+        iconEl.title = 'Download';
+        // Agar Downloads tab hi khula hai to list se turant hata do.
+        if (podcastActiveCategory === 'Downloads') renderPodcastDownloadsGrid();
+        return;
+    }
+
+    iconEl.classList.add('downloading');
     try {
-        const res = await fetch(url);
+        const res = await fetch(meta.url);
+        if (!res.ok) throw new Error('Fetch failed: ' + res.status);
         const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = filename || 'download';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(blobUrl);
+        await window.melodiaxOffline.podcasts.save(id, blob, {
+            title: meta.title,
+            category: meta.category,
+            image: meta.image,
+            sourceType: meta.sourceType
+        });
+        iconEl.classList.remove('downloading');
+        iconEl.classList.add('downloaded');
+        iconEl.title = 'Downloaded - click to remove';
     } catch (err) {
-        console.warn('Download failed, opening in new tab instead:', err);
-        window.open(url, '_blank');
+        console.warn('Podcast offline download failed:', err);
+        iconEl.classList.remove('downloading');
     }
 }
 
 function renderPodcastGrid() {
+    if (podcastActiveCategory === 'Downloads') {
+        renderPodcastDownloadsGrid();
+        return;
+    }
     // Search sirf upar wale dropdown (renderPodcastSearchSuggestions) mein
     // suggest hoti hai - ye neeche wala grid sirf category tab se filter
     // hota hai, taake ek hi cheez do jagah (dropdown + grid) na dikhe.
@@ -246,6 +276,7 @@ function renderPodcastGrid() {
 
     if (!filtered.length) {
         podcastHubGrid.innerHTML = '';
+        podcastHubEmpty.textContent = 'No content in this category yet.';
         podcastHubEmpty.style.display = 'block';
         return;
     }
@@ -263,15 +294,34 @@ function renderPodcastGrid() {
                 <h4>${escapeHtml(p.title)}</h4>
                 ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
                 ${p.sourceType !== 'youtube' && p.audioFile ? `
-                <i class="fa-solid fa-download podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}"></i>` : ''}
+                <i class="fa-solid fa-download podcast-hub-card-download" title="Download"
+                    data-id="${p._id}"
+                    data-url="${escapeHtml(p.audioFile)}"
+                    data-name="${escapeHtml(p.title)}"
+                    data-category="${escapeHtml(p.category || '')}"
+                    data-image="${escapeHtml(podcastThumbnail(p))}"
+                    data-sourcetype="${escapeHtml(p.sourceType)}"></i>` : ''}
             </div>
         </div>
     `).join('');
 
     podcastHubGrid.querySelectorAll('.podcast-hub-card-download').forEach((btn) => {
+        const id = btn.dataset.id;
+        // Pehle se downloaded ho to icon turant "downloaded" state dikhaye.
+        if (window.melodiaxOffline && window.melodiaxOffline.podcasts) {
+            window.melodiaxOffline.podcasts.get(id).then((rec) => {
+                if (rec) { btn.classList.add('downloaded'); btn.title = 'Downloaded - click to remove'; }
+            }).catch(() => {});
+        }
         btn.addEventListener('click', (e) => {
             e.stopPropagation(); // card ka play click trigger na ho
-            downloadPodcastFile(btn.dataset.url, btn.dataset.name);
+            handlePodcastDownloadClick(btn, id, {
+                url: btn.dataset.url,
+                title: btn.dataset.name,
+                category: btn.dataset.category,
+                image: btn.dataset.image,
+                sourceType: btn.dataset.sourcetype
+            });
         });
     });
 
@@ -279,6 +329,68 @@ function renderPodcastGrid() {
         card.addEventListener('click', () => {
             const p = podcastItems.find((item) => item._id === card.dataset.id);
             if (p) playPodcast(p);
+        });
+    });
+}
+
+// ---------------- Downloads tab (offline-only, per-user) ----------------
+async function renderPodcastDownloadsGrid() {
+    if (!(window.currentUser && window.currentUser.id)) {
+        podcastHubGrid.innerHTML = '';
+        podcastHubEmpty.textContent = 'Log in to see your downloads.';
+        podcastHubEmpty.style.display = 'block';
+        return;
+    }
+    if (!window.melodiaxOffline || !window.melodiaxOffline.podcasts) return;
+    const list = await window.melodiaxOffline.podcasts.listAll();
+
+    if (!list.length) {
+        podcastHubGrid.innerHTML = '';
+        podcastHubEmpty.textContent = 'No downloads yet - tap the download icon on any Mp3/Mp4 episode.';
+        podcastHubEmpty.style.display = 'block';
+        return;
+    }
+    podcastHubEmpty.style.display = 'none';
+
+    podcastHubGrid.innerHTML = list.map((r) => `
+        <div class="podcast-hub-card" data-offline-id="${escapeHtml(r.id)}">
+            <div class="podcast-hub-card-thumb">
+                <img src="${escapeHtml(r.image || '/assets/default-song-cover.svg')}" alt="">
+                <div class="podcast-hub-card-play"><i class="fa-solid fa-play"></i></div>
+            </div>
+            <div class="podcast-hub-card-info">
+                <span class="podcast-hub-card-cat">${escapeHtml(r.category || '')}</span>
+                <h4>${escapeHtml(r.title || 'Untitled')}</h4>
+                <i class="fa-solid fa-trash podcast-hub-card-download downloaded" title="Remove download" data-remove-id="${escapeHtml(r.id)}"></i>
+            </div>
+        </div>
+    `).join('');
+
+    podcastHubGrid.querySelectorAll('[data-remove-id]').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const ok = window.showConfirm
+                ? await window.showConfirm('Remove this download?', { confirmText: 'Remove' })
+                : window.confirm('Remove this download?');
+            if (!ok) return;
+            await window.melodiaxOffline.podcasts.delete(btn.dataset.removeId);
+            renderPodcastDownloadsGrid();
+        });
+    });
+
+    podcastHubGrid.querySelectorAll('.podcast-hub-card[data-offline-id]').forEach((card) => {
+        card.addEventListener('click', () => {
+            const rec = list.find((r) => r.id === card.dataset.offlineId);
+            if (!rec) return;
+            playPodcast({
+                _id: rec.id,
+                sourceType: rec.sourceType,
+                audioFile: null, // playPodcast offline se hi resolve karega
+                title: rec.title,
+                category: rec.category,
+                image: rec.image,
+                projectorEnabled: false
+            });
         });
     });
 }
@@ -351,7 +463,7 @@ document.addEventListener('click', (e) => {
 // (WebKit) is call ko silently reject kar deta hai (button "pause"
 // dikhata hai lekin kuch bajta nahi).
 // ============================================================
-function playPodcast(p) {
+async function playPodcast(p) {
     if (typeof makeAllPlay === 'function') makeAllPlay();
 
     // Module band kar do taake user ko sirf neeche wala music player (aur
@@ -383,7 +495,16 @@ function playPodcast(p) {
     if (p.sourceType === 'youtube') {
         startYoutubeTrack({ youtubeId: p.youtubeId });
     } else {
-        audio.src = p.audioFile;
+        // Pehle offline (downloaded) copy check karo - agar mil jaye to
+        // wahi (bina internet) chalao, warna network wali file.
+        let src = p.audioFile;
+        if (window.melodiaxOffline && window.melodiaxOffline.podcasts) {
+            try {
+                const offlineUrl = await window.melodiaxOffline.podcasts.getPlayUrl(p._id);
+                if (offlineUrl) src = offlineUrl;
+            } catch (err) { /* offline lookup fail - network path use karlo */ }
+        }
+        audio.src = src;
         audio.currentTime = 0;
         audio.play().catch((err) => console.warn('Podcast playback failed:', err));
         play.classList.remove('fa-circle-play');
@@ -617,3 +738,11 @@ async function deletePodcast(id, row) {
 // ---------------- Init ----------------
 setPodcastSourceType('youtube');
 setPodcastProjectorEnabled(false);
+
+// Login/logout hone par Downloads tab ko refresh karo - taake dusre user ka
+// login karte hi turant apni (nayi) downloads dikhein, purane user ki nahi.
+window.addEventListener('melodiax-auth-changed', () => {
+    if (podcastActiveCategory === 'Downloads' && podcastHubModal && podcastHubModal.classList.contains('open')) {
+        renderPodcastDownloadsGrid();
+    }
+});
