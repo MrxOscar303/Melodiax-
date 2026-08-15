@@ -40,7 +40,7 @@ nav {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 0.5rem;
+    margin: 0 1rem;
     cursor: pointer;
 }
 
@@ -238,8 +238,8 @@ nav {
 
 .logo-m {
     display: inline-block;
-    width: 5.7rem;
-    height: 4.67rem;
+    width: 5.6rem;
+    height: 4.14rem;
     -webkit-mask-image: url('assets/m-logo-mask.png');
     mask-image: url('assets/m-logo-mask.png');
     -webkit-mask-size: contain;
@@ -252,13 +252,13 @@ nav {
     background-size: 300% 300%;
     filter: drop-shadow(0 3px 8px rgba(46, 213, 115, 0.35));
     animation: mGradientFlow 7s ease-in-out infinite;
-    transform: translateY(7px); /* logo ko neeche kiya - value badhao/ghatao to aur zyada/kam neeche jayega */
+    transform: translateY(10px); /* logo ko neeche kiya - value badhao/ghatao to aur zyada/kam neeche jayega */
     transition: transform 0.35s ease, filter 0.35s ease, background 0.6s ease;
 }
 
 .logo-wrap:hover .logo-m,
 .logo-wrap:focus-visible .logo-m {
-    transform: translateY(20px) scale(1.1);
+    transform: translateY(10px) scale(1.1);
     filter: drop-shadow(0 4px 12px rgba(46, 213, 115, 0.55));
 }
 
@@ -320,7 +320,7 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     background-color: #1f1f1f;
     padding: 8px;
     border-radius: 50%;
-    margin: 0 0.5rem;
+    margin: 0 1rem;
     color: rgb(179, 179, 179);
     transition: 0.2;
     cursor: pointer;
@@ -1962,6 +1962,199 @@ body.red-theme .admin-song-row .admin-song-edit:hover { color: #ff4d4d; }
    bhi ab isi main player-bar (.now-bar + .music-controller) se hoti hai. */
 
 /* ==========================================================================
+   EDUCATIONAL HUB ("Browse Podcasts") - 95% screen module
+   ========================================================================== */
+.podcast-hub-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(3px);
+    z-index: 10400;
+}
+.podcast-hub-overlay.open { display: block; }
+
+.podcast-hub-modal {
+    display: none;
+    position: fixed;
+    top: 2.5%;
+    left: 2.5%;
+    width: 95%;
+    height: 95%;
+    background: #121212;
+    border: 1px solid #2c2c2c;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    z-index: 10450;
+    padding: 24px 28px;
+    overflow-y: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+.podcast-hub-modal.open { display: block; }
+
+.podcast-hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+.podcast-hub-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.podcast-hub-header h2 i { color: #1db954; }
+body.red-theme .podcast-hub-header h2 i { color: #ff4d4d; }
+
+.podcast-hub-header-actions { display: flex; align-items: center; gap: 10px; }
+
+.podcast-hub-admin-btn,
+.podcast-hub-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.podcast-hub-admin-btn {
+    background: #1db954;
+    color: #fff;
+}
+.podcast-hub-admin-btn:hover { transform: scale(1.1); }
+body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
+
+.podcast-hub-close {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ccc;
+}
+.podcast-hub-close:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+
+.podcast-hub-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 18px;
+    max-width: 480px;
+}
+.podcast-hub-search-wrap i { color: #8a8a8a; }
+.podcast-hub-search-wrap input {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: #fff;
+    font-size: 0.9rem;
+}
+.podcast-hub-search-wrap input::placeholder { color: #777; }
+
+.podcast-hub-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+.podcast-hub-tab {
+    padding: 0.5rem 1.1rem;
+    border-radius: 20px;
+    border: 1px solid #333;
+    background: #1a1a1a;
+    color: #ccc;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.podcast-hub-tab:hover { border-color: #1db954; color: #fff; }
+.podcast-hub-tab.active { background: #1db954; border-color: #1db954; color: #fff; }
+body.red-theme .podcast-hub-tab:hover { border-color: #ff4d4d; }
+body.red-theme .podcast-hub-tab.active { background: #ff4d4d; border-color: #ff4d4d; }
+
+.podcast-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+.podcast-hub-card {
+    background: #1a1a1a;
+    border: 1px solid #2c2c2c;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.podcast-hub-card:hover { transform: translateY(-4px); border-color: #1db954; }
+body.red-theme .podcast-hub-card:hover { border-color: #ff4d4d; }
+
+.podcast-hub-card-thumb { position: relative; width: 100%; aspect-ratio: 16 / 8; overflow: hidden; }
+.podcast-hub-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.podcast-hub-card-play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.podcast-hub-card:hover .podcast-hub-card-play { opacity: 1; }
+.podcast-hub-card-play i {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #1db954;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
+
+.podcast-hub-card-info { padding: 16px 18px; }
+.podcast-hub-card-cat {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #1db954;
+    margin-bottom: 6px;
+}
+body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
+.podcast-hub-card-info h4 { margin: 0 0 6px; font-size: 1.05rem; color: #fff; }
+.podcast-hub-card-info p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #999;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.podcast-hub-empty { text-align: center; color: #888; margin-top: 60px; font-size: 0.95rem; }
+
+@media (max-width: 768px) {
+    .podcast-hub-modal { padding: 18px 16px; top: 2%; left: 2%; width: 96%; height: 96%; }
+    .podcast-hub-header h2 { font-size: 1.2rem; }
+    .podcast-hub-grid { gap: 14px; }
+    .podcast-hub-card-info { padding: 10px 12px; }
+    .podcast-hub-card-info h4 { font-size: 0.9rem; }
+    .podcast-hub-card-info p { font-size: 0.75rem; }
+}
+
+/* ==========================================================================
    PLAYLIST FEATURE (Create / Sidebar list / Nav tab / Edit / Delete)
    ========================================================================== */
 
@@ -3104,7 +3297,7 @@ body.red-theme .pbanner-swatch.active { box-shadow: 0 0 0 2px #ff4d4d; }
        sirf wahi end tak push ho, baaki (img/title/artist) apni asal jagah
        par rahe. */
     .now-bar { justify-content: flex-start; padding-right: 0.4rem; box-sizing: border-box; }
-    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: 3px; }
+    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: auto; }
 
     /* Projector (exit-projector-btn) - jahan pehle download button tha wahan
        ab ye chhota sa button aata hai (mobile-menu.js isse yahan move karta

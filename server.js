@@ -11,6 +11,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const songRoutes = require('./routes/songs');
 const playlistRoutes = require('./routes/playlists');
+const podcastRoutes = require('./routes/podcasts');
 
 const app = express();
 
@@ -79,6 +80,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/playlists', playlistRoutes);
+app.use('/api/podcasts', podcastRoutes);
 app.use('/api/contact', require('./routes/contact'));
 
 // Kisi bhi na-milne wali route pe frontend ka index.html hi bhej do (SPA-style fallback)

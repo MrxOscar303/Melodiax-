@@ -105,31 +105,29 @@ playMusic.forEach((element) => {
         index = parseInt(e.target.id);
         currentSong = index;
 
-        // Mobile browsers (khaas kar iOS Safari) audio.play() ko sirf tab
-        // allow karte hain jab wo click ke andar turant/synchronously call
-        // ho - koi "await" beech mein aa jaye to "user gesture" ka permission
-        // toot jata hai aur play() silently block ho jata hai. Isliye yahan
-        // pehle turant normal (network) src se play karo.
-        audio.src = `Audio/${index}.mp3`;
+        // Turant (koi `await` se pehle nahi) real source se play karo - iOS
+        // Safari/Chrome (WebKit) ek `await` ke baad aane wale audio.play()
+        // ko chup-chaap reject kar dete hain (button "pause" dikhata hai
+        // lekin kuch bajta nahi), kyunki user-gesture ka context toot jata hai.
+        const trackData = order[index - 1] || songs[index - 1];
+        const src = trackData ? trackData.songPath : '';
+        audio.src = src;
         audio.currentTime = 0;
-        audio.play().catch(err => console.warn('Play blocked:', err));
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         updateNowBar();
         if (typeof window.melodiaxUpdatePlayerDownloadBtn === 'function') window.melodiaxUpdatePlayerDownloadBtn(index, false);
 
-        // Offline (IndexedDB) copy check baad mein (async) karo - agar mil
-        // jaye to usi gaane par silently switch kar do. Ye ab user-gesture
-        // ki zaroorat ke bagair chalta hai kyunki audio pehle se play ho
-        // chuka hota hai.
+        // Offline (IndexedDB) copy mile to baad mein usi audio element par
+        // switch kar do (already "unlocked" hai is gesture ki wajah se).
         if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
-            const clickedIndex = index;
-            window.melodiaxOffline.getPlayUrl(clickedIndex).then((offlineUrl) => {
-                if (offlineUrl && currentSong === clickedIndex) {
-                    const resumeAt = audio.currentTime;
+            window.melodiaxOffline.getPlayUrl(index).then((offlineUrl) => {
+                if (offlineUrl && currentSong === index) {
+                    const resumeTime = audio.currentTime;
                     audio.src = offlineUrl;
-                    audio.currentTime = resumeAt;
-                    audio.play().catch(() => {});
+                    audio.currentTime = resumeTime;
+                    audio.play().catch((err) => console.warn('Playback failed:', err));
                 }
-            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+            }).catch(() => { /* offline lookup fail - network path already playing */ });
         }
     })
 })
@@ -205,23 +203,17 @@ repeat.addEventListener('click', () => {
 
 playNextSong = () => {
     if (!songOnRepeat) {
+
         let nextSong = (currentSong + 1) % playMusic.length;
         currentSong = nextSong == 0 ? 104 : nextSong;
-    }
-    // Agla gaana YouTube type ka bhi ho sakta hai (admin ne YouTube link se
-    // add kiya ho) - pehle ye hamesha maan leta tha ke agla gaana local mp3
-    // hai aur seedha audio.src par daal deta tha. Agar wo asal mein YouTube
-    // track hota, to ye fail ho jata (ya kabhi kabhi galat/random gaana chal
-    // jata) - ab type check karke sahi player (local <audio> ya YouTube)
-    // istemal karte hain, bilkul waisa hi jaisa pehli baar click karne par
-    // hota hai.
-    const nextData = order[currentSong - 1];
-    if (nextData && nextData.type === 'youtube' && typeof playTrackData === 'function') {
-        playTrackData(nextData);
-    } else {
-        audio.src = nextData ? nextData.songPath : `Audio/${currentSong}.mp3`;
+        audio.src = order[currentSong - 1].songPath;
         audio.currentTime = 0;
-        audio.play().catch(err => console.warn('Play blocked:', err));
+        audio.play();
+        updateNowBar();
+    } else {
+        audio.src = order[currentSong - 1].songPath;
+        audio.currentTime = 0;
+        audio.play();
         updateNowBar();
     }
 }
@@ -230,16 +222,9 @@ playNextSong = () => {
 playPrevSong = () => {
     let prevSong = (currentSong - 1);
     currentSong = prevSong == 0 ? 104 : prevSong;
-    // playNextSong jaisa hi type-aware fix - pichla gaana bhi YouTube ho
-    // sakta hai.
-    const prevData = order[currentSong - 1];
-    if (prevData && prevData.type === 'youtube' && typeof playTrackData === 'function') {
-        playTrackData(prevData);
-        return;
-    }
-    audio.src = prevData ? prevData.songPath : `Audio/${currentSong}.mp3`;
+    audio.src = `Audio/${currentSong}.mp3`
     audio.currentTime = 0;
-    audio.play().catch(err => console.warn('Play blocked:', err));
+    audio.play();
     updateNowBar();
 }
 
@@ -264,25 +249,8 @@ function updateNowBar(songData) {
 // notification par gaana ka naam, cover aur play/pause/next/prev controls
 // dikhane ke liye Media Session API set karna zaroori hai, warna kai
 // devices/browsers thori dair baad audio ko background me rok bhi dete hain.
-//
-// iOS (Safari aur Chrome, dono WebKit use karte hain) me ek known bug hai -
-// naya gaana bajne par metadata turant set karne se Control Center/lock-screen
-// widget purani metadata (pichla gaana) dikhata reh jata hai. Fix: pehle
-// purani metadata ko null karo taake iOS "clean slate" se refresh kare, phir
-// asal audio actually chalna start hone ("playing" event) ke baad naya
-// metadata set karo - turant play() call ke baad set karne se race lagti hai.
-let pendingSessionData = null;
-
 function setMediaSessionMetadata(data) {
     if (!('mediaSession' in navigator) || !data) return;
-    pendingSessionData = data;
-    navigator.mediaSession.metadata = null; // purani (stuck) metadata clear
-    applySessionMetadata();
-}
-
-function applySessionMetadata() {
-    if (!('mediaSession' in navigator) || !pendingSessionData) return;
-    const data = pendingSessionData;
     navigator.mediaSession.metadata = new MediaMetadata({
         title: data.songName || 'Melodiax',
         artist: data.songDes || '',
@@ -313,27 +281,16 @@ if ('mediaSession' in navigator) {
     // audio kahin se bhi (button, hardware control, ended/repeat) chale/ruke.
     audio.addEventListener('play', () => { navigator.mediaSession.playbackState = 'playing'; });
     audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
-
-    // Asal fix: audio actually chalna shuru hone par (naye src ke liye) ek
-    // baar phir metadata apply karo. Isi waqt iOS Control Center widget ko
-    // reliably refresh karta hai - turant play() call ke waqt nahi.
-    audio.addEventListener('playing', () => {
-        applySessionMetadata();
-    });
 }
 
 forward = document.getElementById('forward');
 backward = document.getElementById('backward');
 
-// NOTE: Gaana khatam hone (ended) ka asal agle-gaane-par-jaana wala logic
-// neeche (dusre 'ended' listener) mein hai jo forward.click() simulate karta
-// hai. Yahan dobara playNextSong() call karne se ek hi 'ended' event par
-// agla gaana DO baar advance ho raha tha (audio.src turant do baar badalta
-// tha, jisse pehla play() request interrupt ho jata tha - mobile par yahi
-// wajah thi ke agla gaana bhi nahi chalta tha). Isliye ye duplicate call
-// hata di gayi hai.
-
 forward.addEventListener('click', () => {
+    playNextSong();
+})
+
+audio.addEventListener('ended', () => {
     playNextSong();
 })
 

@@ -230,15 +230,6 @@
                 <button type="button" id="about-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
             <div class="music-section">
-                <h2>Trending Songs</h2>
-                <div class="songs">
-                    
-                    
-                    
-                    
-                </div>
-            </div>
-            <div class="music-section">
                 <h2>Recommended Songs</h2>
                 <div class="songs">
                     
@@ -749,6 +740,139 @@
         <div id="admin-song-list" class="admin-song-list"></div>
     </div>
 
+    <!-- ==================== EDUCATIONAL HUB (Browse Podcasts) ====================
+         "Browse Podcasts" button (sidebar + mobile menu, dono) isko kholte hain.
+         95% screen module - search + category tabs (Physics, Math, waghera) +
+         2-per-row bari cards. Admin ke liye top-right corner me "+" icon hai,
+         jisse alag se admin panel (neeche) khulta hai add/edit/delete ke liye. -->
+    <div id="podcast-hub-overlay" class="podcast-hub-overlay"></div>
+    <div id="podcast-hub-modal" class="podcast-hub-modal" aria-hidden="true">
+        <div class="podcast-hub-header">
+            <h2><i class="fa-solid fa-graduation-cap"></i> Educational Hub</h2>
+            <div class="podcast-hub-header-actions">
+                <button id="podcast-hub-admin-btn" type="button" class="podcast-hub-admin-btn" title="Add Content" style="display:none;">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button id="podcast-hub-close" type="button" class="podcast-hub-close" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="podcast-hub-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="podcast-hub-search" placeholder="Search podcasts, topics...">
+        </div>
+
+        <div id="podcast-hub-tabs" class="podcast-hub-tabs"></div>
+
+        <div id="podcast-hub-grid" class="podcast-hub-grid"></div>
+        <p id="podcast-hub-empty" class="podcast-hub-empty" style="display:none;">No content yet - check back soon!</p>
+    </div>
+
+    <!-- Admin-only panel: Educational Hub content manage karne ke liye
+         (bilkul #admin-panel/song form jaisa hi, bas alag ids/endpoint). -->
+    <div id="podcast-admin-overlay" class="admin-panel-overlay"></div>
+    <div id="podcast-admin-panel" class="admin-panel">
+        <div class="admin-panel-header">
+            <h3 id="podcast-admin-title"><i class="fa-solid fa-graduation-cap"></i> Add Content</h3>
+            <button id="podcast-admin-close" type="button" class="admin-panel-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="podcast-admin-form" class="admin-song-form">
+            <div class="admin-projector-toggle">
+                <div class="admin-projector-toggle-label">
+                    Content Source <span class="admin-field-hint">(YouTube link or upload your own Mp3)</span>
+                </div>
+                <div class="admin-yesno" id="podcast-source-yesno">
+                    <button type="button" class="admin-yesno-btn" data-value="youtube">YouTube Link</button>
+                    <button type="button" class="admin-yesno-btn" data-value="mp3">Mp3 Upload</button>
+                </div>
+                <input type="hidden" id="podcast-source-type" value="youtube">
+            </div>
+
+            <label id="podcast-youtube-url-field">
+                YouTube Link
+                <input type="url" id="podcast-youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+            </label>
+
+            <label id="podcast-audio-file-field" style="display:none;">
+                Mp3 File <span class="admin-field-hint">(mp3 / wav / ogg / m4a, max 40MB)</span>
+                <span class="admin-file-btn admin-file-btn-audio">
+                    <i class="fa-solid fa-file-audio"></i> Choose Mp3
+                    <input type="file" id="podcast-audio-file" accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a">
+                </span>
+                <span id="podcast-audio-file-name" class="admin-field-hint"></span>
+            </label>
+
+            <label>
+                Title
+                <input type="text" id="podcast-title" placeholder="Episode / video title" required>
+            </label>
+
+            <label>
+                Description
+                <input type="text" id="podcast-description" placeholder="Short description">
+            </label>
+
+            <label>
+                Category
+                <input type="text" id="podcast-category" list="podcast-category-list" placeholder="e.g. Physics" required>
+                <datalist id="podcast-category-list">
+                    <option value="Physics">
+                    <option value="Math">
+                    <option value="Philosophy">
+                    <option value="History">
+                    <option value="Biology">
+                </datalist>
+            </label>
+
+            <label>
+                Cover Image <span class="admin-field-hint">(optional - YouTube thumbnail / default cover is used otherwise)</span>
+                <span class="admin-file-btn admin-file-btn-image">
+                    <i class="fa-solid fa-image"></i> Choose Image
+                    <input type="file" id="podcast-image" accept="image/*">
+                </span>
+            </label>
+            <img id="podcast-image-preview" class="song-image-preview" style="display:none;">
+
+            <div class="admin-projector-toggle">
+                <div class="admin-projector-toggle-label">
+                    Projector Video <span class="admin-field-hint">(background video that plays in sync with the audio)</span>
+                </div>
+                <div class="admin-yesno" id="podcast-projector-yesno">
+                    <button type="button" class="admin-yesno-btn" data-value="no">No</button>
+                    <button type="button" class="admin-yesno-btn" data-value="yes">Yes</button>
+                </div>
+                <input type="hidden" id="podcast-projector-enabled" value="false">
+            </div>
+
+            <label id="podcast-projector-video-field" style="display:none;">
+                Projector Video File <span class="admin-field-hint">(mp4 / webm / mov, max 40MB)</span>
+                <span class="admin-file-btn admin-file-btn-video">
+                    <i class="fa-solid fa-clapperboard"></i> Choose Video
+                    <input type="file" id="podcast-projector-video" accept="video/mp4,video/webm,video/ogg,video/quicktime">
+                </span>
+            </label>
+            <video id="podcast-projector-video-preview" class="song-projector-video-preview" muted loop playsinline controls style="display:none;"></video>
+
+            <div id="podcast-admin-form-error" class="admin-form-error"></div>
+            <div id="podcast-admin-form-success" class="admin-form-success"></div>
+
+            <div class="admin-form-actions">
+                <button type="submit" id="podcast-admin-submit-btn" class="admin-submit-btn">Add Content</button>
+                <button type="button" id="podcast-admin-cancel-edit" class="admin-cancel-edit-btn" style="display:none;">Cancel</button>
+            </div>
+        </form>
+
+        <div class="admin-panel-divider"></div>
+
+        <h4 class="admin-existing-title">Your added content</h4>
+        <div id="podcast-admin-list" class="admin-song-list"></div>
+    </div>
+
     <!-- Admin-only panel: homepage ke top wale "Playlists" slide banner ko
          manage karne ke liye (add/edit/delete slides). playlist-banner.js
          isko playlist-banner-edit-btn click par khol/band karta hai. -->
@@ -848,6 +972,7 @@
     <script src="playlist.js"></script>
     <script src="playlist-banner.js"></script>
     <script src="offline.js"></script>
+    <script src="podcast.js"></script>
     <script src="about.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script>

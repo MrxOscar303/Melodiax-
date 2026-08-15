@@ -684,25 +684,22 @@ let pendingYoutubeTimeout = null;
 
 // YouTube API isko khud call karta hai jab script load ho jata hai (global function honi zaroori hai)
 window.onYouTubeIframeAPIReady = function () {
-    // Index.html mein container div 1x1px (bilkul chhota) hai - JS se hi
-    // thoda barha dete hain (2x2px) taake purane iOS/WebKit (jaise iPhone 7)
-    // bilkul 0x0 (zero-size) video ko block na kare (muted hone ke bawajood
-    // bhi kar deta hai). Div ab bhi opacity:0 + off-screen hone ki wajah se
-    // poori tarah invisible rahega - koi visual/layout farak nahi padega.
-    const ytContainer = document.getElementById('yt-player-hidden');
-    if (ytContainer) {
-        ytContainer.style.width = '2px';
-        ytContainer.style.height = '2px';
-    }
-
     ytPlayer = new YT.Player('yt-player-hidden', {
-        height: '2',
-        width: '2',
+        height: '1',
+        width: '1',
         playerVars: {
-            // iOS Safari/Chrome (WebKit) is param ke bagair video ko forced
-            // full-screen mein khol deta hai - hum audio-jaisa hidden inline
-            // playback chahte hain, is liye ye zaroori hai.
+            // iOS (Safari/Chrome, dono WebKit hi hain) ke liye "playsinline"
+            // zaroori hai - iske bina iOS hidden/1px video ko chalane se pehle
+            // use fullscreen me le jaane ki koshish karta hai, aur chunke ye
+            // player jaan-boojh kar hidden hai, ye chup-chaap fail ho jata hai
+            // (button "playing" dikhata hai lekin awaz kabhi aati hi nahi).
             playsinline: 1,
+            autoplay: 0,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            modestbranding: 1,
+            rel: 0,
         },
         events: {
             onReady: () => {
@@ -715,19 +712,8 @@ window.onYouTubeIframeAPIReady = function () {
                     // ho sakta hai - sirf tab play karo jab wo abhi bhi
                     // YouTube track hi sunna chahta ho.
                     if (currentPlaybackType === 'youtube' && currentYoutubeId === idToPlay) {
-                        // iOS par "unmuted autoplay" (bina kisi turant tap ke)
-                        // block ho jata hai - muted start hamesha allowed
-                        // hoti hai, PLAYING state milte hi (onYtStateChange
-                        // mein) khud unmute ho jayega.
-                        if (ytPlayer.mute) ytPlayer.mute();
                         ytPlayer.loadVideoById(idToPlay);
                         ytPlayer.playVideo();
-                        // Ye call ab user ke asal tap se kaafi der baad (YT
-                        // iframe API load hone ke baad) ho rahi hai - iOS is
-                        // "der se aayi" playVideo() request ko silently block
-                        // kar sakta hai (koi error nahi, bas kabhi PLAYING
-                        // state par nahi jata). Verify karke UI ko honest rakho.
-                        verifyYtPlaybackStarted(idToPlay);
                     }
                 }
             },
@@ -737,30 +723,6 @@ window.onYouTubeIframeAPIReady = function () {
     });
 };
 
-// playVideo() call karne ke thodi der baad check karo ke player asal mein
-// PLAYING state mein gaya ya nahi. iOS par kabhi kabhi (khaas kar jab
-// playVideo() user ke turant tap ke bagair, baad mein/async call hoti hai)
-// ye silently block ho jata hai - koi onError bhi nahi aata, bas state
-// hamesha "cued/buffering" par atka reh jata hai. Aisa ho to UI ko turant
-// "play" par wapas reset kar do (warna "pause" icon hamesha ke liye ghalat
-// dikhata rahega) aur user ko console mein wajah bata do.
-function verifyYtPlaybackStarted(expectedId) {
-    setTimeout(() => {
-        if (currentPlaybackType !== 'youtube' || currentYoutubeId !== expectedId) return;
-        if (!ytPlayer || !ytPlayer.getPlayerState) return;
-        const state = ytPlayer.getPlayerState();
-        if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
-            console.warn('YouTube playback did not start (blocked by browser) - resetting UI. Try tapping play again.');
-            play.classList.remove('fa-circle-pause');
-            play.classList.add('fa-circle-play');
-            makeAllPlay();
-            stopYtProgressPolling();
-        }
-    }, 1800);
-}
-
-let consecutiveYtErrors = 0;
-
 function onYtError(event) {
     // 2/100/101/150 = embedding disallowed/blocked/video removed - is video ko
     // bajaya hi nahi ja sakta chahe link sahi ho. Pehle ye chup-chaap fail ho
@@ -769,16 +731,6 @@ function onYtError(event) {
     stopYtProgressPolling();
     play.classList.remove('fa-circle-pause');
     play.classList.add('fa-circle-play');
-
-    // Safety: agar lagataar kai YouTube gaane fail hon (jaise embedding
-    // disabled links add ho gaye hon), to hamesha ke liye auto-skip loop mat
-    // karo - kahin ruk kar user ko pata chale ke masla hai.
-    consecutiveYtErrors++;
-    if (consecutiveYtErrors >= 4) {
-        console.error('Multiple YouTube songs in a row failed to embed - stopping auto-skip. In inko dobara check karein (ho sakta hai in videos par embedding disabled ho).');
-        consecutiveYtErrors = 0;
-        return;
-    }
     if (typeof playNextSong === 'function') playNextSong();
 }
 
@@ -799,21 +751,9 @@ setTimeout(() => {
 function onYtStateChange(event) {
     if (currentPlaybackType !== 'youtube') return;
     if (event.data === YT.PlayerState.PLAYING) {
-        consecutiveYtErrors = 0;
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
         startYtProgressPolling();
-        // iOS par muted state me hi playback allow hoti hai (autoplay-with-
-        // sound block ho jata hai) - is liye humne mute karke play() call
-        // kiya tha (neeche startYoutubeTrack me). Ab jab video WAKAI PLAYING
-        // ho chuka hai (ye guaranteed callback hai), turant unmute kar do aur
-        // user ka pehle se chuna hua volume wapas laga do. Ye ek chalte hue
-        // video ko unmute karna hai, naya (blocked) autoplay-with-sound nahi
-        // - is liye iOS ye allow karta hai.
-        if (ytPlayer && ytPlayer.unMute) {
-            ytPlayer.unMute();
-            if (ytPlayer.setVolume && volumeBar) ytPlayer.setVolume(volumeBar.value);
-        }
     } else if (event.data === YT.PlayerState.PAUSED) {
         play.classList.remove('fa-circle-pause');
         play.classList.add('fa-circle-play');
@@ -880,11 +820,6 @@ function startYoutubeTrack(data) {
     currentPlaybackType = 'youtube';
     if (!audio.paused) audio.pause();
     if (ytPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
-        // iOS par direct tap ke bawajood "unmuted autoplay" kabhi kabhi block
-        // ho jata hai (YouTube apni khud ki autoplay policy bhi lagata hai) -
-        // muted start hamesha allowed hoti hai; onYtStateChange PLAYING milte
-        // hi khud unmute kar dega.
-        if (ytPlayer.mute) ytPlayer.mute();
         if (currentYoutubeId === data.youtubeId && ytPlayer.seekTo) {
             // Wahi song dobara click hua - naya network fetch karne ki
             // zaroorat nahi, bas shuru se dobara chala do (turant hota hai).
@@ -895,7 +830,6 @@ function startYoutubeTrack(data) {
             ytPlayer.loadVideoById(data.youtubeId);
             ytPlayer.playVideo();
         }
-        verifyYtPlaybackStarted(data.youtubeId);
     } else {
         pendingYoutubeId = data.youtubeId;
         currentYoutubeId = data.youtubeId;
@@ -955,27 +889,23 @@ function playTrackData(data) {
     if (data.type === 'youtube') {
         startYoutubeTrack(data);
     } else {
-        // Mobile browsers (khaas kar iOS - Safari aur Chrome dono, kyunki
-        // dono WebKit use karte hain) audio.play() ko sirf turant/sync tarah
-        // allow karte hain - "await" beech me aane se silently block ho jata
-        // hai. Isliye pehle turant network src se play karo.
-        const playForId = currentSong;
+        // Turant play() (koi `await` se pehle nahi) - same iOS gesture-chain
+        // wajah jaisa upar wale click handler mein. currentSong is waqt tak
+        // (playNextSong/playPrevSong ne) is track ki id set kar chuka hota hai.
+        const trackId = currentSong;
         audio.src = data.songPath;
         audio.currentTime = 0;
-        audio.play().catch(err => console.warn('Play blocked:', err));
+        audio.play().catch((err) => console.warn('Playback failed:', err));
 
-        // Offline (IndexedDB) copy baad me (async) check karo - mil jaye to
-        // usi gaane par silently switch kardo (ab user-gesture zaroori nahi,
-        // audio pehle se play ho chuka hota hai).
         if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
-            window.melodiaxOffline.getPlayUrl(playForId).then((offlineUrl) => {
-                if (offlineUrl && currentSong === playForId) {
-                    const resumeAt = audio.currentTime;
+            window.melodiaxOffline.getPlayUrl(trackId).then((offlineUrl) => {
+                if (offlineUrl && currentSong === trackId) {
+                    const resumeTime = audio.currentTime;
                     audio.src = offlineUrl;
-                    audio.currentTime = resumeAt;
-                    audio.play().catch(() => {});
+                    audio.currentTime = resumeTime;
+                    audio.play().catch((err) => console.warn('Playback failed:', err));
                 }
-            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+            }).catch(() => { /* offline lookup fail - network path already playing */ });
         }
     }
     // `data` yahan already maujood hai (jis track ko chalaya ja raha hai) -
@@ -990,7 +920,7 @@ function playTrackData(data) {
 // hain, unhe yahan double-handle nahi karte. data-db-id sirf admin-added
 // tracks par hota hai (chahe type youtube ho ya local/mp3) - isi se manual
 // songs se differentiate karte hain.
-document.addEventListener('click', (e) => {
+document.addEventListener('click', async (e) => {
     const icon = e.target.closest('.playMusic');
     if (!icon || !icon.dataset.dbId) return;
     if (icon.dataset.type !== 'youtube' && icon.dataset.type !== 'local') return;
@@ -1012,13 +942,15 @@ document.addEventListener('click', (e) => {
         startYoutubeTrack(data);
     } else {
         // Admin-uploaded Mp3 - bilkul manual songs jaisa hi local <audio>
-        // playback. Mobile (khaas kar iOS) par audio.play() sirf click ke
-        // andar TURANT/sync call hone par allow hota hai - isliye pehle
-        // turant network src se play karo, offline (IndexedDB) copy check
-        // baad me (async) karo.
+        // playback. IMPORTANT: audio.play() yahan turant (user click ke
+        // andar hi, koi `await` se pehle) call hota hai - iOS Safari/Chrome
+        // (dono WebKit) ek `await` ke baad aane wale play() call ko chup-chaap
+        // reject kar dete hain (button "pause" dikhata hai lekin kuch bajta
+        // nahi) kyunki user-gesture ka context toot jata hai. Offline
+        // (IndexedDB) copy mil jaye to baad me switch kar lete hain.
         audio.src = data.songPath;
         audio.currentTime = 0;
-        audio.play().catch(err => console.warn('Play blocked:', err));
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         // Bara (main) play/pause button bhi turant "pause" dikhaye - warna
         // audio bajta rehta tha lekin button "play" hi dikhata reh jata tha.
         play.classList.remove('fa-circle-play');
@@ -1027,12 +959,12 @@ document.addEventListener('click', (e) => {
         if (window.melodiaxOffline && typeof window.melodiaxOffline.getPlayUrl === 'function') {
             window.melodiaxOffline.getPlayUrl(id).then((offlineUrl) => {
                 if (offlineUrl && currentSong === id) {
-                    const resumeAt = audio.currentTime;
+                    const resumeTime = audio.currentTime;
                     audio.src = offlineUrl;
-                    audio.currentTime = resumeAt;
-                    audio.play().catch(() => {});
+                    audio.currentTime = resumeTime;
+                    audio.play().catch((err) => console.warn('Playback failed:', err));
                 }
-            }).catch(() => { /* offline lookup fail - network path already chal raha hai */ });
+            }).catch(() => { /* offline lookup fail - network path already playing */ });
         }
     }
 
