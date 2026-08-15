@@ -1160,7 +1160,16 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     top: 45%; 
     left: 58%; 
     transform: translate(-50%, -50%);
-    width: 1300px; /* Kaafi bada size */
+    /* Pehle hamesha 1300px fixed width thi - kisi bhi video (chahe portrait/
+       vertical clip hi kyun na ho) ko usi width par force kar deta tha,
+       jisse lambi/vertical videos bohot bari aur ajeeb dikhti thi. Ab
+       max-width/max-height sirf ek "boundary" hain - asal size video ke
+       apne intrinsic ratio (neeche #projector-video) se decide hota hai,
+       is liye landscape aur portrait dono videos apne hisaab se sahi dikhti hain. */
+    max-width: min(1300px, 92vw);
+    max-height: 85vh;
+    width: auto;
+    height: auto;
     z-index: 0; /* Cards ke piche background ki tarah */
     pointer-events: none;
     mix-blend-mode: screen; 
@@ -1170,16 +1179,24 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 }
 
 .projector-mask {
-    width: 100%;
+    display: inline-block;
+    width: auto;
+    height: auto;
     /* Boundary ko fade karne ke liye behtar gradient */
     mask-image: radial-gradient(circle, black 45%, transparent 85%);
     -webkit-mask-image: radial-gradient(circle, black 45%, transparent 85%);
 }
 
 #projector-video {
-    width: 100%;
-    height: auto;
     display: block;
+    /* Video ka apna natural width/height maintain hota hai (aspect ratio
+       preserve), sirf itna bada ke parent ki max-width/max-height se bahar
+       na jaye - chahe video landscape ho ya portrait, hamesha sahi/poori
+       dikhegi, kabhi stretch/squish nahi hogi. */
+    width: auto;
+    height: auto;
+    max-width: min(1300px, 92vw);
+    max-height: 85vh;
 }
 
 
@@ -2184,10 +2201,9 @@ body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
     margin-bottom: 6px;
 }
 body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
-.podcast-hub-card-info h4 { margin: 0 0 6px; padding-right: 40px; font-size: 1.05rem; color: #fff; }
+.podcast-hub-card-info h4 { margin: 0 0 6px; font-size: 1.05rem; color: #fff; }
 .podcast-hub-card-info p {
     margin: 0;
-    padding-right: 40px;
     font-size: 0.82rem;
     color: #999;
     display: -webkit-box;
@@ -2196,25 +2212,40 @@ body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
     overflow: hidden;
 }
 
+/* Thumbnail ke top-right corner par - glassy/blurred "pill" jaisa lagta hai,
+   duration badge aur play-overlay dono se saaf alag rehta hai. */
 .podcast-hub-card-download {
     position: absolute;
-    right: 14px;
-    bottom: 12px;
-    width: 34px;
-    height: 34px;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: #ccc;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(20, 20, 20, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s ease, color 0.2s ease;
+    font-size: 0.78rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+    z-index: 2;
 }
-.podcast-hub-card-download:hover { background: #1db954; color: #fff; }
-body.red-theme .podcast-hub-card-download:hover { background: #ff4d4d; }
+.podcast-hub-card-download:hover {
+    background: #1db954;
+    border-color: #1db954;
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 4px 14px rgba(29, 185, 84, 0.45);
+}
+body.red-theme .podcast-hub-card-download:hover {
+    background: #ff4d4d;
+    border-color: #ff4d4d;
+    box-shadow: 0 4px 14px rgba(255, 77, 77, 0.45);
+}
 
 .podcast-hub-empty { text-align: center; color: #888; margin-top: 60px; font-size: 0.95rem; }
 
@@ -2228,7 +2259,7 @@ body.red-theme .podcast-hub-card-download:hover { background: #ff4d4d; }
     .podcast-hub-card-info { padding: 10px 12px; }
     .podcast-hub-card-info h4 { font-size: 0.9rem; }
     .podcast-hub-card-info p { font-size: 0.75rem; }
-    .podcast-hub-card-download { width: 30px; height: 30px; right: 10px; bottom: 8px; }
+    .podcast-hub-card-download { width: 28px; height: 28px; right: 8px; top: 8px; }
 }
 
 /* ==========================================================================

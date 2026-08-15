@@ -237,15 +237,12 @@ async function downloadPodcastFile(url, filename) {
 }
 
 function renderPodcastGrid() {
-    const term = podcastSearchTerm.trim().toLowerCase();
-    const filtered = podcastItems.filter((p) => {
-        const matchesCategory = podcastActiveCategory === 'All' || p.category === podcastActiveCategory;
-        const matchesSearch = !term
-            || (p.title && p.title.toLowerCase().includes(term))
-            || (p.description && p.description.toLowerCase().includes(term))
-            || (p.category && p.category.toLowerCase().includes(term));
-        return matchesCategory && matchesSearch;
-    });
+    // Search sirf upar wale dropdown (renderPodcastSearchSuggestions) mein
+    // suggest hoti hai - ye neeche wala grid sirf category tab se filter
+    // hota hai, taake ek hi cheez do jagah (dropdown + grid) na dikhe.
+    const filtered = podcastItems.filter((p) => (
+        podcastActiveCategory === 'All' || p.category === podcastActiveCategory
+    ));
 
     if (!filtered.length) {
         podcastHubGrid.innerHTML = '';
@@ -260,15 +257,15 @@ function renderPodcastGrid() {
                 <img src="${escapeHtml(podcastThumbnail(p))}" alt="">
                 <div class="podcast-hub-card-play"><i class="fa-solid fa-play"></i></div>
                 ${formatPodcastDuration(p.duration) ? `<span class="podcast-hub-card-duration">${formatPodcastDuration(p.duration)}</span>` : ''}
+                ${p.sourceType !== 'youtube' && p.audioFile ? `
+                <button type="button" class="podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>` : ''}
             </div>
             <div class="podcast-hub-card-info">
                 <span class="podcast-hub-card-cat">${escapeHtml(p.category)}</span>
                 <h4>${escapeHtml(p.title)}</h4>
                 ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
-                ${p.sourceType !== 'youtube' && p.audioFile ? `
-                <button type="button" class="podcast-hub-card-download" title="Download" data-url="${escapeHtml(p.audioFile)}" data-name="${escapeHtml(p.title)}">
-                    <i class="fa-solid fa-download"></i>
-                </button>` : ''}
             </div>
         </div>
     `).join('');
@@ -293,7 +290,8 @@ const podcastHubSearchResults = document.getElementById('podcast-hub-search-resu
 if (podcastHubSearchInput) {
     podcastHubSearchInput.addEventListener('input', () => {
         podcastSearchTerm = podcastHubSearchInput.value;
-        renderPodcastGrid();
+        // Sirf dropdown suggestions update hoti hain - neeche wala grid
+        // isse touch nahi hota (wo sirf category tabs se filter hota hai).
         renderPodcastSearchSuggestions();
     });
 }

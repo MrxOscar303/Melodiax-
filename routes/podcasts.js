@@ -29,6 +29,36 @@ function uploadBufferToCloudinary(buffer, folder, resourceType) {
     });
 }
 
+// Mp4 upload jab bhi Cloudinary par jati hai, uska public_id bhi chahiye
+// hota hai (thumbnail URL banane ke liye) - is liye ek alag helper jo
+// {url, publicId} dono return kare.
+function uploadVideoToCloudinaryWithId(buffer, folder) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: `melodiax/${folder}`, resource_type: 'video' },
+            (err, result) => {
+                if (err) return reject(err);
+                resolve({ url: result.secure_url, publicId: result.public_id });
+            }
+        );
+        stream.end(buffer);
+    });
+}
+
+// Cloudinary khud video ke andar se ek frame nikal kar JPG thumbnail bana
+// deta hai (koi ffmpeg install karne ki zaroorat nahi) - 1 second wale frame
+// se (0 second par kabhi kabhi kaala/blank frame hota hai).
+function cloudinaryVideoThumbnailUrl(publicId) {
+    return cloudinary.url(publicId, {
+        resource_type: 'video',
+        format: 'jpg',
+        start_offset: '1',
+        crop: 'fill',
+        width: 640,
+        height: 360,
+    });
+}
+
 function deleteOldLocalFileIfAny(relativePath) {
     if (relativePath && relativePath.startsWith('/uploads/')) {
         const oldPath = path.join(__dirname, '..', 'public', relativePath);
@@ -188,12 +218,13 @@ router.post(
                 return res.status(400).json({ message: 'Mp4 file upload is required' });
             }
 
-            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4Url] = await Promise.all([
+            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4] = await Promise.all([
                 imageFile ? uploadBufferToCloudinary(imageFile.buffer, 'podcasts', 'image') : Promise.resolve(null),
                 sourceType !== 'mp4' && projectorEnabled && videoFile ? uploadBufferToCloudinary(videoFile.buffer, 'podcast-videos', 'video') : Promise.resolve(null),
                 audioFileUpload ? uploadBufferToCloudinary(audioFileUpload.buffer, 'podcast-audio', 'video') : Promise.resolve(null),
-                mp4FileUpload ? uploadBufferToCloudinary(mp4FileUpload.buffer, 'podcast-mp4', 'video') : Promise.resolve(null),
+                mp4FileUpload ? uploadVideoToCloudinaryWithId(mp4FileUpload.buffer, 'podcast-mp4') : Promise.resolve(null),
             ]);
+            const uploadedMp4Url = uploadedMp4 ? uploadedMp4.url : null;
 
             let projectorVideo = '';
 
@@ -203,7 +234,10 @@ router.post(
                 // wahi file khud projector video ban jati hai (visual ke liye).
                 audioFile = uploadedMp4Url;
                 projectorVideo = uploadedMp4Url;
-                image = uploadedImageUrl || '/assets/default-song-cover.svg';
+                // Video ke andar se hi ek asal frame nikal kar thumbnail
+                // banate hain (generic placeholder ki bajaye) - YouTube
+                // entries jaisa hi "khud ka real thumbnail" milta hai.
+                image = uploadedImageUrl || (uploadedMp4 ? cloudinaryVideoThumbnailUrl(uploadedMp4.publicId) : '/assets/default-song-cover.svg');
             } else if (sourceType === 'mp3') {
                 if (!uploadedAudioUrl) {
                     return res.status(400).json({ message: 'Mp3 file upload is required' });
@@ -277,12 +311,13 @@ router.put(
             const audioFileUpload = req.files && req.files.audio ? req.files.audio[0] : null;
             const mp4FileUpload = req.files && req.files.mp4File ? req.files.mp4File[0] : null;
 
-            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4Url] = await Promise.all([
+            const [uploadedImageUrl, uploadedVideoUrl, uploadedAudioUrl, uploadedMp4] = await Promise.all([
                 imageFile ? uploadBufferToCloudinary(imageFile.buffer, 'podcasts', 'image') : Promise.resolve(null),
                 videoFile ? uploadBufferToCloudinary(videoFile.buffer, 'podcast-videos', 'video') : Promise.resolve(null),
                 audioFileUpload ? uploadBufferToCloudinary(audioFileUpload.buffer, 'podcast-audio', 'video') : Promise.resolve(null),
-                mp4FileUpload ? uploadBufferToCloudinary(mp4FileUpload.buffer, 'podcast-mp4', 'video') : Promise.resolve(null),
+                mp4FileUpload ? uploadVideoToCloudinaryWithId(mp4FileUpload.buffer, 'podcast-mp4') : Promise.resolve(null),
             ]);
+            const uploadedMp4Url = uploadedMp4 ? uploadedMp4.url : null;
 
             if (title !== undefined) podcast.title = title.trim();
             if (description !== undefined) podcast.description = description.trim();
@@ -322,6 +357,11 @@ router.put(
                     podcast.projectorEnabled = true;
                     podcast.projectorVideo = uploadedMp4Url;
                     podcast.duration = await getAudioDurationFromBuffer(mp4FileUpload.buffer, mp4FileUpload.mimetype);
+                    // Video ke andar se hi real frame thumbnail nikalo (agar
+                    // admin ne khud koi custom image nahi di).
+                    if (!imageFile && !hadManualImage) {
+                        podcast.image = cloudinaryVideoThumbnailUrl(uploadedMp4.publicId);
+                    }
                 }
                 if (!imageFile && !hadManualImage && !podcast.image) {
                     podcast.image = '/assets/default-song-cover.svg';
