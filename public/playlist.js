@@ -265,6 +265,8 @@
         // apna fade-in karega, isliye yahan animation ki zaroorat nahi -
         // warna overlap ki wajah se "jhalak" dikhti hai).
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
+        // Premium tab bhi isi tarah turant chupa do.
+        if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
         fadeOutThen(homeSections, () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });
             renderPlaylistsView();

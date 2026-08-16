@@ -2966,14 +2966,16 @@ body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 
    ============================================================ */
 .main-right-part > .music-section,
 #playlists-view-section,
-#downloads-view-section {
+#downloads-view-section,
+#premium-view-section {
     transition: opacity 0.28s ease, transform 0.28s ease;
     opacity: 1;
     transform: translateY(0);
 }
 .main-right-part > .music-section.view-hidden,
 #playlists-view-section.view-hidden,
-#downloads-view-section.view-hidden {
+#downloads-view-section.view-hidden,
+#premium-view-section.view-hidden {
     opacity: 0;
     transform: translateY(10px);
     pointer-events: none;
@@ -3184,6 +3186,187 @@ body.red-theme .pbanner-swatch.active { box-shadow: 0 0 0 2px #ff4d4d; }
     border-radius: 50%;
     background: none;
     cursor: pointer;
+}
+
+/* ==========================================================================
+   PREMIUM TAB (public cards + admin manage panel)
+   ========================================================================== */
+.premium-view-section { max-width: 1000px; }
+
+.premium-view-heading { position: relative; margin-bottom: 1.8rem; }
+.premium-hero-title {
+    font-size: 2.6rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem 0;
+    background: linear-gradient(115deg, #ffd76a 0%, #e5b93a 30%, #fff3c4 55%, #e5b93a 80%, #ffd76a 100%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: mGradientFlow 7s ease-in-out infinite;
+}
+.premium-hero-subtitle { color: #b3b3b3; font-size: 1rem; margin: 0; }
+
+.premium-edit-btn {
+    position: absolute;
+    top: 4px;
+    right: 0;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: #1db954;
+    color: #000;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.premium-edit-btn:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(29, 185, 84, 0.4); }
+body.red-theme .premium-edit-btn { background: #ff4d4d; }
+body.red-theme .premium-edit-btn:hover { box-shadow: 0 4px 14px rgba(255, 77, 77, 0.4); }
+
+.premium-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.4rem;
+}
+
+.premium-empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #8a8a8a;
+    padding: 2rem 1rem;
+}
+
+.premium-card {
+    --premium-card-color: #1db954;
+    position: relative;
+    background: linear-gradient(165deg, rgba(255,255,255,0.05), #161616 55%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 2rem 1.6rem 1.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 380px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.premium-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    border-radius: 16px 16px 0 0;
+    background: var(--premium-card-color);
+}
+.premium-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--premium-card-color);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.premium-card-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--premium-card-color);
+    color: #000;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+}
+
+.premium-card-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--premium-card-color) 22%, transparent);
+    color: var(--premium-card-color);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.premium-card-name { font-size: 1.4rem; font-weight: 700; margin: 0 0 0.3rem 0; color: #fff; }
+.premium-card-price { font-size: 1.7rem; font-weight: 800; color: var(--premium-card-color); margin-bottom: 0.5rem; }
+.premium-card-tagline { color: #a8a8a8; font-size: 0.86rem; margin: 0 0 1.1rem 0; line-height: 1.4; }
+
+.premium-card-features {
+    list-style: none;
+    margin: 0 0 1.4rem 0;
+    padding: 0;
+    width: 100%;
+    flex: 1;
+}
+.premium-card-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 0.86rem;
+    color: #d6d6d6;
+    padding: 0.35rem 0;
+}
+.premium-card-features li i { color: var(--premium-card-color); margin-top: 0.2rem; font-size: 0.78rem; }
+
+.premium-card-cta {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 25rem;
+    border: none;
+    background: var(--premium-card-color);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.premium-maintenance-note {
+    text-align: center;
+    color: #8a8a8a;
+    font-size: 0.82rem;
+    font-style: italic;
+    margin: 2rem 0 0 0;
+}
+
+/* ---------- Admin "Manage premium plans" panel bits (reuses .admin-panel/.pbanner-panel) ---------- */
+.admin-song-row-swatch {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ---------- Small "total songs" counter chip in admin panel headers ---------- */
+.admin-total-counter {
+    background: rgba(29, 185, 84, 0.15);
+    color: #1db954;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    margin-left: auto;
+    margin-right: 0.6rem;
+}
+body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color: #ff4d4d; }
+
+@media (max-width: 600px) {
+    .premium-hero-title { font-size: 1.9rem; }
+    .premium-cards-grid { grid-template-columns: 1fr; }
+    .premium-edit-btn { top: 2px; }
 }
 
 /* ==========================================================================

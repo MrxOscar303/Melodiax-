@@ -68,7 +68,7 @@
         </div>
         <div class="right-half">
             <div class="right-half-p1">
-                <p class="nav-text">Premium</p>
+                <p class="nav-text" id="nav-premium-btn" title="Explore Premium plans">Premium</p>
                 <p class="nav-text" id="nav-downloads-btn" title="Your downloaded songs" style="display:none;">Downloads</p>
                 <p class="nav-text" id="nav-playlist-btn" title="View and manage your playlists">Playlist</p>
                 <p class="nav-text" id="nav-about-btn" title="About Melodiax and contact us">About us</p>
@@ -229,6 +229,27 @@
 
                 <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
                 <button type="button" id="about-view-leave-btn" class="view-leave-btn">Leave</button>
+            </div>
+            <!-- "Premium" nav button click karne par ye section dikhta hai - baaki
+                 sab (home sections, playlist, downloads, about) chupa diye jate hain.
+                 Plans khud database (/api/premium) se aate hain - admin top-right
+                 pencil button se unhe add/edit/remove kar sakta hai. -->
+            <div id="premium-view-section" class="playlists-view-section premium-view-section" style="display:none;">
+                <div class="premium-view-heading">
+                    <h1 class="premium-hero-title">Melodiax Premium</h1>
+                    <p class="premium-hero-subtitle">Pick the plan that fits how you listen.</p>
+                    <!-- Sirf admin accounts ko ye pencil button nazar aata hai (premium.js control karta hai) -->
+                    <button type="button" id="premium-edit-btn" class="premium-edit-btn" title="Manage Premium plans" style="display:none;">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                </div>
+
+                <div id="premium-cards-grid" class="premium-cards-grid"></div>
+
+                <p class="premium-maintenance-note">This feature is under maintenance</p>
+
+                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+                <button type="button" id="premium-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
             <div class="music-section">
                 <h2>Recommended Songs</h2>
@@ -650,6 +671,7 @@
     <div id="admin-panel" class="admin-panel">
         <div class="admin-panel-header">
             <h3 id="admin-panel-title"><i class="fa-solid fa-music"></i> Add Song</h3>
+            <span id="admin-song-total-counter" class="admin-total-counter" title="Total songs">0 songs</span>
             <button id="admin-panel-close" type="button" class="admin-panel-close" aria-label="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -778,6 +800,7 @@
     <div id="podcast-admin-panel" class="admin-panel">
         <div class="admin-panel-header">
             <h3 id="podcast-admin-title"><i class="fa-solid fa-graduation-cap"></i> Add Content</h3>
+            <span id="podcast-admin-total-counter" class="admin-total-counter" title="Total podcasts">0 podcasts</span>
             <button id="podcast-admin-close" type="button" class="admin-panel-close" aria-label="Close">
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -959,6 +982,80 @@
         <div id="pbanner-list" class="admin-song-list"></div>
     </div>
 
+    <!-- Admin-only panel: Premium plan cards manage karne ke liye
+         (add/edit/delete plans - bilkul Playlists Banner panel jaisa hi,
+         bas image ki jagah theme color + features list). premium.js isko
+         #premium-edit-btn click par khol/band karta hai. -->
+    <div id="premium-panel-overlay" class="admin-panel-overlay"></div>
+    <div id="premium-panel" class="admin-panel pbanner-panel">
+        <div class="admin-panel-header">
+            <h3 id="premium-panel-title"><i class="fa-solid fa-crown"></i> Premium Plans</h3>
+            <button id="premium-panel-close" type="button" class="admin-panel-close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form id="premium-form" class="admin-song-form">
+            <input type="hidden" id="premium-edit-id" value="">
+
+            <label>
+                Plan Name
+                <input type="text" id="premium-name" maxlength="40" placeholder="e.g. Gold" required>
+            </label>
+
+            <label>
+                Price <span class="admin-field-hint">(free text, e.g. "$5.99/mo")</span>
+                <input type="text" id="premium-price" maxlength="40" placeholder="e.g. $5.99/mo">
+            </label>
+
+            <label>
+                Tagline <span class="admin-field-hint">(optional, short subtitle)</span>
+                <input type="text" id="premium-tagline" maxlength="100" placeholder="e.g. Our most popular plan">
+            </label>
+
+            <label>
+                Badge <span class="admin-field-hint">(optional, e.g. "Most Popular")</span>
+                <input type="text" id="premium-badge" maxlength="30" placeholder="e.g. Most Popular">
+            </label>
+
+            <label>
+                Features <span class="admin-field-hint">(one per line)</span>
+                <textarea id="premium-features" rows="5" placeholder="Ad-free listening&#10;Offline downloads&#10;High audio quality"></textarea>
+            </label>
+
+            <label>
+                Theme Color
+                <div id="premium-swatches" class="pbanner-swatches">
+                    <button type="button" class="pbanner-swatch active" data-color="#1db954" style="background:#1db954;" title="Green"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#9ea7b3" style="background:#9ea7b3;" title="Silver"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#e5b93a" style="background:#e5b93a;" title="Gold"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#4fc3d9" style="background:#4fc3d9;" title="Diamond"></button>
+                    <button type="button" class="pbanner-swatch" data-color="#b9a5e3" style="background:#b9a5e3;" title="Platinum"></button>
+                    <input type="color" id="premium-color-custom" class="pbanner-color-custom" value="#1db954" title="Custom color">
+                </div>
+                <input type="hidden" id="premium-color" value="#1db954">
+            </label>
+
+            <label>
+                Order <span class="admin-field-hint">(lower numbers appear first)</span>
+                <input type="text" id="premium-order" inputmode="numeric" placeholder="0">
+            </label>
+
+            <div id="premium-form-error" class="admin-form-error"></div>
+            <div id="premium-form-success" class="admin-form-success"></div>
+
+            <div class="admin-form-actions">
+                <button type="submit" id="premium-submit-btn" class="admin-submit-btn">Add Plan</button>
+                <button type="button" id="premium-cancel-edit" class="admin-cancel-edit-btn" style="display:none;">Cancel</button>
+            </div>
+        </form>
+
+        <div class="admin-panel-divider"></div>
+
+        <h4 class="admin-existing-title">Existing plans</h4>
+        <div id="premium-list" class="admin-song-list"></div>
+    </div>
+
     <!-- Hidden YouTube IFrame API target: admin-added (YouTube) songs are streamed
          through this hidden player, but controlled from the SAME player-bar below
          (now-bar + music-controller) that manual songs use - no separate widget. -->
@@ -988,6 +1085,7 @@
     <script src="offline.js"></script>
     <script src="podcast.js"></script>
     <script src="about.js"></script>
+    <script src="premium.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script>
         // App shell (HTML/CSS/JS/icons) ko cache karta hai taake site khud

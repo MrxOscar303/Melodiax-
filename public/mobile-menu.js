@@ -87,12 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const homeIcon = document.querySelector('.home-icon');
         if (homeIcon) homeIcon.click();
     });
-    // Premium ka abhi apna koi page/handler nahi hai (desktop nav text me
-    // bhi wahi haal hai) - menu sirf band ho jaye.
-    document.getElementById('mobile-menu-premium')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        closeMenu();
-    });
+    wire('mobile-menu-premium', 'nav-premium-btn');
     wire('mobile-menu-about', 'nav-about-btn');
     wire('mobile-menu-downloads', 'nav-downloads-btn');
     wire('mobile-menu-playlist', 'nav-playlist-btn');
@@ -112,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wireLeave('playlists-view-leave-btn');
     wireLeave('downloads-view-leave-btn');
     wireLeave('about-view-leave-btn');
+    wireLeave('premium-view-leave-btn');
 
     // Downloads nav-button ki visibility offline.js dynamically badalta
     // rehta hai (jab pehla gaana download/delete ho) - menu khulne par

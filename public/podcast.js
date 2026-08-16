@@ -691,6 +691,8 @@ function clearPodcastAdminMessages() {
 function renderPodcastAdminList() {
     podcastAdminList.innerHTML = '';
     podcastItems.forEach((p) => podcastAdminList.appendChild(buildPodcastAdminRow(p)));
+    const counterEl = document.getElementById('podcast-admin-total-counter');
+    if (counterEl) counterEl.textContent = podcastItems.length + (podcastItems.length === 1 ? ' podcast' : ' podcasts');
 }
 function buildPodcastAdminRow(p) {
     const row = document.createElement('div');

@@ -398,6 +398,13 @@ function clearAdminTracks() {
     nextTrackId = getNextTrackId();
 }
 
+function updateAdminSongTotalCounter() {
+    const counterEl = document.getElementById('admin-song-total-counter');
+    if (!counterEl) return;
+    const total = songs.length;
+    counterEl.textContent = total + (total === 1 ? ' song' : ' songs');
+}
+
 function renderSongsList(list) {
     // API newest-first bhejta hai; hum oldest-first process karte hain taake
     // IDs (105, 106, ...) add hone ke order se hi assign hon.
@@ -407,6 +414,7 @@ function renderSongsList(list) {
         adminTrackIds.push(trackId);
         renderAdminListRow(song);
     });
+    updateAdminSongTotalCounter();
     // songs array me admin tracks add hone ke baad "order" ko refresh kardo
     // (agar abhi shuffle active nahi hai) taake next/prev/search sab in
     // naye tracks ko bhi dekh sakein.
@@ -604,6 +612,7 @@ if (adminSongForm) {
                 showFormSuccess(data.message || 'Song added successfully!');
                 registerTrack(data.song);
                 renderAdminListRow(data.song);
+                updateAdminSongTotalCounter();
                 adminSongForm.reset();
                 songImagePreview.style.display = 'none';
                 setProjectorEnabled(false);
@@ -636,6 +645,7 @@ async function deleteSong(id, row) {
             icon.closest('.music-card').remove();
             const idx = songs.findIndex((s) => s.dbId === id);
             if (idx !== -1) songs.splice(idx, 1);
+            updateAdminSongTotalCounter();
 
             // Baaki sab songs jo removedId ke baad the, unke ".playMusic" icon
             // ids ko ek number neeche kar do - taake wo dobara `songs[id-1]`

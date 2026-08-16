@@ -12,6 +12,7 @@ const authRoutes = require('./routes/auth');
 const songRoutes = require('./routes/songs');
 const playlistRoutes = require('./routes/playlists');
 const podcastRoutes = require('./routes/podcasts');
+const premiumRoutes = require('./routes/premium');
 
 const app = express();
 
@@ -48,7 +49,7 @@ const SHELL_FILES_FOR_HASH = [
     'Index.html', 'Style.css', 'Script.js',
     'playlist.js', 'playlist-banner.js', 'admin.js',
     'auth.js', 'confirm.js', 'offline.js', 'about.js',
-    'mobile-menu.js', 'manifest.json',
+    'premium.js', 'mobile-menu.js', 'manifest.json',
 ];
 
 function getShellHash() {
@@ -81,6 +82,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/playlists', playlistRoutes);
 app.use('/api/podcasts', podcastRoutes);
+app.use('/api/premium', premiumRoutes);
 app.use('/api/contact', require('./routes/contact'));
 
 // Kisi bhi na-milne wali route pe frontend ka index.html hi bhej do (SPA-style fallback)
