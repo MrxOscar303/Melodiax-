@@ -137,7 +137,7 @@
         } catch (err) { /* best-effort hi hai, fail ho to koi baat nahi */ }
     }
 
-    function saveOfflineSong(id, blob, meta) {
+    function saveOfflineSong(id, blob, meta, projectorBlob) {
         return openDb().then((db) => new Promise((resolve, reject) => {
             const tx = db.transaction(STORE, 'readwrite');
             tx.objectStore(STORE).put({
@@ -146,6 +146,7 @@
                 name: (meta && meta.name) || '',
                 image: (meta && meta.image) || '',
                 desc: (meta && meta.desc) || '',
+                projectorBlob: projectorBlob || null,
                 downloadedAt: Date.now()
             });
             tx.oncomplete = () => resolve(true);
@@ -211,12 +212,28 @@
         return url;
     }
 
+    const projectorBlobUrlCache = new Map();
+    async function getOfflineProjectorUrl(id) {
+        id = String(id);
+        if (projectorBlobUrlCache.has(id)) return projectorBlobUrlCache.get(id);
+        const rec = await getOfflineSong(id);
+        if (!rec || !rec.projectorBlob) return null;
+        const url = URL.createObjectURL(rec.projectorBlob);
+        projectorBlobUrlCache.set(id, url);
+        return url;
+    }
+
     function revokeOfflineUrl(id) {
         id = String(id);
         const url = blobUrlCache.get(id);
         if (url) {
             URL.revokeObjectURL(url);
             blobUrlCache.delete(id);
+        }
+        const pUrl = projectorBlobUrlCache.get(id);
+        if (pUrl) {
+            URL.revokeObjectURL(pUrl);
+            projectorBlobUrlCache.delete(id);
         }
     }
 
@@ -226,13 +243,15 @@
     function revokeAllOfflineUrls() {
         blobUrlCache.forEach((url) => URL.revokeObjectURL(url));
         blobUrlCache.clear();
+        projectorBlobUrlCache.forEach((url) => URL.revokeObjectURL(url));
+        projectorBlobUrlCache.clear();
         revokeAllPodcastOfflineUrls();
     }
 
     // Script.js/admin.js is se offline copy check karke Audio/N.mp3 ki jagah
     // istemal karte hain (agar mojood ho).
     // ---------------- Podcast offline storage (mp3/mp4 - YouTube nahi) ----------------
-    function savePodcastOffline(id, blob, meta) {
+    function savePodcastOffline(id, blob, meta, projectorBlob) {
         return openDb().then((db) => new Promise((resolve, reject) => {
             const tx = db.transaction(PODCAST_STORE, 'readwrite');
             tx.objectStore(PODCAST_STORE).put({
@@ -242,6 +261,7 @@
                 category: (meta && meta.category) || '',
                 image: (meta && meta.image) || '',
                 sourceType: (meta && meta.sourceType) || 'mp3',
+                projectorBlob: projectorBlob || null,
                 downloadedAt: Date.now()
             });
             tx.oncomplete = () => resolve(true);
@@ -274,7 +294,8 @@
             req.onsuccess = () => {
                 const list = (req.result || []).map((r) => ({
                     id: r.id, title: r.title, category: r.category, image: r.image,
-                    sourceType: r.sourceType, downloadedAt: r.downloadedAt
+                    sourceType: r.sourceType, downloadedAt: r.downloadedAt,
+                    hasProjector: !!r.projectorBlob
                 }));
                 list.sort((a, b) => (b.downloadedAt || 0) - (a.downloadedAt || 0));
                 resolve(list);
@@ -294,9 +315,22 @@
         return url;
     }
 
+    const podcastProjectorBlobUrlCache = new Map();
+    async function getPodcastOfflineProjectorUrl(id) {
+        id = String(id);
+        if (podcastProjectorBlobUrlCache.has(id)) return podcastProjectorBlobUrlCache.get(id);
+        const rec = await getPodcastOffline(id);
+        if (!rec || !rec.projectorBlob) return null;
+        const url = URL.createObjectURL(rec.projectorBlob);
+        podcastProjectorBlobUrlCache.set(id, url);
+        return url;
+    }
+
     function revokeAllPodcastOfflineUrls() {
         podcastBlobUrlCache.forEach((url) => URL.revokeObjectURL(url));
         podcastBlobUrlCache.clear();
+        podcastProjectorBlobUrlCache.forEach((url) => URL.revokeObjectURL(url));
+        podcastProjectorBlobUrlCache.clear();
     }
 
     window.melodiaxOffline = {
@@ -306,12 +340,14 @@
         listIds: listOfflineIds,
         listAll: listAllOfflineSongs,
         getPlayUrl: getOfflinePlayUrl,
+        getProjectorUrl: getOfflineProjectorUrl,
         podcasts: {
             save: savePodcastOffline,
             get: getPodcastOffline,
             delete: deletePodcastOffline,
             listAll: listAllOfflinePodcasts,
-            getPlayUrl: getPodcastOfflinePlayUrl
+            getPlayUrl: getPodcastOfflinePlayUrl,
+            getProjectorUrl: getPodcastOfflineProjectorUrl
         }
     };
 
@@ -521,16 +557,38 @@
     }
 
     function playDownloadedSong(rec) {
-        getOfflinePlayUrl(rec.id).then((url) => {
+        getOfflinePlayUrl(rec.id).then(async (url) => {
             if (!url) return;
             if (typeof makeAllPlay === 'function') makeAllPlay();
             const icon = document.getElementById(rec.id);
             if (icon) { icon.classList.remove('fa-circle-play'); icon.classList.add('fa-circle-pause'); }
             if (typeof play !== 'undefined' && play) { play.classList.remove('fa-circle-play'); play.classList.add('fa-circle-pause'); }
             try { index = parseInt(rec.id, 10); currentSong = parseInt(rec.id, 10); } catch (err) { /* globals na milein to ignore */ }
+            window.melodiaxAudioOwner = 'song';
             audio.src = url;
             audio.currentTime = 0;
             audio.play();
+
+            // Agar is gaane ki projector video bhi offline save hai to wo bhi dikhao.
+            const projectorContainer = document.getElementById('projector-overlay');
+            const projectorVid = document.getElementById('projector-video');
+            const mainRightPart = document.querySelector('.main-right-part');
+            if (projectorVid) { projectorVid.pause(); projectorVid.src = ''; }
+            if (projectorContainer) projectorContainer.style.display = 'none';
+            if (mainRightPart) mainRightPart.classList.remove('songs-fade-out');
+            if (typeof hideProjectorBtn === 'function') hideProjectorBtn();
+            try {
+                const offlineProjectorUrl = await getOfflineProjectorUrl(rec.id);
+                if (offlineProjectorUrl && projectorVid && projectorContainer) {
+                    projectorVid.src = offlineProjectorUrl;
+                    projectorContainer.style.display = 'block';
+                    projectorVid.load();
+                    projectorVid.play().catch(() => {});
+                    if (mainRightPart) mainRightPart.classList.add('songs-fade-out');
+                    if (typeof showProjectorBtn === 'function') showProjectorBtn();
+                }
+            } catch (err) { /* offline projector na mile to bas audio hi chalti rahe */ }
+
             // rec (IndexedDB record) me is gaane ka naam/image/desc pehle se
             // maujood hai - lekin agar wo purana/khaali ho (fixed bug se
             // pehle download hua tha), resolveSongMeta() `songs` array se
@@ -704,9 +762,29 @@
                     const res = await fetch(meta.url);
                     if (!res.ok) throw new Error('Fetch failed: ' + res.status);
                     const blob = await res.blob();
+
+                    // Agar is podcast ke sath projector video bhi hai to
+                    // wo bhi offline save kar do (size zyada hogi, lekin
+                    // is se offline play karte waqt bhi video dikhegi).
+                    // Mp4-upload wale podcasts mein audio aur projector
+                    // ASAL mein ek hi file hoti hai (same URL) - us case
+                    // mein wahi blob dobara use kar lete hain, dobara
+                    // download nahi karte (bandwidth/storage bachane ke liye).
+                    let projectorBlob = null;
+                    if (meta.projectorVideo && meta.projectorVideo === meta.url) {
+                        projectorBlob = blob;
+                    } else if (meta.projectorVideo) {
+                        try {
+                            const pRes = await fetch(meta.projectorVideo);
+                            if (pRes.ok) projectorBlob = await pRes.blob();
+                        } catch (pErr) {
+                            console.warn('Projector video offline download failed (audio still saved):', pErr);
+                        }
+                    }
+
                     await savePodcastOffline(id, blob, {
                         title: meta.title, category: meta.category, image: meta.image, sourceType: meta.sourceType
-                    });
+                    }, projectorBlob);
                     setPlayerBtnState('downloaded');
                     const podcastIcon = document.querySelector(`.podcast-hub-card-download[data-id="${id}"]`);
                     if (podcastIcon) { podcastIcon.classList.add('downloaded'); podcastIcon.title = 'Downloaded - click to remove'; }
@@ -726,6 +804,23 @@
                 const res = await fetch(src);
                 if (!res.ok) throw new Error('Fetch failed: ' + res.status);
                 const blob = await res.blob();
+
+                // Agar is gaane ke sath projector video bhi hai to wo bhi
+                // offline save kar do (size zyada hogi, lekin offline play
+                // karte waqt bhi video dikhegi).
+                let projectorBlob = null;
+                if (typeof songs !== 'undefined' && Array.isArray(songs)) {
+                    const songData = songs.find((s, i) => String(s.trackId !== undefined ? s.trackId : i + 1) === String(id));
+                    if (songData && songData.projector && songData.videoPath) {
+                        try {
+                            const pRes = await fetch(songData.videoPath);
+                            if (pRes.ok) projectorBlob = await pRes.blob();
+                        } catch (pErr) {
+                            console.warn('Projector video offline download failed (audio still saved):', pErr);
+                        }
+                    }
+                }
+
                 // Pehle sirf home-card se naam/image/desc dhoondte the - agar
                 // wo card DOM me na ho (jaise admin/YouTube track jiska card
                 // render hi nahi hua, ya kabhi hata diya gaya ho) to khaali
@@ -740,7 +835,7 @@
                     name: nowBarMeta.name || (titleEl ? titleEl.textContent.trim() : ''),
                     desc: nowBarMeta.desc || (descEl ? descEl.textContent.trim() : ''),
                     image: nowBarMeta.image || (imgEl ? imgEl.getAttribute('src') : '')
-                });
+                }, projectorBlob);
                 setPlayerBtnState('downloaded');
                 const homeCardBtn = card ? card.querySelector('.music-download-btn') : null;
                 if (homeCardBtn) setBtnState(homeCardBtn, 'downloaded');

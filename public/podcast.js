@@ -470,7 +470,24 @@ async function playPodcast(p) {
     // agar projector video hai to wo) dikhe - module khud disturb na kare.
     closePodcastHub();
 
-    // ---------- Projector video (agar admin ne ON kiya ho) ----------
+    // ---------- Pehle audio + projector, dono ke liye offline copy check karo ----------
+    // (Sirf mp3/mp4 - YouTube kabhi offline nahi hoti). Agar downloaded hai
+    // to uski apni offline-saved projector video (agar thi) bhi milegi -
+    // warna live/network wali dikhayenge (agar internet ho).
+    let audioSrc = p.audioFile;
+    let projectorSrc = p.projectorEnabled ? p.projectorVideo : '';
+    if (p.sourceType !== 'youtube' && window.melodiaxOffline && window.melodiaxOffline.podcasts) {
+        try {
+            const offlineAudioUrl = await window.melodiaxOffline.podcasts.getPlayUrl(p._id);
+            if (offlineAudioUrl) {
+                audioSrc = offlineAudioUrl;
+                const offlineProjectorUrl = await window.melodiaxOffline.podcasts.getProjectorUrl(p._id);
+                if (offlineProjectorUrl) projectorSrc = offlineProjectorUrl;
+            }
+        } catch (err) { /* offline lookup fail - network path use karlo */ }
+    }
+
+    // ---------- Projector video (agar admin ne ON kiya ho, ya offline copy maujood ho) ----------
     const projectorContainer = document.getElementById('projector-overlay');
     const projectorVid = document.getElementById('projector-video');
     const mainRightPart = document.querySelector('.main-right-part');
@@ -482,8 +499,8 @@ async function playPodcast(p) {
     if (mainRightPart) mainRightPart.classList.remove('songs-fade-out');
     if (typeof hideProjectorBtn === 'function') hideProjectorBtn();
 
-    if (p.projectorEnabled && p.projectorVideo && projectorVid && projectorContainer) {
-        projectorVid.src = p.projectorVideo;
+    if (projectorSrc && projectorVid && projectorContainer) {
+        projectorVid.src = projectorSrc;
         projectorContainer.style.display = 'block';
         projectorVid.load();
         projectorVid.play().catch(() => {});
@@ -500,28 +517,22 @@ async function playPodcast(p) {
     // Player-bar se download click hone par offline.js ko pata hona chahiye
     // kis URL/meta se save karna hai (podcast cards ki tarah data-attributes
     // nahi hote yahan, is liye ek chhota global "stash" use karte hain).
+    // Yahan hamesha ASAL (network) URLs stash karte hain - offline copy se
+    // dobara offline copy banane ki koshish na ho.
     window.melodiaxCurrentPodcastMeta = {
         url: p.audioFile,
         title: p.title,
         category: p.category,
         image: podcastThumbnail(p),
-        sourceType: p.sourceType
+        sourceType: p.sourceType,
+        projectorVideo: p.projectorEnabled ? p.projectorVideo : ''
     };
 
     // ---------- Audio/YouTube ----------
     if (p.sourceType === 'youtube') {
         startYoutubeTrack({ youtubeId: p.youtubeId });
     } else {
-        // Pehle offline (downloaded) copy check karo - agar mil jaye to
-        // wahi (bina internet) chalao, warna network wali file.
-        let src = p.audioFile;
-        if (window.melodiaxOffline && window.melodiaxOffline.podcasts) {
-            try {
-                const offlineUrl = await window.melodiaxOffline.podcasts.getPlayUrl(p._id);
-                if (offlineUrl) src = offlineUrl;
-            } catch (err) { /* offline lookup fail - network path use karlo */ }
-        }
-        audio.src = src;
+        audio.src = audioSrc;
         audio.currentTime = 0;
         audio.play().catch((err) => console.warn('Podcast playback failed:', err));
         play.classList.remove('fa-circle-play');

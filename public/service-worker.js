@@ -24,6 +24,7 @@ const APP_SHELL = [
     '/auth.js',
     '/confirm.js',
     '/offline.js',
+    '/podcast.js',
     '/manifest.json',
     '/favicon.ico'
 ];
