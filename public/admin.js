@@ -901,6 +901,15 @@ function startYoutubeTrack(data) {
     currentPlaybackType = 'youtube';
     if (!audio.paused) audio.pause();
     if (ytPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
+        // iOS par (Safari/Chrome, dono WebKit) naya/reloaded YouTube video
+        // BINA mute kiye play() karna aksar chup-chaap block ho jata tha -
+        // pehle sirf "player abhi ready nahi hua" wale (neeche) case mein
+        // mute kiya jata tha, is "already ready" wale (jyada common) case
+        // mein nahi - isi wajah se real iPhone par YouTube gaane/podcast
+        // kabhi kabhi bilkul nahi chalte the aur auto-skip agle (local)
+        // track par chala jata tha. onYtStateChange PLAYING milte hi khud
+        // unmute ho jata hai, is liye awaz turant wapas aa jati hai.
+        if (ytPlayer.mute) ytPlayer.mute();
         if (currentYoutubeId === data.youtubeId && ytPlayer.seekTo) {
             // Wahi song dobara click hua - naya network fetch karne ki
             // zaroorat nahi, bas shuru se dobara chala do (turant hota hai).

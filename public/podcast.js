@@ -457,7 +457,7 @@ function setPodcastQueue(list, playedItem) {
 // (WebKit) is call ko silently reject kar deta hai (button "pause"
 // dikhata hai lekin kuch bajta nahi).
 // ============================================================
-async function playPodcast(p) {
+function playPodcast(p) {
     if (typeof makeAllPlay === 'function') makeAllPlay();
 
     // Songs aur Podcasts SAME <audio>/YouTube player share karte hain -
@@ -465,29 +465,24 @@ async function playPodcast(p) {
     // error aane, ya forward/backward/shuffle/repeat dabane par sahi
     // (podcast) system hi respond kare, kabhi galti se song system nahi.
     window.melodiaxAudioOwner = 'podcast';
+    window.melodiaxCurrentPodcastId = p._id;
 
     // Module band kar do taake user ko sirf neeche wala music player (aur
     // agar projector video hai to wo) dikhe - module khud disturb na kare.
     closePodcastHub();
 
-    // ---------- Pehle audio + projector, dono ke liye offline copy check karo ----------
-    // (Sirf mp3/mp4 - YouTube kabhi offline nahi hoti). Agar downloaded hai
-    // to uski apni offline-saved projector video (agar thi) bhi milegi -
-    // warna live/network wali dikhayenge (agar internet ho).
-    let audioSrc = p.audioFile;
-    let projectorSrc = p.projectorEnabled ? p.projectorVideo : '';
-    if (p.sourceType !== 'youtube' && window.melodiaxOffline && window.melodiaxOffline.podcasts) {
-        try {
-            const offlineAudioUrl = await window.melodiaxOffline.podcasts.getPlayUrl(p._id);
-            if (offlineAudioUrl) {
-                audioSrc = offlineAudioUrl;
-                const offlineProjectorUrl = await window.melodiaxOffline.podcasts.getProjectorUrl(p._id);
-                if (offlineProjectorUrl) projectorSrc = offlineProjectorUrl;
-            }
-        } catch (err) { /* offline lookup fail - network path use karlo */ }
-    }
+    // ---------- Turant asal (network) URL se play karo - koi `await` yahan
+    // audio.play()/projectorVid.play() se PEHLE nahi hona chahiye. Pehle
+    // (offline copy dhoondhne ke liye) await lagane se iOS Safari/Chrome
+    // (WebKit) user-gesture ka context "toot" gaya samajh kar play() ko
+    // chup-chaap block kar deta hai - isi wajah se button click kabhi kabhi
+    // kuch nahi karta tha aur projector video der se/lag ke sath load hoti
+    // thi. Offline (downloaded) copy mile to use NEECHE, play() ke baad,
+    // bina playback ko rokte hue switch karte hain. ----------
+    const audioSrc = p.audioFile;
+    const projectorSrc = p.projectorEnabled ? p.projectorVideo : '';
 
-    // ---------- Projector video (agar admin ne ON kiya ho, ya offline copy maujood ho) ----------
+    // ---------- Projector video (agar admin ne ON kiya ho) ----------
     const projectorContainer = document.getElementById('projector-overlay');
     const projectorVid = document.getElementById('projector-video');
     const mainRightPart = document.querySelector('.main-right-part');
@@ -544,6 +539,36 @@ async function playPodcast(p) {
         songName: p.title,
         songDes: p.category,
     });
+
+    // ---------- Offline (downloaded) copy check - ASYNC, playback ko bilkul
+    // block nahi karta ----------
+    // (Sirf mp3/mp4 - YouTube kabhi offline nahi hoti). Ye ab play() ke BAAD
+    // chalta hai, is liye pehla (network) play() hamesha turant/user-gesture
+    // ke andar hi hota hai. Downloaded mil jaye to audio/projector dono ko
+    // chupke se (currentTime preserve karte hue) offline copy par switch
+    // kar dete hain - bilkul waisa hi jaisa local songs (admin.js) karte hain.
+    if (p.sourceType !== 'youtube' && window.melodiaxOffline && window.melodiaxOffline.podcasts) {
+        window.melodiaxOffline.podcasts.getPlayUrl(p._id).then(async (offlineAudioUrl) => {
+            // Is dauran user kahin aur (doosra podcast/song) chala chuka ho
+            // sakta hai - sirf tab switch karo jab abhi bhi yahi podcast chal raha ho.
+            if (!offlineAudioUrl || window.melodiaxCurrentPodcastId !== p._id) return;
+            const resumeTime = audio.currentTime;
+            audio.src = offlineAudioUrl;
+            audio.currentTime = resumeTime;
+            audio.play().catch(() => {});
+
+            try {
+                const offlineProjectorUrl = await window.melodiaxOffline.podcasts.getProjectorUrl(p._id);
+                if (offlineProjectorUrl && projectorVid && window.melodiaxCurrentPodcastId === p._id) {
+                    const vidTime = projectorVid.currentTime;
+                    projectorVid.src = offlineProjectorUrl;
+                    projectorVid.load();
+                    projectorVid.currentTime = vidTime;
+                    projectorVid.play().catch(() => {});
+                }
+            } catch (err) { /* offline projector na mile to network wali hi chalti rahe */ }
+        }).catch(() => { /* offline lookup fail - network path already playing */ });
+    }
 }
 
 // Music-player ke shuffle/repeat button podcasts ke liye bhi wahi (shared)
