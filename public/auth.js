@@ -320,7 +320,7 @@ signupForm.addEventListener('submit', async (e) => {
             // taake verify karne ke baad wahin se login kar sakein.
             const emailForResend = data.email;
             signupForm.reset();
-            avatarPreview.src = '/uploads/avatars/default-avatar.png';
+            avatarPreview.src = '/assets/default-avatar.png';
             switchTab('login');
             showSuccess(data.message || 'Account created! Check your inbox to verify your email.');
             showResendHint(emailForResend);
@@ -331,7 +331,7 @@ signupForm.addEventListener('submit', async (e) => {
         showLoggedInUI(data.user);
         closeModal();
         signupForm.reset();
-        avatarPreview.src = '/uploads/avatars/default-avatar.png';
+        avatarPreview.src = '/assets/default-avatar.png';
     } catch (err) {
         showError('Could not connect to the server. Is the backend running?');
     } finally {

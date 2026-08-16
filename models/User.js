@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
         },
         profilePicture: {
             type: String,
-            default: '/uploads/avatars/default-avatar.png',
+            default: '/assets/default-avatar.png',
         },
         authProvider: {
             type: String,
