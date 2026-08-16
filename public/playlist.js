@@ -280,6 +280,13 @@
 
     function showDefaultTab() {
         if (typeof window.melodiaxHideDownloadsTab === 'function') window.melodiaxHideDownloadsTab();
+        // About aur Premium tab agar khule hon to unhe turant (bina fade ke)
+        // chupa do - baaki tabs (Playlist/Downloads/Premium) jis waqt About se
+        // khud khulte hain wahi pattern follow karte hain. Isse About -> Home
+        // transition ke waqt About ka text home content ke peeche/upar ek
+        // pal ke liye dikhna band ho jata hai.
+        if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
+        if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
         fadeOutThen([playlistsViewSection], () => {
             if (playlistsViewSection) playlistsViewSection.style.display = 'none';
             const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));
