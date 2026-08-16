@@ -21,10 +21,7 @@
     }
 
     function hideAboutTab() {
-        if (!aboutSection || aboutSection.style.display === 'none') return;
-        fadeOutThen([aboutSection], () => {
-            aboutSection.style.display = 'none';
-        });
+        if (aboutSection) aboutSection.style.display = 'none';
     }
 
     // Turant (bina fade animation ke) chupa deta hai - jab koi doosra tab

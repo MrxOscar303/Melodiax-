@@ -2967,8 +2967,7 @@ body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 
 .main-right-part > .music-section,
 #playlists-view-section,
 #downloads-view-section,
-#premium-view-section,
-#about-view-section {
+#premium-view-section {
     transition: opacity 0.28s ease, transform 0.28s ease;
     opacity: 1;
     transform: translateY(0);
@@ -2976,8 +2975,7 @@ body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 
 .main-right-part > .music-section.view-hidden,
 #playlists-view-section.view-hidden,
 #downloads-view-section.view-hidden,
-#premium-view-section.view-hidden,
-#about-view-section.view-hidden {
+#premium-view-section.view-hidden {
     opacity: 0;
     transform: translateY(10px);
     pointer-events: none;
