@@ -287,43 +287,14 @@ function renderPodcastGrid() {
             <div class="podcast-hub-card-thumb">
                 <img src="${escapeHtml(podcastThumbnail(p))}" alt="">
                 <div class="podcast-hub-card-play"><i class="fa-solid fa-play"></i></div>
-                ${formatPodcastDuration(p.duration) ? `<span class="podcast-hub-card-duration">${formatPodcastDuration(p.duration)}</span>` : ''}
             </div>
             <div class="podcast-hub-card-info">
                 <span class="podcast-hub-card-cat">${escapeHtml(p.category)}</span>
                 <h4>${escapeHtml(p.title)}</h4>
                 ${p.description ? `<p>${escapeHtml(p.description)}</p>` : ''}
-                ${p.sourceType !== 'youtube' && p.audioFile ? `
-                <i class="fa-solid fa-download podcast-hub-card-download" title="Download"
-                    data-id="${p._id}"
-                    data-url="${escapeHtml(p.audioFile)}"
-                    data-name="${escapeHtml(p.title)}"
-                    data-category="${escapeHtml(p.category || '')}"
-                    data-image="${escapeHtml(podcastThumbnail(p))}"
-                    data-sourcetype="${escapeHtml(p.sourceType)}"></i>` : ''}
             </div>
         </div>
     `).join('');
-
-    podcastHubGrid.querySelectorAll('.podcast-hub-card-download').forEach((btn) => {
-        const id = btn.dataset.id;
-        // Pehle se downloaded ho to icon turant "downloaded" state dikhaye.
-        if (window.melodiaxOffline && window.melodiaxOffline.podcasts) {
-            window.melodiaxOffline.podcasts.get(id).then((rec) => {
-                if (rec) { btn.classList.add('downloaded'); btn.title = 'Downloaded - click to remove'; }
-            }).catch(() => {});
-        }
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation(); // card ka play click trigger na ho
-            handlePodcastDownloadClick(btn, id, {
-                url: btn.dataset.url,
-                title: btn.dataset.name,
-                category: btn.dataset.category,
-                image: btn.dataset.image,
-                sourceType: btn.dataset.sourcetype
-            });
-        });
-    });
 
     podcastHubGrid.querySelectorAll('.podcast-hub-card').forEach((card) => {
         card.addEventListener('click', () => {
@@ -596,7 +567,7 @@ function playPrevPodcast() {
 }
 
 function podcastEnded() {
-    if (typeof repeat !== 'undefined' && repeat && repeat.classList.contains('fa-repeat-1')) {
+    if (typeof repeat !== 'undefined' && repeat && repeat.classList.contains('active')) {
         // Repeat: wahi video/audio dobara se
         const current = podcastQueue[podcastQueueIndex];
         if (current && current.sourceType === 'youtube') {
@@ -633,6 +604,24 @@ function stopPodcastPlayback() {
 window.melodiaxPlayNextPodcast = playNextPodcast;
 window.melodiaxPlayPrevPodcast = playPrevPodcast;
 window.melodiaxPodcastEnded = podcastEnded;
+
+// Home page ke "Downloads" section (offline.js) se ek downloaded podcast
+// play karne ke liye - poori downloaded-podcasts list ko hi queue bana dete
+// hain, taake wahan se bhi next/prev/loop sab kaam karein.
+window.melodiaxPlayOfflinePodcast = async function (rec) {
+    if (!window.melodiaxOffline || !window.melodiaxOffline.podcasts) return;
+    const allDownloaded = await window.melodiaxOffline.podcasts.listAll();
+    const queueList = allDownloaded.map((r) => ({
+        _id: r.id, sourceType: r.sourceType, audioFile: null,
+        title: r.title, category: r.category, image: r.image, projectorEnabled: false
+    }));
+    const item = queueList.find((q) => q._id === rec.id) || {
+        _id: rec.id, sourceType: rec.sourceType, audioFile: null,
+        title: rec.title, category: rec.category, image: rec.image, projectorEnabled: false
+    };
+    setPodcastQueue(queueList, item);
+    playPodcast(item);
+};
 
 // ============================================================
 // ---------------- Hub open/close ----------------

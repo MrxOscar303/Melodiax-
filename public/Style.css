@@ -2238,7 +2238,7 @@ body.red-theme .podcast-hub-card-play i { background: #ff4d4d; }
     margin-bottom: 6px;
 }
 body.red-theme .podcast-hub-card-cat { color: #ff4d4d; }
-.podcast-hub-card-info h4 { margin: 0 0 6px; padding-right: 30px; font-size: 1.05rem; color: #fff; }
+.podcast-hub-card-info h4 { margin: 0 0 6px; font-size: 1.05rem; color: #fff; }
 .podcast-hub-card-info p {
     margin: 0;
     padding-right: 30px;
@@ -2290,6 +2290,14 @@ body.red-theme .podcast-hub-card-download.downloaded { color: #ff4d4d; }
    ========================================================================== */
 
 /* ---------- Sidebar: user ki apni playlists (Browse Podcasts box ke neeche) ---------- */
+.user-playlists-heading {
+    margin: 4px 0 8px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    font-weight: 600;
+}
 .user-playlists-list {
     flex: 1;
     min-height: 0;

@@ -409,7 +409,12 @@
         if (!hasOfflineAccess()) { downloadsNavBtn.style.display = 'none'; return; }
         try {
             const ids = await listOfflineIds();
-            downloadsNavBtn.style.display = ids.length ? '' : 'none';
+            let podcastCount = 0;
+            if (window.melodiaxOffline && window.melodiaxOffline.podcasts) {
+                const podcastList = await window.melodiaxOffline.podcasts.listAll();
+                podcastCount = podcastList.length;
+            }
+            downloadsNavBtn.style.display = (ids.length || podcastCount) ? '' : 'none';
         } catch (err) {
             downloadsNavBtn.style.display = 'none';
         }
@@ -424,8 +429,11 @@
     async function renderDownloadsGrid() {
         if (!downloadsGrid) return;
         const list = await listAllOfflineSongs();
+        const podcastList = (window.melodiaxOffline && window.melodiaxOffline.podcasts)
+            ? await window.melodiaxOffline.podcasts.listAll()
+            : [];
         downloadsGrid.innerHTML = '';
-        if (downloadsEmptyMsg) downloadsEmptyMsg.style.display = list.length ? 'none' : '';
+        if (downloadsEmptyMsg) downloadsEmptyMsg.style.display = (list.length || podcastList.length) ? 'none' : '';
         list.forEach((rec) => {
             const meta = resolveSongMeta(rec.id, rec);
             healOfflineMetaIfNeeded(rec.id, rec, meta);
@@ -465,6 +473,48 @@
                 afterOfflineChange(rec.id);
             });
             card.addEventListener('click', () => playDownloadedSong(rec));
+
+            downloadsGrid.appendChild(card);
+        });
+
+        // Downloaded PODCASTS (mp3/mp4) bhi isi grid mein, songs ke baad -
+        // inko playDownloadedSong (song-only) se nahi, apne podcast-specific
+        // play function se chalate hain, taake ye hamesha SAHI content
+        // chalayein, kabhi galti se koi random song nahi.
+        podcastList.forEach((rec) => {
+            const card = document.createElement('div');
+            card.className = 'playlist-view-card';
+            card.innerHTML =
+                '<div class="playlist-view-cover">' +
+                    (rec.image ? '<img src="' + rec.image + '" alt="">' : '<i class="fa-solid fa-graduation-cap"></i>') +
+                    '<button type="button" class="playlist-view-play" title="Play"><i class="fa-solid fa-play"></i></button>' +
+                '</div>' +
+                '<div class="playlist-view-info">' +
+                    '<div class="playlist-view-name">' + escapeHtmlLocal(rec.title || 'Untitled') + '</div>' +
+                    '<div class="playlist-view-count">' + escapeHtmlLocal(rec.category || 'Podcast') + ' - Downloaded</div>' +
+                '</div>' +
+                '<div class="playlist-view-actions">' +
+                    '<button type="button" class="playlist-view-delete"><i class="fa-solid fa-trash"></i> Delete</button>' +
+                '</div>';
+
+            const playThisPodcast = () => {
+                if (typeof window.melodiaxPlayOfflinePodcast === 'function') window.melodiaxPlayOfflinePodcast(rec);
+            };
+            card.querySelector('.playlist-view-play').addEventListener('click', (e) => {
+                e.stopPropagation();
+                playThisPodcast();
+            });
+            card.querySelector('.playlist-view-delete').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const ok = window.showConfirm
+                    ? await window.showConfirm('Delete this offline copy?', { confirmText: 'Delete' })
+                    : window.confirm('Delete this offline copy?');
+                if (!ok) return;
+                await window.melodiaxOffline.podcasts.delete(rec.id);
+                renderDownloadsGrid();
+                updateDownloadsNavVisibility();
+            });
+            card.addEventListener('click', playThisPodcast);
 
             downloadsGrid.appendChild(card);
         });
@@ -631,6 +681,8 @@
                     // hai) bhi sync kar do.
                     const podcastIcon = document.querySelector(`.podcast-hub-card-download[data-id="${id}"]`);
                     if (podcastIcon) { podcastIcon.classList.remove('downloaded'); podcastIcon.title = 'Download'; }
+                    updateDownloadsNavVisibility();
+                    if (downloadsSection && downloadsSection.style.display !== 'none') renderDownloadsGrid();
                     return;
                 }
                 await deleteOfflineSong(id);
@@ -658,6 +710,8 @@
                     setPlayerBtnState('downloaded');
                     const podcastIcon = document.querySelector(`.podcast-hub-card-download[data-id="${id}"]`);
                     if (podcastIcon) { podcastIcon.classList.add('downloaded'); podcastIcon.title = 'Downloaded - click to remove'; }
+                    updateDownloadsNavVisibility();
+                    if (downloadsSection && downloadsSection.style.display !== 'none') renderDownloadsGrid();
                 } catch (err) {
                     console.warn('Offline podcast download failed:', err);
                     setPlayerBtnState('idle');

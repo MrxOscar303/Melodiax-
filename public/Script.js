@@ -574,7 +574,7 @@ audio.addEventListener('ended', () => {
 
     const mainRightPart = document.querySelector('.main-right-part');
 
-    if (repeat.classList.contains('fa-repeat-1')) {
+    if (repeat.classList.contains('active')) {
         // Repeat mode: wahi gaana + wahi video loop ho
         audio.currentTime = 0;
         audio.play();
