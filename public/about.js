@@ -9,7 +9,7 @@
         const visible = elements.filter((el) => el && el.style.display !== 'none');
         if (!visible.length) { after(); return; }
         visible.forEach((el) => el.classList.add('view-hidden'));
-        setTimeout(after, 180);
+        setTimeout(after, 220);
     }
 
     function fadeIn(elements) {
