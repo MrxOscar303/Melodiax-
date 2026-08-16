@@ -3615,15 +3615,24 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     #play { font-size: 1.8rem; }
     .volume-container { flex: 1 1 100%; order: 3; justify-content: center; padding-right: 0; gap: 1rem; }
     #progressBar { width: 100%; max-width: 92vw; }
-    .player-bar img { height: 3.2rem; width: 3.2rem; }
-    .img-title-info, .img-des-info { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .player-bar img { height: 3.2rem; width: 3.2rem; flex-shrink: 0; }
+    /* Pehle title/desc ko ek fixed "46vw" chaudai di jati thi - chhote
+       screens (jahan image+button ka hissa us 46vw ke sath mil kar row ki
+       poori chaudai se zyada ho jata) par download button screen ke
+       daayein kinare se bahar chala jata tha. Ab text column ko flex se
+       khud "baaki bachi hui" jagah lene dete hain (image aur button dono
+       flex-shrink:0 hain, apni fixed size par rehte hain) - is se button
+       kabhi bhi screen se bahar nahi ja sakta, chahe title kitna bhi lamba
+       ho ya screen kitni bhi choti ho. */
+    .now-bar-info { flex: 1 1 auto; min-width: 0; }
+    .img-title-info, .img-des-info { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     /* Song name/description apni normal (left-aligned) jagah par hi rehte
        hain - download button ab is row ke right edge (card ke top-right,
        "marked" jagah) par hai, khud apna margin-left:auto lagate hain taake
        sirf wahi end tak push ho, baaki (img/title/artist) apni asal jagah
        par rahe. */
     .now-bar { justify-content: flex-start; padding-right: 0.4rem; box-sizing: border-box; }
-    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: auto; }
+    .now-bar .player-download-btn { width: 1.9rem; height: 1.9rem; font-size: 1.2rem; margin-left: 0.6rem; margin-right: 0.3rem; flex-shrink: 0; }
 
     /* Projector (exit-projector-btn) - jahan pehle download button tha wahan
        ab ye chhota sa button aata hai (mobile-menu.js isse yahan move karta
@@ -3653,14 +3662,23 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
        aur "area cover bhi ho" (kahin se khaali/black na dikhe) dono ek sath
        sirf tab mumkin hain jab video screen ka poora area bhare - is liye
        object-fit:cover use kiya (thoda edges se crop hota hai, lekin na to
-       khaali patti dikhti hai na hi video chhoti/off-center lagti hai). */
+       khaali patti dikhti hai na hi video chhoti/off-center lagti hai).
+       NOTE: pehle width:100vw/height:100vh se size diya jata tha - asal
+       iPhone (Safari) par ye kabhi kabhi screen ke pure right edge tak
+       nahi pahunchta tha (ek patli khaali/black patti reh jati thi),
+       chahe desktop ke "mobile view"/inspect mein bilkul theek dikhta ho -
+       ye WebKit ka jaana-mana quirk hai jahan fixed element par vw/vh
+       asal screen edges se thoda mismatch ho jate hain. `inset: 0` seedha
+       viewport ke chaaron edges se lock kar deta hai, is quirk se bachata hai. */
     .projector-container {
         top: 0;
         left: 0;
+        inset: 0;
         transform: none;
-        width: 100vw;
-        height: 100dvh;
-        height: 100vh;
+        width: auto;
+        height: auto;
+        max-width: none;
+        max-height: none;
     }
     .projector-mask {
         width: 100%;
@@ -3669,6 +3687,8 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     #projector-video {
         width: 100%;
         height: 100%;
+        max-width: none;
+        max-height: none;
         object-fit: cover;
         object-position: center;
     }
