@@ -39,6 +39,13 @@ const premiumPlanSchema = new mongoose.Schema(
             trim: true,
             default: '#1db954',
         },
+        // Chhoti cover image - crown icon ki jagah dikhti hai (optional,
+        // khaali ho to purana crown icon fallback ke tor par rehta hai).
+        image: {
+            type: String,
+            trim: true,
+            default: '',
+        },
         // Chhota number pehle dikhta hai (card order). Equal hone par
         // createdAt (purana pehle) se decide hota hai.
         order: {

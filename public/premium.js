@@ -38,6 +38,8 @@
     const premiumPriceInput = document.getElementById('premium-price');
     const premiumTaglineInput = document.getElementById('premium-tagline');
     const premiumBadgeInput = document.getElementById('premium-badge');
+    const premiumImageInput = document.getElementById('premium-image');
+    const premiumImagePreview = document.getElementById('premium-image-preview');
     const premiumFeaturesInput = document.getElementById('premium-features');
     const premiumColorInput = document.getElementById('premium-color');
     const premiumColorCustom = document.getElementById('premium-color-custom');
@@ -87,10 +89,16 @@
         const featuresHtml = (p.features || [])
             .map((f) => `<li><i class="fa-solid fa-check"></i> ${escapeHtml(f)}</li>`)
             .join('');
+        // Admin ne cover image di ho to crown icon ki jagah wahi dikhti hai
+        // (same chhota circle, card ka size nahi badalta) - warna purana
+        // crown icon fallback ke tor par rehta hai.
+        const iconHtml = p.image
+            ? `<div class="premium-card-icon premium-card-icon-image"><img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)} cover"></div>`
+            : `<div class="premium-card-icon"><i class="fa-solid fa-crown"></i></div>`;
         return `
             <div class="premium-card" style="--premium-card-color: ${color};">
                 ${p.badge ? `<span class="premium-card-badge">${escapeHtml(p.badge)}</span>` : ''}
-                <div class="premium-card-icon"><i class="fa-solid fa-crown"></i></div>
+                ${iconHtml}
                 <h3 class="premium-card-name">${escapeHtml(p.name)}</h3>
                 ${p.price ? `<div class="premium-card-price">${escapeHtml(p.price)}</div>` : ''}
                 ${p.tagline ? `<p class="premium-card-tagline">${escapeHtml(p.tagline)}</p>` : ''}
@@ -216,6 +224,19 @@
         });
     }
 
+    // ---------------- Cover image preview ----------------
+    if (premiumImageInput) {
+        premiumImageInput.addEventListener('change', () => {
+            const file = premiumImageInput.files[0];
+            if (file) {
+                premiumImagePreview.src = URL.createObjectURL(file);
+                premiumImagePreview.style.display = 'block';
+            } else {
+                premiumImagePreview.style.display = 'none';
+            }
+        });
+    }
+
     // ---------------- Form messages ----------------
     function showPremiumError(msg) {
         premiumFormSuccess.classList.remove('visible');
@@ -266,6 +287,14 @@
         premiumFeaturesInput.value = (p.features || []).join('\n');
         premiumOrderInput.value = (p.order !== undefined && p.order !== null) ? String(p.order) : '0';
         selectPremiumColor(p.color || '#1db954', null);
+        premiumImageInput.value = '';
+        if (p.image) {
+            premiumImagePreview.src = p.image;
+            premiumImagePreview.style.display = 'block';
+        } else {
+            premiumImagePreview.style.display = 'none';
+            premiumImagePreview.src = '';
+        }
 
         premiumPanelTitle.innerHTML = '<i class="fa-solid fa-crown"></i> Edit Plan';
         premiumSubmitBtn.textContent = 'Save Changes';
@@ -277,6 +306,8 @@
     function cancelPremiumEdit() {
         premiumForm.reset();
         premiumEditId.value = '';
+        premiumImagePreview.style.display = 'none';
+        premiumImagePreview.src = '';
         selectPremiumColor('#1db954', premiumSwatchesWrap ? premiumSwatchesWrap.querySelector('.pbanner-swatch') : null);
         premiumPanelTitle.innerHTML = '<i class="fa-solid fa-crown"></i> Premium Plans';
         premiumSubmitBtn.textContent = 'Add Plan';
@@ -292,28 +323,31 @@
             clearPremiumMessages();
 
             const id = premiumEditId.value;
-            const payload = {
-                name: premiumNameInput.value.trim(),
-                price: premiumPriceInput.value.trim(),
-                tagline: premiumTaglineInput.value.trim(),
-                badge: premiumBadgeInput.value.trim(),
-                features: premiumFeaturesInput.value,
-                color: premiumColorInput.value,
-                order: premiumOrderInput.value.trim() || '0',
-            };
+            const name = premiumNameInput.value.trim();
 
-            if (!payload.name) {
+            if (!name) {
                 showPremiumError('Plan name is required');
                 return;
             }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('price', premiumPriceInput.value.trim());
+            formData.append('tagline', premiumTaglineInput.value.trim());
+            formData.append('badge', premiumBadgeInput.value.trim());
+            formData.append('features', premiumFeaturesInput.value);
+            formData.append('color', premiumColorInput.value);
+            formData.append('order', premiumOrderInput.value.trim() || '0');
+            // Cover image optional hai - sirf tab bhejte hain jab admin ne
+            // nayi file chuni ho (edit mein blank chhodne par purani image bani rehti hai).
+            if (premiumImageInput.files[0]) formData.append('image', premiumImageInput.files[0]);
 
             premiumSubmitBtn.disabled = true;
             try {
                 const res = await fetch(id ? `${PREMIUM_API}/${id}` : PREMIUM_API, {
                     method: id ? 'PUT' : 'POST',
                     credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
+                    body: formData,
                 });
                 const data = await res.json();
                 if (!res.ok) {

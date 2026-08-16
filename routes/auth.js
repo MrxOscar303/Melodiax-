@@ -244,7 +244,7 @@ function sendOauthPopupResponse(res, success) {
     const fallbackUrl = success ? '/?auth=success' : '/?auth=failed';
     const heading = success ? 'Login successful!' : 'Login failed';
     const message = success
-        ? 'You are now logged in. You can close this tab.'
+        ? 'You are now logged in. This tab will close automatically.'
         : 'Something went wrong, please try again. You can close this tab.';
 
     res.send(`<!DOCTYPE html>
@@ -279,10 +279,14 @@ function sendOauthPopupResponse(res, success) {
 (function () {
     // Agar ye popup se khula tha (main tab ne open kiya tha) to usi tab ko
     // postMessage se turant bata dete hain - taake wahan login/signup turant
-    // reflect ho jaye (jaise Spotify karta hai). Popup khud band NAHI hota,
-    // user apni marzi se is tab ko close karega.
+    // reflect ho jaye (jaise Spotify karta hai). Login successful hone par
+    // popup khud-ba-khud band ho jata hai; failure par user ko dikhta rehta
+    // hai taake wo error padh sake aur khud close kare.
     if (window.opener) {
         window.opener.postMessage({ type: '${type}' }, window.location.origin);
+        if (${success ? 'true' : 'false'}) {
+            window.close();
+        }
     } else {
         // Popup blocked tha, is liye normal full-page navigation hui thi -
         // us case mein seedha home page par bhej dete hain.

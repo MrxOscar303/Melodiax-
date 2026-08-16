@@ -1,10 +1,49 @@
 const express = require('express');
+const multer = require('multer');
 const rateLimit = require('express-rate-limit');
+const cloudinary = require('cloudinary').v2;
 
 const PremiumPlan = require('../models/PremiumPlan');
 const { requireAuth, requireAdmin } = require('../middleware/authMiddleware');
 
 const router = express.Router();
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Buffer (memory mein aayi hui file) ko seedha Cloudinary par upload karta hai
+// - playlists.js jaisa hi pattern (koi bhi hosting ho, image kabhi local
+// disk par save hi nahi hoti).
+function uploadBufferToCloudinary(buffer, folder) {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+            { folder: `melodiax/${folder}`, resource_type: 'image' },
+            (err, result) => {
+                if (err) return reject(err);
+                resolve(result.secure_url);
+            }
+        );
+        stream.end(buffer);
+    });
+}
+
+// ---------- Premium plan cover image upload (Multer) ----------
+// Crown icon ki jagah dikhne wali chhoti cover image - optional hai, isliye
+// (playlist banner ke unlike) na hone par bhi form submit ho sakta hai.
+const storage = multer.memoryStorage();
+
+const upload = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (allowed.includes(file.mimetype)) return cb(null, true);
+        return cb(new Error('Only image files (jpg, png, webp, gif) allowed hain'));
+    },
+});
 
 const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -36,7 +75,7 @@ function parseFeatures(raw) {
 const DEFAULT_PLANS = [
     {
         name: 'Silver',
-        price: '$2.99/mo',
+        price: 'RM12.90/mo',
         tagline: 'A light, ad-free starting point',
         features: ['Ad-free listening', 'Standard audio quality', 'Unlimited skips'],
         color: '#9ea7b3',
@@ -44,7 +83,7 @@ const DEFAULT_PLANS = [
     },
     {
         name: 'Gold',
-        price: '$5.99/mo',
+        price: 'RM25.90/mo',
         tagline: 'Our most popular everyday plan',
         features: ['Everything in Silver', 'High audio quality', 'Offline downloads', 'Custom playlists'],
         color: '#e5b93a',
@@ -53,7 +92,7 @@ const DEFAULT_PLANS = [
     },
     {
         name: 'Diamond',
-        price: '$9.99/mo',
+        price: 'RM42.90/mo',
         tagline: 'For listeners who want it all',
         features: ['Everything in Gold', 'Lossless audio quality', 'Early access to new songs', 'Priority support'],
         color: '#4fc3d9',
@@ -61,7 +100,7 @@ const DEFAULT_PLANS = [
     },
     {
         name: 'Platinum',
-        price: '$14.99/mo',
+        price: 'RM64.90/mo',
         tagline: 'The ultimate Melodiax experience',
         features: ['Everything in Diamond', 'Family sharing (up to 5)', 'Exclusive content', 'Dedicated support line'],
         color: '#b9a5e3',
@@ -98,7 +137,7 @@ router.get('/', async (req, res) => {
 });
 
 // ============ ADD PLAN (admin only) ============
-router.post('/', requireAuth, requireAdmin, premiumLimiter, async (req, res) => {
+router.post('/', requireAuth, requireAdmin, premiumLimiter, upload.single('image'), async (req, res) => {
     try {
         const { name, price, tagline, features, color, badge, order } = req.body;
 
@@ -111,12 +150,17 @@ router.post('/', requireAuth, requireAdmin, premiumLimiter, async (req, res) => 
             return res.status(400).json({ message: 'Theme color must be a valid hex code' });
         }
 
+        // Cover image optional hai - agar upload hui hai to Cloudinary par
+        // bhej dete hain, warna crown icon hi fallback ke tor par dikhta rahega.
+        const imageUrl = req.file ? await uploadBufferToCloudinary(req.file.buffer, 'premium') : '';
+
         const plan = await PremiumPlan.create({
             name: name.trim(),
             price: (price || '').trim(),
             tagline: (tagline || '').trim(),
             features: parseFeatures(features),
             color: chosenColor || '#1db954',
+            image: imageUrl,
             badge: (badge || '').trim(),
             order: Number.isFinite(Number(order)) ? Number(order) : 0,
             createdBy: req.user._id,
@@ -130,7 +174,7 @@ router.post('/', requireAuth, requireAdmin, premiumLimiter, async (req, res) => 
 });
 
 // ============ EDIT PLAN (admin only) ============
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.put('/:id', requireAuth, requireAdmin, upload.single('image'), async (req, res) => {
     try {
         const plan = await PremiumPlan.findById(req.params.id);
         if (!plan) {
@@ -156,6 +200,9 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
                 return res.status(400).json({ message: 'Theme color must be a valid hex code' });
             }
             plan.color = chosenColor;
+        }
+        if (req.file) {
+            plan.image = await uploadBufferToCloudinary(req.file.buffer, 'premium');
         }
 
         await plan.save();

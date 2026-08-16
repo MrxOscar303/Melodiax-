@@ -1004,8 +1004,8 @@
             </label>
 
             <label>
-                Price <span class="admin-field-hint">(free text, e.g. "$5.99/mo")</span>
-                <input type="text" id="premium-price" maxlength="40" placeholder="e.g. $5.99/mo">
+                Price <span class="admin-field-hint">(free text, e.g. "RM25.90/mo")</span>
+                <input type="text" id="premium-price" maxlength="40" placeholder="e.g. RM25.90/mo">
             </label>
 
             <label>
@@ -1017,6 +1017,15 @@
                 Badge <span class="admin-field-hint">(optional, e.g. "Most Popular")</span>
                 <input type="text" id="premium-badge" maxlength="30" placeholder="e.g. Most Popular">
             </label>
+
+            <label>
+                Cover Image <span class="admin-field-hint">(optional - replaces the crown icon on the card; leave blank to keep the icon)</span>
+                <span class="admin-file-btn admin-file-btn-image">
+                    <i class="fa-solid fa-image"></i> Choose Image
+                    <input type="file" id="premium-image" accept="image/*">
+                </span>
+            </label>
+            <img id="premium-image-preview" class="song-image-preview" style="display:none;">
 
             <label>
                 Features <span class="admin-field-hint">(one per line)</span>
