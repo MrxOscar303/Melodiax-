@@ -111,8 +111,11 @@ function renderPlaylistBanner() {
         .join('');
 
     const showNav = pbannerSlides.length > 1;
-    playlistBannerNext.style.display = showNav ? '' : 'none';
-    // Backward button pehli slide pe chupa rehta hai, 2nd/3rd/... se dikhta hai.
+    // Forward aur Backward dono ab symmetric hain: forward aakhri slide pe
+    // chup jata hai (loop karke wapas 1st pe nahi jata), backward pehli
+    // slide pe chupa rehta hai - is se sirf itne hi arrows dikhte hain
+    // jitni waqai "aage/peeche" jaane layak slides maujood hain.
+    playlistBannerNext.style.display = (showNav && pbannerIndex < pbannerSlides.length - 1) ? '' : 'none';
     playlistBannerPrev.style.display = (showNav && pbannerIndex > 0) ? '' : 'none';
 
     // Click par us section ki playlist auto-generate karke Playlist tab pe le jao.
@@ -175,10 +178,13 @@ function updatePlaylistBannerPosition() {
     playlistBannerDots.querySelectorAll('.playlist-banner-dot').forEach((dot, i) => {
         dot.classList.toggle('active', i === pbannerIndex);
     });
-    // Backward button sirf 1st slide (index 0) pe gayab hota hai, baaki (2nd,
-    // 3rd, 4th ... ongoing) sab slides pe dikhta hai.
+    // Backward sirf 1st slide (index 0) pe gayab, forward sirf aakhri slide
+    // pe gayab - dono symmetric.
     if (playlistBannerPrev) {
         playlistBannerPrev.style.display = (pbannerSlides.length > 1 && pbannerIndex > 0) ? '' : 'none';
+    }
+    if (playlistBannerNext) {
+        playlistBannerNext.style.display = (pbannerSlides.length > 1 && pbannerIndex < pbannerSlides.length - 1) ? '' : 'none';
     }
 }
 

@@ -34,6 +34,16 @@ function syncProjectorToTime(refTime) {
 let audio = new Audio('Audio/1.mp3');
 let currentSong = 1;
 
+// Songs aur Podcasts dono SAME <audio> element aur SAME YouTube player use
+// karte hain (taake ek waqt me sirf ek hi cheez baje) - is liye jab bhi
+// audio khatam ho, error de, ya forward/backward/shuffle/repeat dabaya jaye,
+// code ko pata hona chahiye "abhi kaun sa system chal raha hai" - warna gaana
+// khatam hone par galti se DUSRE (song) system ka "agla" chal jata hai jab
+// asal me ek podcast chal raha tha (ya iske ulta). Ye flag hamesha "song" ya
+// "podcast" hota hai; jo bhi actually play karna start kare wahi ise apne
+// hisab se set kar deta hai.
+window.melodiaxAudioOwner = 'song';
+
 // NOTE: Master play/pause click logic (icon + music + projector video + button)
 // ab neechay ek hi jagah "Play/Pause button" section mein consolidate kar diya gaya hai,
 // taake video aur "Exit Projector" button hamesha sahi sync mein rahein.
@@ -104,6 +114,7 @@ playMusic.forEach((element) => {
 
         index = parseInt(e.target.id);
         currentSong = index;
+        window.melodiaxAudioOwner = 'song';
 
         // Turant (koi `await` se pehle nahi) real source se play karo - iOS
         // Safari/Chrome (WebKit) ek `await` ke baad aane wale audio.play()
@@ -287,24 +298,30 @@ forward = document.getElementById('forward');
 backward = document.getElementById('backward');
 
 forward.addEventListener('click', () => {
-    playNextSong();
-})
-
-audio.addEventListener('ended', () => {
+    if (window.melodiaxAudioOwner === 'podcast') {
+        if (typeof window.melodiaxPlayNextPodcast === 'function') window.melodiaxPlayNextPodcast();
+        return;
+    }
     playNextSong();
 })
 
 backward.addEventListener('click', () => {
+    if (window.melodiaxAudioOwner === 'podcast') {
+        if (typeof window.melodiaxPlayPrevPodcast === 'function') window.melodiaxPlayPrevPodcast();
+        return;
+    }
     playPrevSong();
 })
 
 forward.addEventListener('click', () => {
-    // Index update hone ke baad
-    handleProjector(currentSong); 
+    // Index update hone ke baad - sirf song mode me relevant hai (podcasts
+    // ka apna projector wo khud playPodcast ke andar handle karte hain).
+    if (window.melodiaxAudioOwner === 'podcast') return;
+    handleProjector(currentSong);
 });
 
 backward.addEventListener('click', () => {
-    // Index update hone ke baad
+    if (window.melodiaxAudioOwner === 'podcast') return;
     handleProjector(currentSong);
 });
 
@@ -546,8 +563,15 @@ play.addEventListener('click', () => {
     }
 });
 
-// Gaana khatam hone par
+// Gaana/Podcast (local mp3/mp4) khatam hone par
 audio.addEventListener('ended', () => {
+    if (window.melodiaxAudioOwner === 'podcast') {
+        // Podcast ka apna repeat/next/stop-if-none logic (podcast.js) -
+        // song wale playNextSong/forward ko yahan bilkul touch nahi karte.
+        if (typeof window.melodiaxPodcastEnded === 'function') window.melodiaxPodcastEnded();
+        return;
+    }
+
     const mainRightPart = document.querySelector('.main-right-part');
 
     if (repeat.classList.contains('fa-repeat-1')) {

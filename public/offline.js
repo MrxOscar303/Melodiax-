@@ -574,25 +574,30 @@
         }
     }
 
-    // Script.js/admin.js har baar naya gaana bajne par ye call karte hain -
-    // taake player-bar wala download icon hamesha "is waqt baj raha" gaane
-    // ki sahi state (downloaded/idle) dikhaye.
-    async function updatePlayerDownloadBtn(id, isYoutube) {
+    // Script.js/admin.js/podcast.js har baar naya gaana/podcast bajne par ye
+    // call karte hain - taake player-bar wala download icon hamesha "is waqt
+    // baj raha" content ki sahi state (downloaded/idle) dikhaye.
+    // type: 'song' (default) ya 'podcast' - dono ki apni alag offline store hai.
+    async function updatePlayerDownloadBtn(id, isYoutube, type) {
         if (!playerDownloadBtn) return;
+        const kind = type === 'podcast' ? 'podcast' : 'song';
         // songId hamesha pehle set kar do (login state se independent) - taake
         // baad me login hone par 'melodiax-auth-changed' handler ko pata ho
         // ke abhi konsa gaana baj raha hai, aur button turant wapas dikha sake
         // (pehle yahan early-return se pehle hi return ho jata tha, is liye
         // guest ke tor par gaana chalane ke baad login karne se bhi button
         // hidden hi reh jata tha jab tak agla/pichla gaana na chalayein).
-        if (id !== undefined && id !== null) playerDownloadBtn.dataset.songId = String(id);
+        if (id !== undefined && id !== null) {
+            playerDownloadBtn.dataset.songId = String(id);
+            playerDownloadBtn.dataset.type = kind;
+        }
         if (!isLoggedIn() || isYoutube || id === undefined || id === null) {
             playerDownloadBtn.style.display = 'none';
             return;
         }
         playerDownloadBtn.style.display = '';
         try {
-            const rec = await getOfflineSong(id);
+            const rec = kind === 'podcast' ? await getPodcastOffline(id) : await getOfflineSong(id);
             setPlayerBtnState(rec ? 'downloaded' : 'idle');
         } catch (err) {
             setPlayerBtnState('idle');
@@ -611,12 +616,23 @@
             }
             const id = playerDownloadBtn.dataset.songId;
             if (!id) return;
+            const isPodcast = playerDownloadBtn.dataset.type === 'podcast';
             const isDownloaded = playerDownloadBtn.classList.contains('downloaded');
+
             if (isDownloaded) {
                 const ok = window.showConfirm
                     ? await window.showConfirm('Delete this offline copy?', { confirmText: 'Delete' })
                     : window.confirm('Delete this offline copy?');
                 if (!ok) return;
+                if (isPodcast) {
+                    await deletePodcastOffline(id);
+                    setPlayerBtnState('idle');
+                    // Podcast module ka apna download icon (agar isi card ka
+                    // hai) bhi sync kar do.
+                    const podcastIcon = document.querySelector(`.podcast-hub-card-download[data-id="${id}"]`);
+                    if (podcastIcon) { podcastIcon.classList.remove('downloaded'); podcastIcon.title = 'Download'; }
+                    return;
+                }
                 await deleteOfflineSong(id);
                 revokeOfflineUrl(id);
                 setPlayerBtnState('idle');
@@ -626,7 +642,29 @@
                 afterOfflineChange(id);
                 return;
             }
+
             setPlayerBtnState('downloading');
+
+            if (isPodcast) {
+                try {
+                    const meta = window.melodiaxCurrentPodcastMeta || {};
+                    if (!meta.url) throw new Error('No podcast source URL available');
+                    const res = await fetch(meta.url);
+                    if (!res.ok) throw new Error('Fetch failed: ' + res.status);
+                    const blob = await res.blob();
+                    await savePodcastOffline(id, blob, {
+                        title: meta.title, category: meta.category, image: meta.image, sourceType: meta.sourceType
+                    });
+                    setPlayerBtnState('downloaded');
+                    const podcastIcon = document.querySelector(`.podcast-hub-card-download[data-id="${id}"]`);
+                    if (podcastIcon) { podcastIcon.classList.add('downloaded'); podcastIcon.title = 'Downloaded - click to remove'; }
+                } catch (err) {
+                    console.warn('Offline podcast download failed:', err);
+                    setPlayerBtnState('idle');
+                }
+                return;
+            }
+
             try {
                 const cardIcon = document.getElementById(id);
                 const card = cardIcon ? cardIcon.closest('.music-card') : null;

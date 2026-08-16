@@ -20,6 +20,32 @@ body {
    fixed jagah chhod kar page ke sath hi scroll/gayab hone lagte hain. */
 body { overflow-x: hidden; max-width: 100%; }
 
+/* Global scrollbar (poori site - vertical aur horizontal dono) - browser ka
+   bulky default scrollbar hata kar sirf ek thin, theme ke mutabik plain
+   gray line rakhi hai (koi colorful/green accent nahi, taake ye
+   background me hi mil jaye aur distract na kare). */
+* {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #4d4d4d transparent; /* Firefox: thumb track */
+}
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background: #4d4d4d;
+    border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
 nav {
     background-color: black;
     display: flex;
@@ -1427,11 +1453,11 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(29, 185, 84, 0.05);
     scrollbar-width: thin;
-    scrollbar-color: #1db954 transparent;
+    scrollbar-color: #4d4d4d transparent;
 }
 
 .auth-modal-content::-webkit-scrollbar { width: 6px; }
-.auth-modal-content::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.auth-modal-content::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 .auth-modal-content .modal-header { margin-bottom: 1.4rem; }
 .auth-modal-content .modal-header h2 {
@@ -2075,8 +2101,8 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
     padding: 0 1.2rem;
     height: 3.2rem;
     margin-bottom: 18px;
-    max-width: 100%;
-    width: 100%;
+    max-width: 900px;
+    width: 80%;
     transition: background 0.2s ease;
 }
 .podcast-hub-search-wrap:hover { background: #2c2c2c; }
@@ -2271,10 +2297,10 @@ body.red-theme .podcast-hub-card-download.downloaded { color: #ff4d4d; }
     margin-top: 0.5rem;
     padding: 0 0.4rem 0.6rem 0.4rem;
     scrollbar-width: thin;
-    scrollbar-color: #1db954 transparent;
+    scrollbar-color: #4d4d4d transparent;
 }
 .user-playlists-list::-webkit-scrollbar { width: 6px; }
-.user-playlists-list::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.user-playlists-list::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 .sidebar-playlist-item {
     display: flex;
@@ -2361,9 +2387,13 @@ body.red-theme .sidebar-playlist-cover { background: linear-gradient(135deg, #ff
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 70%;
-    height: 70%;
-    max-width: 1100px;
+    /* % ki bajaye vw/vh - agar beech mein koi transform wala parent ho to
+       fixed-position element ka % width/height viewport ki bajaye us parent
+       ke hisaab se resolve hone lagta hai. vw/vh hamesha seedha screen ke
+       hisaab se calculate hote hain, is liye "90%" reliably lagta hai. */
+    width: 90vw;
+    height: 90vh;
+    max-width: 1300px;
     background: #181818;
     border: 1px solid #2a2a2a;
     border-radius: 14px;
@@ -2435,10 +2465,10 @@ body.red-theme .playlist-selected-count { color: #ff4d4d; }
     grid-template-columns: repeat(2, 1fr);
     gap: 0.3rem 1.2rem;
     scrollbar-width: thin;
-    scrollbar-color: #1db954 transparent;
+    scrollbar-color: #4d4d4d transparent;
 }
 .playlist-song-picker::-webkit-scrollbar { width: 6px; }
-.playlist-song-picker::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.playlist-song-picker::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 /* Song search box - "Add songs" heading ke turant baad, list ke upar - taake
    bari list (1000+ songs) me se user turant naam se dhoond sake. Checkbox
@@ -2776,10 +2806,10 @@ body.red-theme .playlist-detail-edit-btn:hover { background: rgba(255,77,77,0.16
     margin-top: 0;
     padding: 0.6rem 2rem 1.8rem 2rem;
     scrollbar-width: thin;
-    scrollbar-color: #1db954 transparent;
+    scrollbar-color: #4d4d4d transparent;
 }
 .playlist-detail-song-list::-webkit-scrollbar { width: 6px; }
-.playlist-detail-song-list::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.playlist-detail-song-list::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 .playlist-detail-song-row {
     display: flex;

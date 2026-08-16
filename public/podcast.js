@@ -328,7 +328,10 @@ function renderPodcastGrid() {
     podcastHubGrid.querySelectorAll('.podcast-hub-card').forEach((card) => {
         card.addEventListener('click', () => {
             const p = podcastItems.find((item) => item._id === card.dataset.id);
-            if (p) playPodcast(p);
+            if (p) {
+                setPodcastQueue(filtered, p);
+                playPodcast(p);
+            }
         });
     });
 }
@@ -382,7 +385,7 @@ async function renderPodcastDownloadsGrid() {
         card.addEventListener('click', () => {
             const rec = list.find((r) => r.id === card.dataset.offlineId);
             if (!rec) return;
-            playPodcast({
+            const item = {
                 _id: rec.id,
                 sourceType: rec.sourceType,
                 audioFile: null, // playPodcast offline se hi resolve karega
@@ -390,7 +393,13 @@ async function renderPodcastDownloadsGrid() {
                 category: rec.category,
                 image: rec.image,
                 projectorEnabled: false
-            });
+            };
+            const queueList = list.map((r) => ({
+                _id: r.id, sourceType: r.sourceType, audioFile: null,
+                title: r.title, category: r.category, image: r.image, projectorEnabled: false
+            }));
+            setPodcastQueue(queueList, item);
+            playPodcast(item);
         });
     });
 }
@@ -441,7 +450,12 @@ function renderPodcastSearchSuggestions() {
     podcastHubSearchResults.querySelectorAll('.podcast-hub-search-item').forEach((item) => {
         item.addEventListener('click', () => {
             const p = podcastItems.find((entry) => entry._id === item.dataset.id);
-            if (p) playPodcast(p);
+            if (p) {
+                // Search se play karne par queue = poori list (jaisi filter ho)
+                // taake next/prev abhi bhi kaam kare.
+                setPodcastQueue(podcastItems, p);
+                playPodcast(p);
+            }
             podcastHubSearchResults.classList.remove('active');
             podcastHubSearchInput.value = '';
             podcastSearchTerm = '';
@@ -456,6 +470,15 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// ---------------- Playback queue (next/prev/auto-advance ke liye) ----------------
+let podcastQueue = [];
+let podcastQueueIndex = -1;
+
+function setPodcastQueue(list, playedItem) {
+    podcastQueue = list;
+    podcastQueueIndex = list.findIndex((item) => item._id === playedItem._id);
+}
+
 // ============================================================
 // ---------------- Playback ----------------
 // Direct/synchronous (no `await` from a user-gesture click tak koi
@@ -465,6 +488,12 @@ document.addEventListener('click', (e) => {
 // ============================================================
 async function playPodcast(p) {
     if (typeof makeAllPlay === 'function') makeAllPlay();
+
+    // Songs aur Podcasts SAME <audio>/YouTube player share karte hain -
+    // ye batata hai "abhi podcast chal raha hai" taake gaana khatam hone,
+    // error aane, ya forward/backward/shuffle/repeat dabane par sahi
+    // (podcast) system hi respond kare, kabhi galti se song system nahi.
+    window.melodiaxAudioOwner = 'podcast';
 
     // Module band kar do taake user ko sirf neeche wala music player (aur
     // agar projector video hai to wo) dikhe - module khud disturb na kare.
@@ -490,6 +519,23 @@ async function playPodcast(p) {
         if (mainRightPart) mainRightPart.classList.add('songs-fade-out');
         if (typeof showProjectorBtn === 'function') showProjectorBtn();
     }
+
+    // ---------- Player-bar download icon (bilkul songs jaisa) ----------
+    // Sirf mp3/mp4 podcasts download ho sakte hain (YouTube type kabhi nahi) -
+    // isYoutube=true dene se button khud chup jayega un ke liye.
+    if (typeof window.melodiaxUpdatePlayerDownloadBtn === 'function') {
+        window.melodiaxUpdatePlayerDownloadBtn(p._id, p.sourceType === 'youtube', 'podcast');
+    }
+    // Player-bar se download click hone par offline.js ko pata hona chahiye
+    // kis URL/meta se save karna hai (podcast cards ki tarah data-attributes
+    // nahi hote yahan, is liye ek chhota global "stash" use karte hain).
+    window.melodiaxCurrentPodcastMeta = {
+        url: p.audioFile,
+        title: p.title,
+        category: p.category,
+        image: podcastThumbnail(p),
+        sourceType: p.sourceType
+    };
 
     // ---------- Audio/YouTube ----------
     if (p.sourceType === 'youtube') {
@@ -517,6 +563,76 @@ async function playPodcast(p) {
         songDes: p.category,
     });
 }
+
+// Music-player ke shuffle/repeat button podcasts ke liye bhi wahi (shared)
+// hain - unki current state seedha DOM se padh lete hain.
+function playNextPodcast() {
+    if (!podcastQueue.length || podcastQueueIndex === -1) return;
+
+    if (typeof shuffle !== 'undefined' && shuffle && shuffle.classList.contains('active') && podcastQueue.length > 1) {
+        let randIndex;
+        do {
+            randIndex = Math.floor(Math.random() * podcastQueue.length);
+        } while (randIndex === podcastQueueIndex);
+        podcastQueueIndex = randIndex;
+        playPodcast(podcastQueue[podcastQueueIndex]);
+        return;
+    }
+
+    if (podcastQueueIndex + 1 >= podcastQueue.length) {
+        // Aage koi video nahi - kuch bhi play na ho, bas ruk jao.
+        stopPodcastPlayback();
+        return;
+    }
+    podcastQueueIndex++;
+    playPodcast(podcastQueue[podcastQueueIndex]);
+}
+
+function playPrevPodcast() {
+    if (!podcastQueue.length || podcastQueueIndex === -1) return;
+    if (podcastQueueIndex - 1 < 0) return; // Pehla item hi hai - kuch na karo
+    podcastQueueIndex--;
+    playPodcast(podcastQueue[podcastQueueIndex]);
+}
+
+function podcastEnded() {
+    if (typeof repeat !== 'undefined' && repeat && repeat.classList.contains('fa-repeat-1')) {
+        // Repeat: wahi video/audio dobara se
+        const current = podcastQueue[podcastQueueIndex];
+        if (current && current.sourceType === 'youtube') {
+            if (typeof ytPlayer !== 'undefined' && ytPlayer && ytPlayer.seekTo) {
+                ytPlayer.seekTo(0, true);
+                ytPlayer.playVideo();
+            }
+        } else {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        }
+        const projectorVid = document.getElementById('projector-video');
+        if (projectorVid && projectorVid.src) {
+            projectorVid.currentTime = 0;
+            projectorVid.play().catch(() => {});
+        }
+        return;
+    }
+    playNextPodcast();
+}
+
+function stopPodcastPlayback() {
+    audio.pause();
+    if (typeof ytPlayer !== 'undefined' && ytPlayer && ytPlayer.pauseVideo) {
+        try { ytPlayer.pauseVideo(); } catch (err) { /* ignore */ }
+    }
+    const projectorVid = document.getElementById('projector-video');
+    if (projectorVid) projectorVid.pause();
+    play.classList.remove('fa-circle-pause');
+    play.classList.add('fa-circle-play');
+    if (typeof makeAllPlay === 'function') makeAllPlay();
+}
+
+window.melodiaxPlayNextPodcast = playNextPodcast;
+window.melodiaxPlayPrevPodcast = playPrevPodcast;
+window.melodiaxPodcastEnded = podcastEnded;
 
 // ============================================================
 // ---------------- Hub open/close ----------------
