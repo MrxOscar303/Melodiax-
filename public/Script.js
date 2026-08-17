@@ -328,15 +328,28 @@ backward.addEventListener('click', () => {
 let volumeBar = document.getElementById('volumeBar');
 let volIcon = document.getElementById('vol-icon');
 
+// iOS (Safari/Chrome, sab WebKit hain) par "audio.volume" JS se set hi nahi
+// ho sakta - ye Apple ki permanent, official restriction hai (volume hamesha
+// device ke hardware buttons ke control mein rehta hai). Ye har iOS device
+// par hai, koi bug nahi. Is liye slider ko disable kar dete hain (taake user
+// ko na lage ye "broken" hai) aur mute icon ko "audio.muted" se chalate hain,
+// jo iOS par bhi kaam karta hai (sirf ".volume" hi disabled hai, ".muted" nahi).
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS Safari
+
+if (isIOS && volumeBar) {
+    volumeBar.disabled = true;
+    volumeBar.title = 'iOS par volume sirf device ke hardware buttons se control hota hai';
+    volumeBar.style.opacity = '0.4';
+    volumeBar.style.cursor = 'not-allowed';
+}
+
 volumeBar.addEventListener('input', (e) => {
     let value = e.target.value;
 
-
-    audio.volume = value / 100;
-
+    if (!isIOS) audio.volume = value / 100; // iOS par ye no-op hai, koi asar nahi
 
     volumeBar.style.background = `linear-gradient(to right, #bdda2c ${value}%, #333 ${value}%)`;
-
 
     if (value == 0) {
         volIcon.className = "fa-solid fa-volume-xmark";
@@ -349,6 +362,13 @@ volumeBar.addEventListener('input', (e) => {
 
 
 volIcon.addEventListener('click', () => {
+    if (isIOS) {
+        // ".volume" ki tarah 0/prev set karne ki bajaye ".muted" toggle karte
+        // hain - ye iOS par bhi guaranteed kaam karta hai.
+        audio.muted = !audio.muted;
+        volIcon.className = audio.muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+        return;
+    }
     if (audio.volume > 0) {
         audio.dataset.prevVol = audio.volume;
         audio.volume = 0;
