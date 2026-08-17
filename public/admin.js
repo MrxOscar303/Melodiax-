@@ -762,6 +762,7 @@ function verifyYtPlaybackStarted(expectedId) {
         const state = ytPlayer.getPlayerState();
         if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING) {
             console.warn('YouTube playback did not start (blocked by browser) - resetting UI. Try tapping play again.');
+            showYtDebugToast(`YT playback blocked silently (no error code). Player state: ${state}, video: ${expectedId}`);
             play.classList.remove('fa-circle-pause');
             play.classList.add('fa-circle-play');
             makeAllPlay();
@@ -770,11 +771,48 @@ function verifyYtPlaybackStarted(expectedId) {
     }, 1800);
 }
 
+// ---------------- TEMPORARY iOS debug toast ----------------
+// iOS par (khaas kar Chrome) developer console dekhna mushkil hai (Mac ki
+// zaroorat hoti hai) - is liye jab bhi YouTube playback fail/block ho, ye
+// chhota sa on-screen message dikha dete hain taake user seedha screenshot
+// le kar bhej sake. Masla diagnose hone ke baad ye hata diya jayega.
+function isMobileDevice() {
+    return window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function showYtDebugToast(message) {
+    if (!isMobileDevice()) return; // sirf mobile par dikhana hai (diagnostic ke liye) - desktop par chup
+
+    let el = document.getElementById('yt-debug-toast');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'yt-debug-toast';
+        el.style.cssText = 'position:fixed;top:8px;left:8px;right:8px;z-index:99999;' +
+            'background:#c0392b;color:#fff;font-size:13px;line-height:1.4;' +
+            'padding:10px 14px;border-radius:8px;text-align:center;' +
+            'box-shadow:0 4px 14px rgba(0,0,0,0.4);';
+        document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.style.display = 'block';
+    clearTimeout(el._hideTimeout);
+    el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+const YT_ERROR_MEANINGS = {
+    2: 'Invalid video ID',
+    5: 'HTML5 player error',
+    100: 'Video not found / private / removed',
+    101: 'Embedding disabled by video owner',
+    150: 'Embedding disabled by video owner',
+};
+
 function onYtError(event) {
     // 2/100/101/150 = embedding disallowed/blocked/video removed - is video ko
     // bajaya hi nahi ja sakta chahe link sahi ho. Pehle ye chup-chaap fail ho
     // kar "kuch nahi hota" jaisa lagta tha - ab UI reset karke agla song try karte hain.
     console.error('YouTube player error, code:', event.data);
+    showYtDebugToast(`YT error ${event.data}: ${YT_ERROR_MEANINGS[event.data] || 'Unknown error'} (video: ${currentYoutubeId || '?'})`);
     stopYtProgressPolling();
     play.classList.remove('fa-circle-pause');
     play.classList.add('fa-circle-play');
@@ -785,6 +823,7 @@ function onYtError(event) {
     consecutiveYtErrors++;
     if (consecutiveYtErrors >= 4) {
         console.error('Multiple YouTube items in a row failed to embed - stopping auto-skip.');
+        showYtDebugToast('Multiple YouTube songs failed in a row - stopped auto-skip.');
         consecutiveYtErrors = 0;
         return;
     }
