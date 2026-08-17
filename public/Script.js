@@ -32,6 +32,15 @@ function syncProjectorToTime(refTime) {
     }
 }
 let audio = new Audio('Audio/1.mp3');
+// iOS (khaas kar purane devices jaise iPhone 7) par background/lock-screen
+// playback ko zyada reliable banane ke liye: "auto" preload rakhte hain
+// (taake buffered/ready audio element hamesha maujood rahe) aur
+// "playsinline" set karte hain - technically video ke liye zaroori hai,
+// lekin kuch WebKit versions audio element par bhi isi flag ko background
+// session ke liye check karte hain, is liye safe side par daal dete hain.
+audio.preload = 'auto';
+audio.setAttribute('playsinline', '');
+audio.setAttribute('webkit-playsinline', '');
 let currentSong = 1;
 
 // Songs aur Podcasts dono SAME <audio> element aur SAME YouTube player use
@@ -219,12 +228,12 @@ playNextSong = () => {
         currentSong = nextSong == 0 ? 104 : nextSong;
         audio.src = order[currentSong - 1].songPath;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         updateNowBar();
     } else {
         audio.src = order[currentSong - 1].songPath;
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         updateNowBar();
     }
 }
@@ -235,7 +244,7 @@ playPrevSong = () => {
     currentSong = prevSong == 0 ? 104 : prevSong;
     audio.src = `Audio/${currentSong}.mp3`
     audio.currentTime = 0;
-    audio.play();
+    audio.play().catch((err) => console.warn('Playback failed:', err));
     updateNowBar();
 }
 
@@ -275,23 +284,85 @@ function setMediaSessionMetadata(data) {
 }
 
 if ('mediaSession' in navigator) {
+    // IMPORTANT: har action ko apne alag try/catch mein register karte hain.
+    // Wajah - agar ek hi purani (jaise iPhone 7 ke) Safari version par koi
+    // EK action (jaise 'seekto' ya 'stop') support hi na ho, to us par
+    // "setActionHandler" khud ek error throw kar deta hai - aur agar sab
+    // calls ek hi block mein sequentially likhi hon (jaisa pehle tha), to
+    // wo ek error poore block ko wahin rok deta hai, is wajah se uske BAAD
+    // wali lines (next/prev/play-state sync waghera) kabhi register hi
+    // nahi hoti thin. Yahi wajah thi ke lock-screen/control-center widget
+    // dikhta to tha lekin uske buttons kaam nahi karte the. Ab har handler
+    // apne aap mein independent hai - ek fail ho to baaki sab phir bhi
+    // register ho jate hain.
+    const setSafeAction = (action, handler) => {
+        try {
+            navigator.mediaSession.setActionHandler(action, handler);
+        } catch (err) {
+            // Ye action is browser/OS version par supported nahi - koi
+            // masla nahi, baaki actions par asar nahi padega.
+        }
+    };
+
     // Hardware/lock-screen/notification controls ko humare asal buttons pe
     // forward kar dete hain, taake behavior (projector sync, icon, wagera)
     // hamesha same rahe - duplicate logic nahi likhni parti.
-    navigator.mediaSession.setActionHandler('play', () => play.click());
-    navigator.mediaSession.setActionHandler('pause', () => play.click());
-    navigator.mediaSession.setActionHandler('previoustrack', () => playPrevSong());
-    navigator.mediaSession.setActionHandler('nexttrack', () => playNextSong());
-    navigator.mediaSession.setActionHandler('seekto', (details) => {
+    setSafeAction('play', () => {
+        if (audio.paused) play.click();
+    });
+    setSafeAction('pause', () => {
+        if (!audio.paused) play.click();
+    });
+    setSafeAction('stop', () => {
+        if (!audio.paused) play.click();
+    });
+    setSafeAction('previoustrack', () => playPrevSong());
+    setSafeAction('nexttrack', () => playNextSong());
+    setSafeAction('seekto', (details) => {
         if (details.seekTime != null && audio.duration) {
-            audio.currentTime = details.seekTime;
+            if (typeof details.fastSeek === 'boolean' && details.fastSeek && 'fastSeek' in audio) {
+                audio.fastSeek(details.seekTime);
+            } else {
+                audio.currentTime = details.seekTime;
+            }
+            setProgressFill((details.seekTime / audio.duration) * 100);
         }
     });
 
     // Play/pause state ko lock-screen ke sath hamesha sync rakho, chahe
     // audio kahin se bhi (button, hardware control, ended/repeat) chale/ruke.
+    // Warna OS ka widget kabhi "playing" par atka reh jata ya reverse.
     audio.addEventListener('play', () => { navigator.mediaSession.playbackState = 'playing'; });
     audio.addEventListener('pause', () => { navigator.mediaSession.playbackState = 'paused'; });
+
+    // setPositionState: lock-screen/control-center scrubber ko batata hai
+    // gaana kitna lamba hai aur abhi kahan par hai - iske bina wo widget ka
+    // progress bar hamesha stuck/0 dikhta hai aur scrub karna bhi kaam nahi
+    // karta (yahi "widget dikhta hai lekin work nahi karta" ka doosra bada
+    // sabab hai). Purane duration/negative/NaN values par error na aaye is
+    // liye har baar guard lagate hain.
+    if ('setPositionState' in navigator.mediaSession) {
+        audio.addEventListener('timeupdate', () => {
+            if (!isFinite(audio.duration) || audio.duration <= 0) return;
+            try {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate || 1,
+                    position: Math.min(audio.currentTime, audio.duration)
+                });
+            } catch (err) { /* duration/position abhi valid nahi - ignore */ }
+        });
+        audio.addEventListener('loadedmetadata', () => {
+            if (!isFinite(audio.duration) || audio.duration <= 0) return;
+            try {
+                navigator.mediaSession.setPositionState({
+                    duration: audio.duration,
+                    playbackRate: audio.playbackRate || 1,
+                    position: 0
+                });
+            } catch (err) { /* ignore */ }
+        });
+    }
 }
 
 forward = document.getElementById('forward');
@@ -328,28 +399,41 @@ backward.addEventListener('click', () => {
 let volumeBar = document.getElementById('volumeBar');
 let volIcon = document.getElementById('vol-icon');
 
+// Original bar color hamesha yahi rahega - chahe user isse drag kare ya
+// sirf icon par click karke mute/unmute kare, dono jagah SAME color use
+// hota hai (pehle mute-click wale case mein ek alag maroon color
+// (#610f38) hardcoded tha, is wajah se mute karne ke baad bar ka color
+// badal jata tha - ab dono jagah se ye ek hi constant use hoti hai).
+const VOLUME_FILL_COLOR = '#bdda2c';
+
+function paintVolumeBar(value) {
+    volumeBar.style.background = `linear-gradient(to right, ${VOLUME_FILL_COLOR} ${value}%, #333 ${value}%)`;
+}
+
 // iOS (Safari/Chrome, sab WebKit hain) par "audio.volume" JS se set hi nahi
 // ho sakta - ye Apple ki permanent, official restriction hai (volume hamesha
-// device ke hardware buttons ke control mein rehta hai). Ye har iOS device
-// par hai, koi bug nahi. Is liye slider ko disable kar dete hain (taake user
-// ko na lage ye "broken" hai) aur mute icon ko "audio.muted" se chalate hain,
-// jo iOS par bhi kaam karta hai (sirf ".volume" hi disabled hai, ".muted" nahi).
+// device ke hardware buttons ke control mein rehta hai). Pehle is wajah se
+// pura slider hi disable/dim kar diya jata tha - ab aisa nahi karte: slider
+// desktop jaisa hi active/draggable rehta hai (mobile/iOS dono par), bas
+// iOS par "volume level" ki jagah ye slider "mute <-> unmute" ka kaam karta
+// hai (0 tak le jao to mute, wapas upar le jao to unmute) - jo ".muted" ke
+// zariye iOS par bhi guaranteed kaam karta hai.
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS Safari
-
-if (isIOS && volumeBar) {
-    volumeBar.disabled = true;
-    volumeBar.title = 'iOS par volume sirf device ke hardware buttons se control hota hai';
-    volumeBar.style.opacity = '0.4';
-    volumeBar.style.cursor = 'not-allowed';
-}
 
 volumeBar.addEventListener('input', (e) => {
     let value = e.target.value;
 
-    if (!isIOS) audio.volume = value / 100; // iOS par ye no-op hai, koi asar nahi
+    if (isIOS) {
+        // Real volume level set nahi ho sakta - is liye slider ko sirf
+        // mute-threshold ki tarah use karte hain, taake drag karna "kuch
+        // na kuch" zaroor kare (sirf cosmetic na rahe).
+        audio.muted = (value == 0);
+    } else {
+        audio.volume = value / 100;
+    }
 
-    volumeBar.style.background = `linear-gradient(to right, #bdda2c ${value}%, #333 ${value}%)`;
+    paintVolumeBar(value);
 
     if (value == 0) {
         volIcon.className = "fa-solid fa-volume-xmark";
@@ -364,14 +448,18 @@ volumeBar.addEventListener('input', (e) => {
 volIcon.addEventListener('click', () => {
     if (isIOS) {
         // ".volume" ki tarah 0/prev set karne ki bajaye ".muted" toggle karte
-        // hain - ye iOS par bhi guaranteed kaam karta hai.
+        // hain - ye iOS par bhi guaranteed kaam karta hai. Slider ko bhi
+        // (visually) usi ke mutabiq sync kar dete hain.
         audio.muted = !audio.muted;
         volIcon.className = audio.muted ? "fa-solid fa-volume-xmark" : "fa-solid fa-volume-high";
+        volumeBar.value = audio.muted ? 0 : (volumeBar.dataset.prevVal || 100);
+        paintVolumeBar(volumeBar.value);
         return;
     }
     if (audio.volume > 0) {
         audio.dataset.prevVol = audio.volume;
         audio.volume = 0;
+        volumeBar.dataset.prevVal = volumeBar.value;
         volumeBar.value = 0;
         volIcon.className = "fa-solid fa-volume-xmark";
     } else {
@@ -381,7 +469,7 @@ volIcon.addEventListener('click', () => {
         volIcon.className = "fa-solid fa-volume-high";
     }
 
-    volumeBar.style.background = `linear-gradient(to right, #610f38 ${volumeBar.value}%, #333 ${volumeBar.value}%)`;
+    paintVolumeBar(volumeBar.value);
 });
 
 const displayCurrent = document.getElementById('track-current');
@@ -551,7 +639,7 @@ play.addEventListener('click', () => {
 
     if (audio.paused || audio.currentTime <= 0) {
         // --- PLAY ---
-        audio.play();
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
 
@@ -597,7 +685,7 @@ audio.addEventListener('ended', () => {
     if (repeat.classList.contains('active')) {
         // Repeat mode: wahi gaana + wahi video loop ho
         audio.currentTime = 0;
-        audio.play();
+        audio.play().catch((err) => console.warn('Playback failed:', err));
         if (projectorVid && projectorVid.src !== "" && !projectorExited) {
             projectorVid.currentTime = 0;
             projectorVid.play();

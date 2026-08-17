@@ -874,6 +874,16 @@ body.red-theme .player-download-btn.downloaded { color: #ff4d4d; }
     background: linear-gradient(to right, #aab3ad 100%, #535353 100%);
 }
 
+/* Touch devices (mobile/iOS) ke paas ":hover" nahi hota, is liye upar wala
+   thumb-reveal-on-hover kabhi trigger hi nahi hota tha - bar disabled to
+   nahi ab, lekin thumb hamesha invisible reh kar drag karna mushkil ho
+   jata. Touch-capable screens par thumb hamesha visible rakhte hain. */
+@media (hover: none) {
+    #volumeBar::-webkit-slider-thumb {
+        opacity: 1;
+    }
+}
+
 
 
 .player-bar {
@@ -3694,7 +3704,16 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
        flex se hi baaki bachi hui jagah (dono labels minus karke) lene dete
        hain - kabhi overflow nahi hoga chahe value kitni bhi badi ho. */
     #progressBar { width: auto; max-width: none; flex: 1 1 auto; min-width: 0; }
-    .time-label { min-width: 34px; flex-shrink: 0; }
+    /* Total duration (jaise "4:00") screen ke right edge se chip kar
+       aakhri digit "0" tak cut ho raha tha ("4:0" dikhta tha) - row ko
+       poore edge tak stretch karne ki bajaye ab thoda box-sizing/padding
+       ke sath andar (left ki taraf) rakhte hain, aur label ko thoda
+       chaudi jagah (aur nowrap) dete hain taake pura number hamesha
+       poora nazar aaye. */
+    .spotify-timer-row { width: 100%; box-sizing: border-box; padding: 0 0.4rem; gap: 10px; }
+    .time-label { min-width: 36px; flex-shrink: 0; white-space: nowrap; }
+    #track-total { text-align: right; }
+    #track-current { text-align: left; }
     .player-bar img { height: 3.2rem; width: 3.2rem; flex-shrink: 0; }
     /* Pehle title/desc ko ek fixed "46vw" chaudai di jati thi - chhote
        screens (jahan image+button ka hissa us 46vw ke sath mil kar row ki
