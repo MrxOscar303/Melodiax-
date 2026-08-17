@@ -1153,22 +1153,31 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     border-radius: 4px;
     margin-right: 15px;
     object-fit: cover;
+    flex-shrink: 0;
 }
 
 .search-item-info {
     display: flex;
     flex-direction: column;
+    min-width: 0; /* flex item ko shrink karne deta hai - warna lamba text wrap ho jata */
+    flex: 1;
 }
 
 .search-item-info strong {
     color: white;
     font-size: 0.95rem;
     margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .search-item-info span {
     color: #b3b3b3;
     font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Scrollbar Customization */
@@ -2152,9 +2161,9 @@ body.red-theme .podcast-hub-admin-btn { background: #ff4d4d; }
 .podcast-hub-search-item:last-child { border-bottom: none; }
 .podcast-hub-search-item:hover { background: #282828; }
 .podcast-hub-search-item img { width: 48px; height: 48px; border-radius: 4px; margin-right: 12px; object-fit: cover; flex-shrink: 0; }
-.podcast-hub-search-item-info { display: flex; flex-direction: column; min-width: 0; }
+.podcast-hub-search-item-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .podcast-hub-search-item-info strong { color: #fff; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.podcast-hub-search-item-info span { color: #b3b3b3; font-size: 0.78rem; }
+.podcast-hub-search-item-info span { color: #b3b3b3; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .podcast-hub-search-empty { padding: 14px; color: #888; font-size: 0.85rem; text-align: center; }
 
 .podcast-hub-tabs {
@@ -3591,7 +3600,11 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
         background: #141414;
         border-radius: 12px;
         margin: 0 0 1.5rem 0;
-        padding: 1.1rem 1rem 1.3rem;
+        /* Pehle padding-top bahut kam (1.1rem) tha - navbar ke bilkul
+           saath "Your Playlists"/"Your Downloads" heading ka upper hissa
+           chup jata tha (aadha text hi nazar aata). Thora aur breathing
+           room de diya. */
+        padding: 1.8rem 1rem 1.3rem;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
@@ -3600,6 +3613,32 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     #playlists-view-section h2,
     #downloads-view-section h2 { margin: 0 0 1rem 0; flex-shrink: 0; font-size: 1.15rem; }
     .downloads-view-empty { flex-shrink: 0; }
+
+    /* About Us aur Premium - pehle sirf desktop wala "margin: 2rem 0 2rem
+       2rem" (left-heavy, asymmetric) inherit karte the, is liye poora
+       block/cards screen ke center ki bajaye left ki taraf chipke dikhte
+       the. Ab symmetric margin + center text/cards. */
+    #about-view-section,
+    #premium-view-section {
+        width: 100%;
+        margin: 0 auto 1.5rem auto;
+        box-sizing: border-box;
+    }
+    #about-view-section {
+        text-align: center;
+    }
+    #about-view-section .contact-form {
+        text-align: left; /* form fields khud left-aligned hi rahein, sirf block center ho */
+        max-width: 420px;
+        margin: 0 auto;
+    }
+    .premium-cards-grid {
+        justify-items: center;
+    }
+    .premium-card {
+        width: 100%;
+        max-width: 360px;
+    }
 
     .playlists-view-grid {
         display: grid;
@@ -3630,7 +3669,15 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .player-btns { margin: 0.3rem 0.5rem; font-size: 0.95rem; }
     #play { font-size: 1.8rem; }
     .volume-container { flex: 1 1 100%; order: 3; justify-content: center; padding-right: 0; gap: 1rem; }
-    #progressBar { width: 100%; max-width: 92vw; }
+    /* Pehle progressBar ko hardcoded "92vw" max-width di gayi thi - dono
+       time labels (current + total) aur unke beech ke gaps ke sath milkar
+       ye poori row ki chaudai screen se zyada kar deta tha, is liye lambi
+       duration (jaise "21:04") wala total-time label screen ke bahar chala
+       jata (aur "overflow-x: hidden" ki wajah se ghaib ho jata). Ab isko
+       flex se hi baaki bachi hui jagah (dono labels minus karke) lene dete
+       hain - kabhi overflow nahi hoga chahe value kitni bhi badi ho. */
+    #progressBar { width: auto; max-width: none; flex: 1 1 auto; min-width: 0; }
+    .time-label { min-width: 34px; flex-shrink: 0; }
     .player-bar img { height: 3.2rem; width: 3.2rem; flex-shrink: 0; }
     /* Pehle title/desc ko ek fixed "46vw" chaudai di jati thi - chhote
        screens (jahan image+button ka hissa us 46vw ke sath mil kar row ki
