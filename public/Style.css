@@ -3635,7 +3635,10 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     #about-view-section,
     #premium-view-section {
         width: 100%;
-        margin: 0 auto 1.5rem auto;
+        /* Pehle "margin: 0 auto..." top margin bilkul hata deta tha - is
+           wajah se "Melodiax" heading navbar ke bilkul saath chip kar upar
+           se kat jati thi. Ab top par bhi thori jagah di hai. */
+        margin: 1.8rem auto 1.5rem auto;
         box-sizing: border-box;
     }
     #about-view-section {
