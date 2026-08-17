@@ -888,6 +888,7 @@ function onYtStateChange(event) {
         play.classList.remove('fa-circle-play');
         play.classList.add('fa-circle-pause');
         startYtProgressPolling();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         // iOS par muted state me hi playback allow hoti hai (autoplay-with-
         // sound block ho jata hai) - is liye humne mute karke play() call
         // kiya tha. Ab jab video WAKAI PLAYING ho chuka hai (ye guaranteed
@@ -901,6 +902,7 @@ function onYtStateChange(event) {
         play.classList.remove('fa-circle-pause');
         play.classList.add('fa-circle-play');
         stopYtProgressPolling();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
     } else if (event.data === YT.PlayerState.ENDED) {
         stopYtProgressPolling();
         if (window.melodiaxAudioOwner === 'podcast') {

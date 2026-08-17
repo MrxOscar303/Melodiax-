@@ -3525,6 +3525,20 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
         padding-left: 0.2rem;
     }
 
+    /* Search dropdown - search bar khud chhoti hai (navbar mein baaki
+       cheezon ke sath jagah share karti hai), is liye dropdown ko usi
+       chhoti width tak mehdood nahi rakhte - warna image + text ek row
+       mein fit hi nahi hote (sirf 1-2 letters + "..." dikhta tha). Content
+       (image/font) bhi chota kar diya taake sab kuch saaf ek row mein aaye. */
+    .search-results-slide {
+        width: max(280px, 78vw);
+        max-width: 92vw;
+    }
+    .search-item { padding: 8px 10px; }
+    .search-item img { width: 38px; height: 38px; margin-right: 10px; }
+    .search-item-info strong { font-size: 0.82rem; margin-bottom: 2px; }
+    .search-item-info span { font-size: 0.72rem; }
+
     .right-half { flex: 0 0 auto; width: auto; justify-content: flex-end; flex-wrap: nowrap; }
     .right-half-p1 { display: none; } /* Premium/Download/Playlist/Support - ab hamburger menu me hain */
     .right-half-p2 { flex-wrap: nowrap; justify-content: flex-end; }
