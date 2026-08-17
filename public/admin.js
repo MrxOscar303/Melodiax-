@@ -692,6 +692,25 @@ let pendingYoutubeId = null;
 let currentYoutubeId = null; // abhi kaunsa YouTube video load/buffer ho chuka hai
 let pendingYoutubeTimeout = null;
 
+// Slow/cellular network par YouTube ki IFrame API script (Index.html mein
+// <script src="youtube.com/iframe_api">) kabhi kabhi pehli koshish mein load
+// hi nahi hoti (timeout/blocked), aur "onYouTubeIframeAPIReady" kabhi call
+// hi nahi hota - is se HAR YouTube gaana/podcast fail ho jata hai, chahe
+// video sahi ho. Ek dafa khud-ba-khud retry kar dete hain (naya script tag,
+// cache-bypass) taake temporary network hiccup se poora YouTube playback
+// hamesha ke liye na tootay.
+let ytApiRetried = false;
+function ensureYtApiLoaded() {
+    if (window.YT && window.YT.Player) return; // pehle hi load ho chuki
+    if (ytApiRetried) return;
+    ytApiRetried = true;
+    console.warn('YouTube IFrame API abhi tak load nahi hui - ek dafa retry kar rahe hain...');
+    const retryScript = document.createElement('script');
+    retryScript.src = 'https://www.youtube.com/iframe_api?retry=' + Date.now();
+    document.head.appendChild(retryScript);
+}
+setTimeout(ensureYtApiLoaded, 4000);
+
 // YouTube API isko khud call karta hai jab script load ho jata hai (global function honi zaroori hai)
 window.onYouTubeIframeAPIReady = function () {
     // Purane iOS/WebKit (jaise iPhone 7) bilkul 0x0/1x1 (zero/near-zero size)
@@ -809,6 +828,7 @@ function showYtDebugToast(message) {
 }
 
 const YT_ERROR_MEANINGS = {
+    '-1': 'Player took too long to load (slow/unstable network)',
     2: 'Invalid video ID',
     5: 'HTML5 player error',
     100: 'Video not found / private / removed',
@@ -971,20 +991,22 @@ function startYoutubeTrack(data) {
     } else {
         pendingYoutubeId = data.youtubeId;
         currentYoutubeId = data.youtubeId;
-        // YT player abhi tak ready nahi hua. Pehle is case me user "pause"
-        // (playing) icon dekhta rehta tha lekin awaaz kabhi start hi nahi
-        // hoti thi agar YT iframe API load na ho paye (ad-blocker/slow
-        // network/blocked). Ab 5 second wait karke, agar ab bhi ready na ho,
-        // UI reset karke agla gaana try kar lete hain - taake user ko pata
-        // chale ke ye gaana nahi chal saka, chup-chaap atka na rahe.
+        // YT player abhi tak ready nahi hua. Turant retry try karte hain
+        // (agar API script hi load nahi hui thi) - taake slow/cellular
+        // network par bhi mauka mile. Pehle is case me user "pause" (playing)
+        // icon dekhta rehta tha lekin awaaz kabhi start hi nahi hoti thi.
+        // Ab 8 second wait karke (retry ko time dene ke liye), agar ab bhi
+        // ready na ho, UI reset karke agla gaana try kar lete hain - taake
+        // user ko pata chale ke ye gaana nahi chal saka, chup-chaap atka na rahe.
+        ensureYtApiLoaded();
         clearTimeout(pendingYoutubeTimeout);
         pendingYoutubeTimeout = setTimeout(() => {
             if (pendingYoutubeId === data.youtubeId && !ytPlayerReady) {
-                console.error('YouTube player failed to load (5s timeout) - trying the next song.');
+                console.error('YouTube player failed to load (8s timeout, retry included) - trying the next song.');
                 pendingYoutubeId = null;
                 onYtError({ data: -1 });
             }
-        }, 5000);
+        }, 8000);
     }
     play.classList.remove('fa-circle-play');
     play.classList.add('fa-circle-pause');
