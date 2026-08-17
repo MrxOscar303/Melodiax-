@@ -5,6 +5,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Melodiax - Music Player</title>
+
+    <!-- Link preview (WhatsApp, Facebook, Twitter/X, Discord, etc. -
+         jab koi is site ka link share karta hai to yahan se title/description/
+         image uthate hain). Pehle ye tags maujood hi nahi the, is liye
+         preview me generic grey "person" placeholder image dikhti thi. -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Melodiax">
+    <meta property="og:title" content="Melodiax - Music Player">
+    <meta property="og:description" content="Stream music, podcasts and playlists on Melodiax.">
+    <meta property="og:image" content="https://melodiax.onrender.com/assets/og-image.jpg">
+    <meta property="og:url" content="https://melodiax.onrender.com/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Melodiax - Music Player">
+    <meta name="twitter:description" content="Stream music, podcasts and playlists on Melodiax.">
+    <meta name="twitter:image" content="https://melodiax.onrender.com/assets/og-image.jpg">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
         integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -14,7 +30,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="Style.css?v=4">
+    <link rel="stylesheet" href="Style.css?v=3">
     <link rel="icon" id="favicon-ico" href="favicon.ico?v=2" type="image/x-icon">
     <link rel="shortcut icon" id="favicon-shortcut" href="favicon.ico?v=2" type="image/x-icon">
     <link rel="icon" id="favicon-16" type="image/png" sizes="16x16" href="favicon-16x16.png?v=2">
@@ -25,22 +41,6 @@
     <link rel="icon" id="favicon-512" type="image/png" sizes="512x512" href="android-chrome-512x512.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
-    <!-- iOS "Add to Home Screen" wale standalone app mode ke liye - Apple
-         web manifest ("display":"standalone") ko khud honor nahi karta,
-         apne alag meta tags chahiye. Home Screen se khola gaya app (Safari
-         tab ki bajaye) background/lock-screen audio playback bahut zyada
-         reliably deta hai - khaas kar purane iOS devices (jaise iPhone 7)
-         par. -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Melodiax">
-    <meta name="mobile-web-app-capable" content="yes">
-    <!-- YouTube ke embedded (hidden audio) player ko kabhi kabhi mobile
-         browsers (khaas kar iOS Chrome/WebKit) mein "Error 153: Video
-         player configuration error" milta hai jab Referer header
-         strip/missing ho. Ye explicitly bata deta hai ke origin bhejo -
-         YouTube ke player ko configure hone ke liye chahiye hota hai. -->
-    <meta name="referrer" content="strict-origin-when-cross-origin">
 </head>
 
 <body>
@@ -100,7 +100,7 @@
 
                 <!-- Logged-in state: login/signup ke baad sirf ye dikhega, upar wale buttons gayab ho jayenge -->
                 <div id="user-profile-box" class="user-profile-box" style="display:none;">
-                    <img id="user-avatar" class="user-avatar" src="/assets/default-avatar.png" alt="Profile">
+                    <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
                     <span id="user-name" class="user-name"></span>
                     <!-- Sirf admin accounts ko ye button nazar aata hai (auth.js/admin.js control karte hain) -->
                     <button id="admin-panel-btn" class="admin-panel-btn" type="button" title="Add Song" style="display:none;">
@@ -574,7 +574,7 @@
                 <form id="signup-form" class="auth-form" style="display:none;">
                     <div class="avatar-upload">
                         <label for="signup-avatar" class="avatar-upload-wrapper">
-                            <img id="avatar-preview" src="/assets/default-avatar.png" alt="Profile picture preview">
+                            <img id="avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Profile picture preview">
                             <span class="avatar-upload-overlay"><i class="fa-solid fa-camera"></i></span>
                         </label>
                         <label for="signup-avatar" class="avatar-upload-label">Add a profile picture (optional)</label>
@@ -1020,8 +1020,8 @@
             </label>
 
             <label>
-                Price <span class="admin-field-hint">(free text, e.g. "RM25.90/mo")</span>
-                <input type="text" id="premium-price" maxlength="40" placeholder="e.g. RM25.90/mo">
+                Price <span class="admin-field-hint">(free text, e.g. "$5.99/mo")</span>
+                <input type="text" id="premium-price" maxlength="40" placeholder="e.g. $5.99/mo">
             </label>
 
             <label>
@@ -1033,15 +1033,6 @@
                 Badge <span class="admin-field-hint">(optional, e.g. "Most Popular")</span>
                 <input type="text" id="premium-badge" maxlength="30" placeholder="e.g. Most Popular">
             </label>
-
-            <label>
-                Cover Image <span class="admin-field-hint">(optional - replaces the crown icon on the card; leave blank to keep the icon)</span>
-                <span class="admin-file-btn admin-file-btn-image">
-                    <i class="fa-solid fa-image"></i> Choose Image
-                    <input type="file" id="premium-image" accept="image/*">
-                </span>
-            </label>
-            <img id="premium-image-preview" class="song-image-preview" style="display:none;">
 
             <label>
                 Features <span class="admin-field-hint">(one per line)</span>
