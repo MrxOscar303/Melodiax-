@@ -723,6 +723,15 @@ window.onYouTubeIframeAPIReady = function () {
         events: {
             onReady: () => {
                 ytPlayerReady = true;
+                // Extra safety for "Error 153" (missing/blocked Referer header) -
+                // meta tag (Index.html <head>) sets it site-wide, lekin kuch iOS
+                // WebKit browsers dynamically-created iframes par wo consistently
+                // apply nahi karte - is liye seedha iframe element par bhi set kar
+                // dete hain.
+                if (ytPlayer.getIframe) {
+                    const ytIframe = ytPlayer.getIframe();
+                    if (ytIframe) ytIframe.referrerPolicy = 'strict-origin-when-cross-origin';
+                }
                 if (pendingYoutubeId) {
                     const idToPlay = pendingYoutubeId;
                     pendingYoutubeId = null;

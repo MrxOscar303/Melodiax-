@@ -25,6 +25,12 @@
     <link rel="icon" id="favicon-512" type="image/png" sizes="512x512" href="android-chrome-512x512.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
+    <!-- YouTube ke embedded (hidden audio) player ko kabhi kabhi mobile
+         browsers (khaas kar iOS Chrome/WebKit) mein "Error 153: Video
+         player configuration error" milta hai jab Referer header
+         strip/missing ho. Ye explicitly bata deta hai ke origin bhejo -
+         YouTube ke player ko configure hone ke liye chahiye hota hai. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 </head>
 
 <body>
