@@ -4,6 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- YouTube ke embedded (IFrame API) player ko video load karte waqt
+         Referer header chahiye hota hai - agar browser (khaas kar mobile
+         Safari/Chrome strict privacy settings mein) ye header na bheje to
+         YouTube "Error 153: Unknown error" de deta hai, chahe video/link
+         bilkul sahi ho. Ye meta tag poori site (aur is se embed hone wale
+         YouTube iframe) ke liye ek safe/consistent Referer policy set
+         karta hai taake ye error na aaye. -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Melodiax - Music Player</title>
 
     <!-- Link preview (WhatsApp, Facebook, Twitter/X, Discord, etc. -
