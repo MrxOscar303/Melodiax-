@@ -7,6 +7,7 @@ const cloudinary = require('cloudinary').v2;
 
 const Song = require('../models/Song');
 const { requireAuth, requireAdmin } = require('../middleware/authMiddleware');
+const { getYoutubeAudioBuffer } = require('../utils/youtubeAudio');
 
 const router = express.Router();
 
@@ -121,6 +122,25 @@ function youtubeThumbnailUrl(youtubeId) {
     return `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`;
 }
 
+// YouTube video ko real Cloudinary audio file mein convert karne ki koshish
+// karta hai - kabhi throw nahi karta (fail hone par null return karta hai)
+// taake calling route hamesha purane "youtube iframe" tareeqe par fallback
+// kar sake agar conversion na ho paye (video private/restricted/bahut lambi
+// ho, wagera). Kamyab hone par ye asal masla (hidden-iframe iOS fragility -
+// error 153/-1, background playback na chalna, lock-screen widget na aana)
+// hamesha ke liye khatam kar deta hai, kyunki phir song bilkul local mp3
+// jaisa hi <audio> element se bajta hai.
+async function tryConvertYoutubeToAudio(youtubeId) {
+    try {
+        const buffer = await getYoutubeAudioBuffer(youtubeId);
+        const audioUrl = await uploadBufferToCloudinary(buffer, 'audio', 'video');
+        return audioUrl;
+    } catch (err) {
+        console.warn(`YouTube->audio auto-convert failed for ${youtubeId}, falling back to iframe playback:`, err.message);
+        return null;
+    }
+}
+
 // ============ LIST ALL SONGS (public - homepage inhe render karta hai) ============
 router.get('/', async (req, res) => {
     try {
@@ -144,7 +164,7 @@ router.post(
             const { title, description, section, youtubeUrl } = req.body;
             // 'youtube' (default, backward-compatible) ya 'mp3' - do tareeqon
             // mein se koi bhi ek admin ye song add karte waqt chun sakta hai.
-            const sourceType = req.body.sourceType === 'mp3' ? 'mp3' : 'youtube';
+            let sourceType = req.body.sourceType === 'mp3' ? 'mp3' : 'youtube';
 
             if (!title || !section) {
                 return res.status(400).json({ message: 'Title and section are required' });
@@ -193,6 +213,16 @@ router.post(
                 // kar dete hain (khaali chorte nahi) - taake har song ka image
                 // data hamesha DB mein maujood rahe.
                 image = uploadedImageUrl || youtubeThumbnailUrl(youtubeId);
+
+                // Real audio extract karke Cloudinary par upload karne ki koshish -
+                // kamyab ho jaye to song ko turant "mp3" (reliable native <audio>)
+                // ki tarah save karte hain, fail ho to purana YouTube-iframe
+                // tareeqa hi chalta rehta hai (koi behavior break nahi hota).
+                const convertedAudioUrl = await tryConvertYoutubeToAudio(youtubeId);
+                if (convertedAudioUrl) {
+                    sourceType = 'mp3';
+                    audioFile = convertedAudioUrl;
+                }
             }
 
             const projectorVideo = projectorEnabled && uploadedVideoUrl ? uploadedVideoUrl : '';
@@ -203,7 +233,7 @@ router.post(
                 section: section.trim(),
                 sourceType,
                 youtubeId,
-                youtubeUrl: sourceType === 'youtube' ? youtubeUrl.trim() : '',
+                youtubeUrl: youtubeUrl ? youtubeUrl.trim() : '', // reference ke liye rakha hai chahe convert ho chuka ho
                 audioFile,
                 image,
                 projectorEnabled,
@@ -296,6 +326,15 @@ router.put(
                 // to saved default thumbnail ko bhi naye video ke mutabiq update kardo.
                 if (!imageFile && !hadManualImage) {
                     song.image = youtubeThumbnailUrl(youtubeId);
+                }
+
+                // Yahan bhi real audio extract karke reliable native <audio>
+                // playback par upgrade karne ki koshish karte hain (add-song
+                // route jaisa hi) - fail ho to purana YouTube-iframe tareeqa chalta rahega.
+                const convertedAudioUrl = await tryConvertYoutubeToAudio(youtubeId);
+                if (convertedAudioUrl) {
+                    song.sourceType = 'mp3';
+                    song.audioFile = convertedAudioUrl;
                 }
             }
 
