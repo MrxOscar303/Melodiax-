@@ -559,12 +559,23 @@ function playPodcast(p) {
 
             try {
                 const offlineProjectorUrl = await window.melodiaxOffline.podcasts.getProjectorUrl(p._id);
-                if (offlineProjectorUrl && projectorVid && window.melodiaxCurrentPodcastId === p._id) {
+                if (offlineProjectorUrl && projectorVid && projectorContainer && window.melodiaxCurrentPodcastId === p._id) {
                     const vidTime = projectorVid.currentTime;
                     projectorVid.src = offlineProjectorUrl;
                     projectorVid.load();
                     projectorVid.currentTime = vidTime;
                     projectorVid.play().catch(() => {});
+                    // "Your Downloads" grid se play hone par (melodiaxPlayOfflinePodcast)
+                    // shuru mein projectorEnabled pata nahi hota (hamesha false
+                    // bhej di jati hai), is liye upar wala synchronous block
+                    // container ko kabhi dikhata hi nahi tha - video load/play
+                    // to ho jati thi lekin peeche chhupi rehti thi. Ab yahan
+                    // (offline copy mil jaane par) container ko bhi khud dikha
+                    // dete hain, bilkul waisa hi jaisa normal (network) path
+                    // karta hai.
+                    projectorContainer.style.display = 'block';
+                    if (mainRightPart) mainRightPart.classList.add('songs-fade-out');
+                    if (typeof showProjectorBtn === 'function') showProjectorBtn();
                 }
             } catch (err) { /* offline projector na mile to network wali hi chalti rahe */ }
         }).catch(() => { /* offline lookup fail - network path already playing */ });
