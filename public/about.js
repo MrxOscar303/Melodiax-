@@ -1,5 +1,4 @@
-// "About us" tab - baaki tabs (Playlist/Downloads) jaisa hi show/hide pattern,
-// plus contact form ko backend (/api/contact) par submit karna.
+
 (function () {
     const aboutNavBtn = document.getElementById('nav-about-btn');
     const aboutSection = document.getElementById('about-view-section');

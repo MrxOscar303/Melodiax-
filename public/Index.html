@@ -4,20 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- YouTube ke embedded (IFrame API) player ko video load karte waqt
-         Referer header chahiye hota hai - agar browser (khaas kar mobile
-         Safari/Chrome strict privacy settings mein) ye header na bheje to
-         YouTube "Error 153: Unknown error" de deta hai, chahe video/link
-         bilkul sahi ho. Ye meta tag poori site (aur is se embed hone wale
-         YouTube iframe) ke liye ek safe/consistent Referer policy set
-         karta hai taake ye error na aaye. -->
+   
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <title>Melodiax - Music Player</title>
 
-    <!-- Link preview (WhatsApp, Facebook, Twitter/X, Discord, etc. -
-         jab koi is site ka link share karta hai to yahan se title/description/
-         image uthate hain). Pehle ye tags maujood hi nahi the, is liye
-         preview me generic grey "person" placeholder image dikhti thi. -->
+    
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Melodiax">
     <meta property="og:title" content="Melodiax - Music Player">
@@ -61,15 +52,15 @@
         </div>
     </div>
 
-    <!-- Exit Projector Mode button: sirf projector video chalte waqt nazar aata ha -->
+
     <button id="exit-projector-btn" class="exit-projector-btn" type="button" title="Exit Projector Mode" aria-label="Exit Projector Mode">
         <span class="exit-icon"></span>
     </button>
-    <!-- Navbar -->
+   
 
     <nav>
         <div class="left-half">
-            <!-- Sirf mobile pe nazar aata hai - click karne se side menu (Home/Premium/Downloads/Playlist/Support) khulta hai -->
+           
             <button id="mobile-menu-btn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu-panel">
                 <i class="fa-solid fa-bars"></i>
             </button>
@@ -100,17 +91,17 @@
             <div class="right-half-p2">
                 <div class="nav-text"><i class="fa-regular fa-circle-down"></i>Install App</div>
 
-                <!-- Guest state: jab tak user login/signup nahi karta, ye dikhega -->
+              
                 <div id="guest-auth-buttons" class="guest-auth-buttons">
                     <div class="nav-text" id="open-signup-btn">Sign up</div>
                     <button class="login-btn" id="open-login-btn">Log in</button>
                 </div>
 
-                <!-- Logged-in state: login/signup ke baad sirf ye dikhega, upar wale buttons gayab ho jayenge -->
+
                 <div id="user-profile-box" class="user-profile-box" style="display:none;">
                     <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
                     <span id="user-name" class="user-name"></span>
-                    <!-- Sirf admin accounts ko ye button nazar aata hai (auth.js/admin.js control karte hain) -->
+                    
                     <button id="admin-panel-btn" class="admin-panel-btn" type="button" title="Add Song" style="display:none;">
                         <i class="fa-solid fa-plus"></i>
                     </button>
@@ -124,12 +115,7 @@
 
     </nav>
 
-    <!-- ==================== MOBILE SIDE MENU ====================
-         Sirf mobile screens (<=768px) pe hamburger icon se khulta hai - smooth
-         slide-in transition ke sath. Home/Premium/Downloads/Playlist/Support
-         + Create Playlist/Browse Podcasts, sab yahan se bhi chalte hain
-         (neeche wale asal buttons ko hi JS se click karte hain, taake
-         behavior bilkul same rahe). -->
+   
     <div id="mobile-menu-overlay" class="mobile-menu-overlay"></div>
     <aside id="mobile-menu-panel" class="mobile-menu-panel" aria-hidden="true">
         <button id="mobile-menu-close" class="mobile-menu-close" type="button" aria-label="Close menu">
@@ -167,14 +153,13 @@
                     <button id="create-playlist-btn" type="button">Create Playlist</button>
                 </div>
                 <div class="box">
-                    <h4>Let's find some podcast to follow</h4>
+                    <h4>Let's find some E-learning to follow</h4>
                     <p>We'll keep you updated on new updates</p>
                     <button id="browse-podcasts-btn">Browse Podcasts</button>
                 </div>
             </div>
 
-            <!-- User ki apni banayi hui playlists yahan (Browse Podcasts ke box ke neeche) aati hain.
-                 Jitni zyada hongi, sirf isi div me scroll aayega - baaki left part disturb nahi hoga. -->
+          
             <h5 class="user-playlists-heading">Your Playlists</h5>
             <div id="user-playlists-list" class="user-playlists-list"></div>
         </div>
@@ -184,14 +169,11 @@
 
 
         <div class="main-right-part">
-            <!-- Admin-managed "Playlists" slide banner - homepage ke bilkul top par.
-                 Public: sirf slides + chhote backward/forward buttons dikhte hain.
-                 Admin: top-right corner par chhota pencil (edit) button, jisse
-                 manage panel khulta hai (add/edit/delete slides). -->
+
             <div id="playlist-banner" class="playlist-banner" style="display:none;">
                 <div id="playlist-banner-track" class="playlist-banner-track"></div>
 
-                <!-- 1st slide pe chupa rehta hai, 2nd/3rd/... slide se dikhta hai (playlist-banner.js control karta hai) -->
+                
                 <button id="playlist-banner-prev" class="playlist-banner-nav playlist-banner-prev" type="button"
                     aria-label="Previous playlist" style="display:none;">
                     <i class="fa-solid fa-chevron-left"></i>
@@ -203,40 +185,34 @@
 
                 <div id="playlist-banner-dots" class="playlist-banner-dots"></div>
 
-                <!-- Sirf logged-in admin account ko nazar aata hai (playlist-banner.js control karta hai) -->
+                
                 <button id="playlist-banner-edit-btn" class="playlist-banner-edit-btn" type="button"
                     title="Manage playlists banner" style="display:none;">
                     <i class="fa-solid fa-pen"></i>
                 </button>
             </div>
 
-            <!-- "Playlist" nav button click karne par ye section dikhta hai aur neeche wale
-                 saare song-sections (Recommended Songs se lekar aakhir tak) chupa diye jate hain.
-                 Home icon click karne se wapas normal view aa jati hai. -->
+           
             <div id="playlists-view-section" class="playlists-view-section" style="display:none;">
                 <h2>Your Playlists</h2>
                 <div id="playlists-view-grid" class="playlists-view-grid"></div>
-                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+
                 <button type="button" id="playlists-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
 
-            <!-- "Download" nav button click karne par ye section dikhta hai - Playlist
-                 section jaisa hi grid, lekin isme sirf offline-downloaded songs (individual
-                 gaane, playlists nahi) show hote hain. Ye button khud tab dikhta hai
-                 jab kam se kam 1 gaana download ho chuka ho (offline.js control karta hai). -->
+            
             <div id="downloads-view-section" class="playlists-view-section" style="display:none;">
                 <h2>Your Downloads</h2>
                 <p id="downloads-view-empty" class="downloads-view-empty" style="display:none;">No songs downloaded for offline yet - hover over any song and click the download icon to save it.</p>
                 <div id="downloads-view-grid" class="playlists-view-grid"></div>
-                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+               
                 <button type="button" id="downloads-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
-            <!-- "About us" nav button click karne par ye section dikhta hai - baaki
-                 sab (home sections, playlist, downloads) chupa diye jate hain. -->
+          
             <div id="about-view-section" class="playlists-view-section about-view-section" style="display:none;">
                 <h1 class="about-hero-title">Melodiax</h1>
                 <p class="about-description">
-                    Melodiax is a full-stack web music player featuring a library of over
+                    Melodiax is a full-stack web music player inspired by spotify, featuring a library of over
                     1,000 songs. Built using Node.js and MongoDB Atlas with the help of AI
                     tools, the entire project - including both the frontend and backend -
                     was independently developed by Aiyz.
@@ -251,18 +227,15 @@
                     <p id="contact-form-status" class="contact-form-status" style="display:none;"></p>
                 </form>
 
-                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+               
                 <button type="button" id="about-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
-            <!-- "Premium" nav button click karne par ye section dikhta hai - baaki
-                 sab (home sections, playlist, downloads, about) chupa diye jate hain.
-                 Plans khud database (/api/premium) se aate hain - admin top-right
-                 pencil button se unhe add/edit/remove kar sakta hai. -->
+       
             <div id="premium-view-section" class="playlists-view-section premium-view-section" style="display:none;">
                 <div class="premium-view-heading">
                     <h1 class="premium-hero-title">Melodiax Premium</h1>
                     <p class="premium-hero-subtitle">Pick the plan that fits how you listen.</p>
-                    <!-- Sirf admin accounts ko ye pencil button nazar aata hai (premium.js control karta hai) -->
+                   
                     <button type="button" id="premium-edit-btn" class="premium-edit-btn" title="Manage Premium plans" style="display:none;">
                         <i class="fa-solid fa-pen"></i>
                     </button>
@@ -272,9 +245,17 @@
 
                 <p class="premium-maintenance-note">This feature is under maintenance</p>
 
-                <!-- Sirf mobile pe nazar aata hai - is view se wapas Home par le jata hai -->
+
                 <button type="button" id="premium-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
+            <div class="music-section">
+                <h2>Trending Songs</h2>
+                <div class="songs">
+                    
+                    
+                    
+                    
+                </div>
             <div class="music-section">
                 <h2>Recommended Songs</h2>
                 <div class="songs">
@@ -607,10 +588,6 @@
         </div>
     </div>
 
-    <!-- ============ ADMIN PANEL (song add karne ka form) ============ -->
-    <!-- ==================== PLAYLIST CREATE / EDIT MODULE ====================
-         "Create Playlist" (ya kisi playlist ka Edit icon) click karne par khulta hai.
-         Screen ka ~70% cover karta hai, theme (dark/red) ke hisaab se apna color badalta hai. -->
     <div id="playlist-modal-overlay" class="playlist-modal-overlay"></div>
     <div id="playlist-modal" class="playlist-modal">
         <div class="playlist-modal-header">
@@ -662,9 +639,7 @@
         </div>
     </div>
 
-    <!-- ==================== PLAYLIST DETAIL MODULE ====================
-         Playlist card/sidebar item pe click karne se (play button pe nahi) ye khulta hai -
-         playlist ke sab songs, aur har song kab (date + time) playlist me add hua tha, wo dikhata hai. -->
+    
     <div id="playlist-detail-overlay" class="playlist-modal-overlay"></div>
     <div id="playlist-detail-modal" class="playlist-modal playlist-detail-modal">
         <div class="playlist-modal-header">
@@ -787,11 +762,7 @@
         <div id="admin-song-list" class="admin-song-list"></div>
     </div>
 
-    <!-- ==================== EDUCATIONAL HUB (Browse Podcasts) ====================
-         "Browse Podcasts" button (sidebar + mobile menu, dono) isko kholte hain.
-         95% screen module - search + category tabs (Physics, Math, waghera) +
-         2-per-row bari cards. Admin ke liye top-right corner me "+" icon hai,
-         jisse alag se admin panel (neeche) khulta hai add/edit/delete ke liye. -->
+   
     <div id="podcast-hub-overlay" class="podcast-hub-overlay"></div>
     <div id="podcast-hub-modal" class="podcast-hub-modal" aria-hidden="true">
         <div class="podcast-hub-header">
@@ -818,8 +789,7 @@
         <p id="podcast-hub-empty" class="podcast-hub-empty" style="display:none;">No content yet - check back soon!</p>
     </div>
 
-    <!-- Admin-only panel: Educational Hub content manage karne ke liye
-         (bilkul #admin-panel/song form jaisa hi, bas alag ids/endpoint). -->
+   
     <div id="podcast-admin-overlay" class="admin-panel-overlay"></div>
     <div id="podcast-admin-panel" class="admin-panel">
         <div class="admin-panel-header">
@@ -934,9 +904,7 @@
         <div id="podcast-admin-list" class="admin-song-list"></div>
     </div>
 
-    <!-- Admin-only panel: homepage ke top wale "Playlists" slide banner ko
-         manage karne ke liye (add/edit/delete slides). playlist-banner.js
-         isko playlist-banner-edit-btn click par khol/band karta hai. -->
+    
     <div id="pbanner-panel-overlay" class="admin-panel-overlay"></div>
     <div id="pbanner-panel" class="admin-panel pbanner-panel">
         <div class="admin-panel-header">
@@ -1006,10 +974,7 @@
         <div id="pbanner-list" class="admin-song-list"></div>
     </div>
 
-    <!-- Admin-only panel: Premium plan cards manage karne ke liye
-         (add/edit/delete plans - bilkul Playlists Banner panel jaisa hi,
-         bas image ki jagah theme color + features list). premium.js isko
-         #premium-edit-btn click par khol/band karta hai. -->
+    
     <div id="premium-panel-overlay" class="admin-panel-overlay"></div>
     <div id="premium-panel" class="admin-panel pbanner-panel">
         <div class="admin-panel-header">
@@ -1080,14 +1045,10 @@
         <div id="premium-list" class="admin-song-list"></div>
     </div>
 
-    <!-- Hidden YouTube IFrame API target: admin-added (YouTube) songs are streamed
-         through this hidden player, but controlled from the SAME player-bar below
-         (now-bar + music-controller) that manual songs use - no separate widget. -->
+    
     <div id="yt-player-hidden" style="position:absolute; width:1px; height:1px; overflow:hidden; opacity:0; pointer-events:none;"></div>
 
-    <!-- Custom confirm dialog: replaces the native browser confirm() popup for
-         every delete action (admin songs, playlists). Always centered on screen
-         and follows the current theme (dark / red). Controlled by confirm.js. -->
+    
     <div id="confirm-dialog-overlay" class="confirm-dialog-overlay">
         <div id="confirm-dialog" class="confirm-dialog" role="alertdialog" aria-modal="true">
             <div class="confirm-dialog-icon"><i class="fa-solid fa-trash"></i></div>
@@ -1112,9 +1073,7 @@
     <script src="premium.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script>
-        // App shell (HTML/CSS/JS/icons) ko cache karta hai taake site khud
-        // bina internet ke bhi khul sake - offline.js (IndexedDB) alag se
-        // individual gaanon ko offline-playable banata hai.
+       
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js').catch((err) => {
