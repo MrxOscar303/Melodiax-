@@ -340,6 +340,52 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     }
 }
 
+/* ---------- App splash screen (native-app-style launch screen) ----------
+   Bara M logo, screen ke bilkul center me, black background par - jaisa
+   Android/iOS app open hote waqt dikhta hai. pwa-install.js ise short delay
+   ke baad fade karke hata deta hai. */
+#app-splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #000000;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.45s ease;
+}
+#app-splash-screen.splash-hide {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.splash-logo {
+    display: inline-block;
+    width: 11rem;
+    height: 8.1rem;
+    max-width: 40vw;
+    max-height: 30vh;
+    -webkit-mask-image: url('assets/m-logo-mask.png');
+    mask-image: url('assets/m-logo-mask.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    background: linear-gradient(115deg, #43e97b 0%, #2ed573 25%, #0b6e3a 50%, #38f9a3 75%, #43e97b 100%);
+    background-size: 300% 300%;
+    filter: drop-shadow(0 6px 18px rgba(46, 213, 115, 0.4));
+    animation: mGradientFlow 2.2s ease-in-out infinite, splashPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes splashPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+
 
 .home-icon {
     font-size: 1.7rem;

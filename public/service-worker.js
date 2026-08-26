@@ -26,6 +26,8 @@ const APP_SHELL = [
     '/offline.js',
     '/podcast.js',
     '/premium.js',
+    '/mobile-menu.js',
+    '/pwa-install.js',
     '/manifest.json',
     '/favicon.ico'
 ];

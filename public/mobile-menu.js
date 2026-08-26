@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wire('mobile-menu-playlist', 'nav-playlist-btn');
     wire('mobile-menu-create-playlist', 'create-playlist-btn');
     wire('mobile-menu-browse-podcasts', 'browse-podcasts-btn');
+    wire('mobile-menu-install', 'nav-install-btn');
 
     // "Leave" buttons - Your Playlists / Downloads ke mobile full-screen
     // view se wapas Home par le jaate hain (home-icon jaisa hi behavior).

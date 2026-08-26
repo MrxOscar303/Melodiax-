@@ -40,9 +40,24 @@
     <link rel="icon" id="favicon-512" type="image/png" sizes="512x512" href="android-chrome-512x512.png?v=2">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
+
+    <!-- Install-as-app support: Android/desktop Chrome/Edge already read the
+         manifest above; these extra tags are for iOS Safari, which ignores
+         the manifest for "Add to Home Screen" and needs its own meta tags. -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Melodiax">
 </head>
 
 <body>
+
+    <!-- App splash screen: har baar app open hote hi (browser tab ho ya
+         installed app) center me bara M logo dikhta hai, phir fade out ho
+         kar asal app nazar aata hai - native Android/iOS app jaisa feel. -->
+    <div id="app-splash-screen" aria-hidden="true">
+        <span class="splash-logo"></span>
+    </div>
 
     <div id="projector-overlay" class="projector-container">
         <div class="projector-mask">
@@ -89,7 +104,7 @@
                 <p class="nav-text" id="nav-about-btn" title="About Melodiax and contact us">About us</p>
             </div>
             <div class="right-half-p2">
-                <div class="nav-text"><i class="fa-regular fa-circle-down"></i>Install App</div>
+                <div class="nav-text" id="nav-install-btn" title="Install Melodiax as an app" style="display:none;"><i class="fa-regular fa-circle-down"></i>Install App</div>
 
               
                 <div id="guest-auth-buttons" class="guest-auth-buttons">
@@ -128,6 +143,7 @@
                 <a href="#" class="mobile-menu-link mobile-menu-group-2" id="mobile-menu-playlist"><i class="fa-solid fa-compact-disc"></i><span>Playlist</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-premium"><i class="fa-solid fa-crown"></i><span>Premium</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-about"><i class="fa-solid fa-circle-info"></i><span>About us</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-install" style="display:none;"><i class="fa-regular fa-circle-down"></i><span>Install App</span></a>
             </nav>
             <div class="mobile-menu-actions">
                 <button type="button" id="mobile-menu-create-playlist" class="mobile-menu-action-btn">Create Playlist</button>
@@ -502,7 +518,7 @@
                 <i id="repeat" class="player-btns fa-solid fa-repeat"></i>
 
                 <div class="playback-speed-wrap">
-                    <i id="playback-speed-btn" class="player-btns fa-solid fa-gauge-high" title="Playback speed"></i>
+                    <i id="playback-speed-btn" class="player-btns fa-solid fa-gauge-simple-high" title="Playback speed"></i>
                     <div id="playback-speed-panel" class="playback-speed-panel">
                         <div class="playback-speed-panel-title">Playback speed</div>
                         <div class="playback-speed-value"><span id="playback-speed-value-text">1x</span></div>
@@ -1090,6 +1106,7 @@
     <script src="about.js"></script>
     <script src="premium.js"></script>
     <script src="mobile-menu.js?v=2"></script>
+    <script src="pwa-install.js?v=1"></script>
     <script>
        
         if ('serviceWorker' in navigator) {
