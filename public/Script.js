@@ -248,7 +248,16 @@ function applyPlaybackSpeed(speed) {
         try { ytPlayer.setPlaybackRate(speed); } catch (err) { /* player abhi ready na ho to ignore */ }
     }
     if (playbackSpeedValueText) playbackSpeedValueText.textContent = formatSpeedLabel(speed);
-    if (playbackSpeedSlider) playbackSpeedSlider.value = speed;
+    if (playbackSpeedSlider) {
+        playbackSpeedSlider.value = speed;
+        // Bar ki fill (--p) ko slider ki min/max ke hisaab se update karte
+        // hain, taake sirf accent-color wali default bar ki jagah ek
+        // proper filled/custom-styled bar dikhe.
+        const min = parseFloat(playbackSpeedSlider.min) || 0.25;
+        const max = parseFloat(playbackSpeedSlider.max) || 3;
+        const pct = ((speed - min) / (max - min)) * 100;
+        playbackSpeedSlider.style.setProperty('--p', pct + '%');
+    }
     if (playbackSpeedBtn) playbackSpeedBtn.classList.toggle('active', speed !== 1);
     playbackSpeedPresets.forEach((btn) => {
         btn.classList.toggle('active', Math.abs(parseFloat(btn.dataset.speed) - speed) < 0.001);
@@ -260,7 +269,14 @@ window.melodiaxGetPlaybackSpeed = () => currentPlaybackSpeed;
 if (playbackSpeedBtn && playbackSpeedPanel) {
     playbackSpeedBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        playbackSpeedPanel.classList.toggle('open');
+        const isOpen = playbackSpeedPanel.classList.toggle('open');
+        if (isOpen) {
+            // Pehla click: panel "on" - khul jata hai taake user speed chun sake.
+        } else {
+            // Dusra click (isi button pe): panel "off" ho jata hai AND
+            // speed wapas default 1x par reset ho jati hai.
+            applyPlaybackSpeed(1);
+        }
     });
     playbackSpeedPanel.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => playbackSpeedPanel.classList.remove('open'));
