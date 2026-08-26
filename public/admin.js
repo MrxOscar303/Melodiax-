@@ -898,6 +898,12 @@ function onYtStateChange(event) {
             ytPlayer.unMute();
             if (ytPlayer.setVolume && volumeBar) ytPlayer.setVolume(volumeBar.value);
         }
+        // Naya video load hone par YouTube player khud apni speed 1x par
+        // reset kar deta hai - user ne jo speed pehle se chuni thi wahi
+        // dobara laga do.
+        if (typeof window.melodiaxGetPlaybackSpeed === 'function' && ytPlayer && ytPlayer.setPlaybackRate) {
+            try { ytPlayer.setPlaybackRate(window.melodiaxGetPlaybackSpeed()); } catch (err) { /* ignore */ }
+        }
     } else if (event.data === YT.PlayerState.PAUSED) {
         play.classList.remove('fa-circle-pause');
         play.classList.add('fa-circle-play');

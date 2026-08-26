@@ -215,7 +215,7 @@
                     Melodiax is a full-stack web music player inspired by spotify, featuring a library of over
                     1,000 songs. Built using Node.js and MongoDB Atlas with the help of AI
                     tools, the entire project - including both the frontend and backend -
-                    was independently developed by Aiyz.
+                    was independently developed by Aiyz Kahlon.
                 </p>
 
                 <h2 class="about-contact-heading">Contact Us</h2>
@@ -500,6 +500,24 @@
                 <i id="play" class="player-btns fa-solid fa-circle-play"></i>
                 <i id="forward" class="player-btns fa-sharp fa-solid fa-forward-step"></i>
                 <i id="repeat" class="player-btns fa-solid fa-repeat"></i>
+
+                <div class="playback-speed-wrap">
+                    <i id="playback-speed-btn" class="player-btns fa-solid fa-gauge-high" title="Playback speed"></i>
+                    <div id="playback-speed-panel" class="playback-speed-panel">
+                        <div class="playback-speed-panel-title">Playback speed</div>
+                        <div class="playback-speed-value"><span id="playback-speed-value-text">1x</span></div>
+                        <input type="range" id="playback-speed-slider" min="0.25" max="3" step="0.05" value="1">
+                        <div class="playback-speed-presets">
+                            <button type="button" class="playback-speed-preset" data-speed="0.5">0.5x</button>
+                            <button type="button" class="playback-speed-preset" data-speed="0.75">0.75x</button>
+                            <button type="button" class="playback-speed-preset active" data-speed="1">1x</button>
+                            <button type="button" class="playback-speed-preset" data-speed="1.25">1.25x</button>
+                            <button type="button" class="playback-speed-preset" data-speed="1.5">1.5x</button>
+                            <button type="button" class="playback-speed-preset" data-speed="2">2x</button>
+                            <button type="button" class="playback-speed-preset" data-speed="3">3x</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="spotify-timer-row">

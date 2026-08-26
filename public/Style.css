@@ -702,6 +702,79 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     color: rgb(209, 208, 208);
 }
 
+/* ---------- Playback speed control (YouTube jaisa chhota popup) ---------- */
+.playback-speed-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+#playback-speed-btn.active { color: #1db954; }
+body.red-theme #playback-speed-btn.active { color: #ff4d4d; }
+
+.playback-speed-panel {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 14px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    background: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    z-index: 500;
+    cursor: default;
+}
+.playback-speed-panel.open { display: block; }
+body.red-theme .playback-speed-panel { background: #1a0000; border-color: #4e0000; }
+
+.playback-speed-panel-title {
+    font-size: 0.8rem;
+    color: #ccc;
+    margin-bottom: 6px;
+    text-align: center;
+}
+.playback-speed-value {
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1db954;
+    margin-bottom: 8px;
+}
+body.red-theme .playback-speed-value { color: #ff4d4d; }
+
+#playback-speed-slider {
+    width: 100%;
+    accent-color: #1db954;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+body.red-theme #playback-speed-slider { accent-color: #ff4d4d; }
+
+.playback-speed-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+.playback-speed-preset {
+    flex: 1 1 auto;
+    min-width: 42px;
+    padding: 5px 6px;
+    border-radius: 14px;
+    border: 1px solid #3a3a3a;
+    background: #262626;
+    color: #ccc;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.playback-speed-preset:hover { border-color: #1db954; color: #fff; }
+.playback-speed-preset.active { background: #1db954; border-color: #1db954; color: #000; font-weight: 700; }
+body.red-theme .playback-speed-preset:hover { border-color: #ff4d4d; }
+body.red-theme .playback-speed-preset.active { background: #ff4d4d; border-color: #ff4d4d; color: #fff; }
+
 #play {
     font-size: 2.2rem;
     color: white;
@@ -3694,6 +3767,19 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .now-bar { flex: 1 1 100%; order: 1; padding-left: 0.2rem; }
     .music-controller { flex: 1 1 100%; order: 2; }
     .player-btns { margin: 0.3rem 0.5rem; font-size: 0.95rem; }
+
+    /* Popup ko button ke sath relative rakhne se mobile pe screen se bahar
+       nikal jata tha (button khud edge ke kareeb hota hai) - is liye yahan
+       poori screen ke hisaab se fixed+center kar diya. */
+    .playback-speed-panel {
+        position: fixed;
+        bottom: auto;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 85vw;
+        max-width: 280px;
+    }
     #play { font-size: 1.8rem; }
     .volume-container { flex: 1 1 100%; order: 3; justify-content: center; padding-right: 0; gap: 1rem; }
     /* Pehle progressBar ko hardcoded "92vw" max-width di gayi thi - dono

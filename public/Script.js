@@ -220,6 +220,58 @@ repeat.addEventListener('click', () => {
     }
 })
 
+// ---------------- Playback speed (songs + podcasts, dono) ----------------
+// Shared <audio> element + shared YouTube player use hote hain, is liye
+// yahan set ki hui speed khud-ba-khud dono system (song ho ya podcast) par
+// lagu ho jati hai - alag se kahin aur handle karne ki zaroorat nahi.
+let currentPlaybackSpeed = 1;
+const playbackSpeedBtn = document.getElementById('playback-speed-btn');
+const playbackSpeedPanel = document.getElementById('playback-speed-panel');
+const playbackSpeedSlider = document.getElementById('playback-speed-slider');
+const playbackSpeedValueText = document.getElementById('playback-speed-value-text');
+const playbackSpeedPresets = document.querySelectorAll('.playback-speed-preset');
+
+function formatSpeedLabel(speed) {
+    // Trailing zeros hata dete hain: 1 -> "1x", 1.5 -> "1.5x", 1.25 -> "1.25x"
+    return (Math.round(speed * 100) / 100) + 'x';
+}
+
+function applyPlaybackSpeed(speed) {
+    speed = Math.min(3, Math.max(0.25, speed));
+    currentPlaybackSpeed = speed;
+    audio.playbackRate = speed;
+    if (typeof projectorVid !== 'undefined' && projectorVid) projectorVid.playbackRate = speed;
+    // ytPlayer admin.js me define hota hai (Script.js ke baad load hoti hai) -
+    // lekin ye function hamesha click/interaction ke waqt hi chalta hai (parse
+    // waqt nahi), is liye tab tak ytPlayer maujood ho chuki hoti hai.
+    if (typeof ytPlayer !== 'undefined' && ytPlayer && ytPlayer.setPlaybackRate) {
+        try { ytPlayer.setPlaybackRate(speed); } catch (err) { /* player abhi ready na ho to ignore */ }
+    }
+    if (playbackSpeedValueText) playbackSpeedValueText.textContent = formatSpeedLabel(speed);
+    if (playbackSpeedSlider) playbackSpeedSlider.value = speed;
+    if (playbackSpeedBtn) playbackSpeedBtn.classList.toggle('active', speed !== 1);
+    playbackSpeedPresets.forEach((btn) => {
+        btn.classList.toggle('active', Math.abs(parseFloat(btn.dataset.speed) - speed) < 0.001);
+    });
+}
+window.melodiaxApplyPlaybackSpeed = applyPlaybackSpeed;
+window.melodiaxGetPlaybackSpeed = () => currentPlaybackSpeed;
+
+if (playbackSpeedBtn && playbackSpeedPanel) {
+    playbackSpeedBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playbackSpeedPanel.classList.toggle('open');
+    });
+    playbackSpeedPanel.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => playbackSpeedPanel.classList.remove('open'));
+}
+if (playbackSpeedSlider) {
+    playbackSpeedSlider.addEventListener('input', (e) => applyPlaybackSpeed(parseFloat(e.target.value)));
+}
+playbackSpeedPresets.forEach((btn) => {
+    btn.addEventListener('click', () => applyPlaybackSpeed(parseFloat(btn.dataset.speed)));
+});
+
 
 playNextSong = () => {
     if (!songOnRepeat) {
