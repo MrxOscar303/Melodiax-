@@ -41,6 +41,15 @@ let audio = new Audio('Audio/1.mp3');
 audio.preload = 'auto';
 audio.setAttribute('playsinline', '');
 audio.setAttribute('webkit-playsinline', '');
+// `new Audio()` se bana element by default DOM ka hissa nahi hota (sirf JS
+// memory me "detached" rehta hai). Kai mobile browsers (khaas kar iOS
+// Safari/installed PWA) aise detached audio element ko background/lock-
+// screen me kam reliable treat karte hain aur app se hatte hi playback rok
+// dete hain. DOM me (hidden) attach karne se OS/browser ise ek "real" media
+// element maanta hai aur background me chalte rehne dene ka chance kaafi
+// badh jata hai.
+audio.style.display = 'none';
+document.body.appendChild(audio);
 let currentSong = 1;
 
 // Songs aur Podcasts dono SAME <audio> element aur SAME YouTube player use
