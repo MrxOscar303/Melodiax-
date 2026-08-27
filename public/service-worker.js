@@ -65,10 +65,13 @@ self.addEventListener('fetch', (event) => {
     if (url.pathname.startsWith('/api/')) return;
 
     // Audio/video/uploads - offline.js (IndexedDB) is scope se bahar rakhta hai.
+    // /downloads/ - desktop .exe installer (bara file, ek dafa download hota
+    // hai) - ise service worker cache karne ki koshish bhi na kare.
     if (
         url.pathname.startsWith('/Audio/') ||
         url.pathname.startsWith('/Videos/') ||
-        url.pathname.startsWith('/uploads/')
+        url.pathname.startsWith('/uploads/') ||
+        url.pathname.startsWith('/downloads/')
     ) return;
 
     // Stale-while-revalidate: cache mojood ho to turant wahi do (fast +

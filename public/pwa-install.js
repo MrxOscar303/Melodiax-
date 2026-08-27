@@ -4,12 +4,15 @@
 // 1) Splash screen: app-splash-screen (Index.html) ko thori der dikha kar
 //    fade out kar dete hain - Android/iOS app jaisa launch feel.
 //
-// 2) Install App: "beforeinstallprompt" ko capture karke desktop nav ke
-//    #nav-install-btn aur mobile hamburger ke #mobile-menu-install, dono
-//    button dikhate hain (jab tak app already installed na ho). Click par
-//    Chrome/Edge/Android jaisi jagah asal install-prompt khulta hai; jahan
-//    ye event support nahi hota (iOS Safari, Firefox) wahan showConfirm()
-//    se "Add to Home Screen" jaisi manual instructions dikha dete hain.
+// 2) Install App:
+//    - DESKTOP (Windows/Mac/Linux browser): button hamesha dikhta hai, aur
+//      click karte hi asal Melodiax.exe installer seedha download ho jata
+//      hai (browser ka halka PWA install nahi - ye real, proper Windows
+//      installer hai jo public/downloads/Melodiax-Setup.exe se serve hota
+//      hai). User use chala kar khud install kar leta hai.
+//    - MOBILE (Android/iOS): purana wahi PWA/"Add to Home Screen" flow -
+//      "beforeinstallprompt" (Android Chrome/Edge) se asal install-prompt,
+//      ya iOS ke liye manual "Share > Add to Home Screen" instructions.
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -33,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS 13+ desktop-jaisa UA bhejta hai
+    const isOtherMobile = /android|iemobile|blackberry|opera mini/i.test(navigator.userAgent);
+    const isDesktop = !isIOS && !isOtherMobile; // Windows/Mac/Linux par browser - yahan .exe installer download hoga
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
         window.navigator.standalone === true; // navigator.standalone = iOS Safari ka apna flag
 
@@ -52,18 +57,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // App pehle se hi installed/open hai (standalone window) - button dikhane
         // ka koi faida nahi.
         hideInstallButtons();
-    } else if (isIOS) {
-        // iOS Safari "beforeinstallprompt" kabhi fire nahi karta - button hamesha
-        // dikhao, click par manual instructions.
+    } else if (isIOS || isDesktop) {
+        // iOS: "beforeinstallprompt" kabhi fire nahi karta.
+        // Desktop: .exe download hamesha available hai, kisi event ka wait
+        // nahi karna - is liye dono jagah button seedha shuru se dikhao.
         showInstallButtons();
+        if (isDesktop && navInstallBtn) navInstallBtn.title = 'Download Melodiax for Windows';
     }
-    // Baaki (Chrome/Edge/Android/desktop) browsers: button "beforeinstallprompt"
-    // fire hone par hi dikhega (neeche).
+    // Android/doosre mobile browsers: button "beforeinstallprompt" fire hone
+    // par hi dikhega (neeche) - is se pehle chupa rehta hai.
 
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (!isStandalone) showInstallButtons();
+        if (!isStandalone && !isDesktop) showInstallButtons(); // desktop ke liye humara apna .exe flow hai, browser wala prompt use nahi karna
     });
 
     window.addEventListener('appinstalled', () => {
@@ -71,7 +78,20 @@ document.addEventListener('DOMContentLoaded', () => {
         hideInstallButtons();
     });
 
+    function downloadDesktopInstaller() {
+        const a = document.createElement('a');
+        a.href = '/downloads/Melodiax-Setup.exe';
+        a.download = 'Melodiax-Setup.exe';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
     async function handleInstallClick() {
+        if (isDesktop) {
+            downloadDesktopInstaller();
+            return;
+        }
         if (deferredPrompt) {
             deferredPrompt.prompt();
             await deferredPrompt.userChoice;
@@ -91,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-        // Fallback for browsers with no beforeinstallprompt and no iOS-specific flow
+        // Fallback for other mobile browsers with no beforeinstallprompt
         if (window.showConfirm) {
             await window.showConfirm(
                 'To install Melodiax, open your browser menu and choose "Install App" or "Add to Home Screen".',
