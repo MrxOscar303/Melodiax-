@@ -49,7 +49,7 @@ const SHELL_FILES_FOR_HASH = [
     'Index.html', 'Style.css', 'Script.js',
     'playlist.js', 'playlist-banner.js', 'admin.js',
     'auth.js', 'confirm.js', 'offline.js', 'about.js',
-    'premium.js', 'mobile-menu.js', 'pwa-install.js', 'manifest.json',
+    'premium.js', 'mobile-menu.js', 'pwa-install.js', 'manifest.json', 'manifest-red.json',
 ];
 
 function getShellHash() {

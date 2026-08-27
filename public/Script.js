@@ -583,6 +583,17 @@ function applyThemeFavicon(isRed) {
         newLink.href = href;
         oldLink.parentNode.replaceChild(newLink, oldLink);
     });
+
+    // manifest.json (jo Android/desktop "Install App" ke waqt icon uthata
+    // hai) ko bhi theme ke mutabiq switch kar dete hain - taake jo bhi
+    // theme is waqt active ho, install/"Add to Home Screen" usi rang wala
+    // logo use kare. (Pehle se installed app ka home-screen icon OS/browser
+    // khud cache kar leta hai - wo retroactively nahi badal sakta, ye sirf
+    // agli install ke liye hai.)
+    const manifestLink = document.getElementById('app-manifest-link');
+    if (manifestLink) {
+        manifestLink.href = isRed ? 'manifest-red.json' : 'manifest.json';
+    }
 }
 
 if (themeBtn) {

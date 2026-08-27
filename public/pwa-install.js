@@ -79,13 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (isIOS) {
+            // iOS ke sab browsers (Safari, Chrome, Edge, Firefox) WebKit ka
+            // wahi system Share sheet use karte hain, is liye instruction
+            // kisi ek browser ka naam liye baghair generic rakha hai - taake
+            // kisi bhi iOS browser me sahi lage.
+            const iosMsg = 'Tap the Share icon in your browser\'s toolbar, then choose "Add to Home Screen" to install Melodiax.';
             if (window.showConfirm) {
-                await window.showConfirm(
-                    'Tap the Share icon in Safari, then choose "Add to Home Screen" to install Melodiax.',
-                    { confirmText: 'Got it', cancelText: 'Got it' }
-                );
+                await window.showConfirm(iosMsg, { confirmText: 'Got it', cancelText: 'Got it' });
             } else {
-                alert('Tap the Share icon in Safari, then choose "Add to Home Screen" to install Melodiax.');
+                alert(iosMsg);
             }
             return;
         }

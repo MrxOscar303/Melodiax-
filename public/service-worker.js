@@ -29,6 +29,7 @@ const APP_SHELL = [
     '/mobile-menu.js',
     '/pwa-install.js',
     '/manifest.json',
+    '/manifest-red.json',
     '/favicon.ico'
 ];
 
