@@ -566,7 +566,7 @@ const FAVICON_MAP = {
     'favicon-16': { default: 'favicon-16x16.png?v=2', red: 'favicon-16x16-red.png?v=2' },
     'favicon-32': { default: 'favicon-32x32.png?v=2', red: 'favicon-32x32-red.png?v=2' },
     'favicon-48': { default: 'favicon-48x48.png?v=2', red: 'favicon-48x48-red.png?v=2' },
-    'favicon-apple': { default: 'apple-touch-icon.png?v=2', red: 'apple-touch-icon-red.png?v=2' },
+    'favicon-apple': { default: 'apple-touch-icon.png', red: 'apple-touch-icon-red.png' },
     'favicon-192': { default: 'android-chrome-192x192.png?v=2', red: 'android-chrome-192x192-red.png?v=2' },
     'favicon-512': { default: 'android-chrome-512x512.png?v=2', red: 'android-chrome-512x512-red.png?v=2' },
 };
