@@ -800,31 +800,17 @@ function verifyYtPlaybackStarted(expectedId) {
 }
 
 // ---------------- TEMPORARY iOS debug toast ----------------
-// iOS par (khaas kar Chrome) developer console dekhna mushkil hai (Mac ki
-// zaroorat hoti hai) - is liye jab bhi YouTube playback fail/block ho, ye
-// chhota sa on-screen message dikha dete hain taake user seedha screenshot
-// le kar bhej sake. Masla diagnose hone ke baad ye hata diya jayega.
+// [REMOVED] Ye pehle ek on-screen red banner dikhata tha (raw YT error code +
+// video ID) taake iOS par masla diagnose kiya ja sake - lekin ye real users
+// ko bhi dikh raha tha aur unprofessional/scary lagta tha. Ab sirf console
+// me log hota hai (jo remote-debugging se dekha ja sakta hai), user ko kuch
+// nazar nahi aata - background me hi agla gaana chal jata hai.
 function isMobileDevice() {
     return window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function showYtDebugToast(message) {
-    if (!isMobileDevice()) return; // sirf mobile par dikhana hai (diagnostic ke liye) - desktop par chup
-
-    let el = document.getElementById('yt-debug-toast');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'yt-debug-toast';
-        el.style.cssText = 'position:fixed;top:8px;left:8px;right:8px;z-index:99999;' +
-            'background:#c0392b;color:#fff;font-size:13px;line-height:1.4;' +
-            'padding:10px 14px;border-radius:8px;text-align:center;' +
-            'box-shadow:0 4px 14px rgba(0,0,0,0.4);';
-        document.body.appendChild(el);
-    }
-    el.textContent = message;
-    el.style.display = 'block';
-    clearTimeout(el._hideTimeout);
-    el._hideTimeout = setTimeout(() => { el.style.display = 'none'; }, 6000);
+    console.warn('[Melodiax YT]', message);
 }
 
 const YT_ERROR_MEANINGS = {
@@ -975,6 +961,7 @@ audio.addEventListener('play', () => {
 
 function startYoutubeTrack(data) {
     currentPlaybackType = 'youtube';
+    if (typeof window.melodiaxShowYtBgAudioNotice === 'function') window.melodiaxShowYtBgAudioNotice();
     if (!audio.paused) audio.pause();
     if (ytPlayerReady && ytPlayer && ytPlayer.loadVideoById) {
         // iOS par (Safari/Chrome, dono WebKit) naya/reloaded YouTube video

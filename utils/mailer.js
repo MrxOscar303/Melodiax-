@@ -50,20 +50,20 @@ async function sendVerificationEmail(to, username, verifyUrl) {
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
             <h2>Hi ${username},</h2>
-            <p>Melodiax par account banane ka shukriya! Neeche diye button par click karke apna email verify karein:</p>
+            <p>Thanks for creating a Melodiax account! Please click the button below to verify your email address:</p>
             <p style="margin: 24px 0;">
                 <a href="${verifyUrl}" style="background:#1db954;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
-                    Email Verify Karein
+                    Verify Email
                 </a>
             </p>
-            <p>Ya ye link browser mein paste karein:<br>${verifyUrl}</p>
-            <p style="color:#888;font-size:12px;">Ye link 24 ghante ke liye valid hai. Agar aapne ye account nahi banaya to is email ko ignore karein.</p>
+            <p>Or paste this link into your browser:<br>${verifyUrl}</p>
+            <p style="color:#888;font-size:12px;">This link is valid for 24 hours. If you didn't create this account, you can safely ignore this email.</p>
         </div>
     `;
 
     const sent = await sendBrevoEmail({
         to,
-        subject: 'Apna email verify karein - Melodiax',
+        subject: 'Verify your email - Melodiax',
         html,
     });
 
