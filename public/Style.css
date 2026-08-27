@@ -125,6 +125,8 @@ nav {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Install App row add hone ke baad chhote screens par thora scroll lagta hai - iOS par smooth rahe isliye */
+    overscroll-behavior: contain;
     transform: translateX(-105%);
     transition: transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
@@ -161,7 +163,7 @@ nav {
 .mobile-menu-links {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 /* Har link ek row hai: icon + text, dono white, ek hi tarah align (fixed
@@ -169,25 +171,28 @@ nav {
    lagega). Hover/press par piche halka white background highlight aata
    hai (jaisa asal Premium/Playlist/Support buttons ka original theme hai).
    Icon/text bare/zyada visible hain, panel bhi red-marked area jitna
-   bara/tall rakha hai taake sab kuch achi tarah nazar aaye. */
+   bara/tall rakha hai taake sab kuch achi tarah nazar aaye.
+   (Compact rakha gaya hai taake "Install App" row add hone ke baad bhi
+   neeche wale Create Playlist/Browse Podcasts buttons chhoti screens par
+   bhi hamesha nazar aayein.) */
 .mobile-menu-link {
     display: flex;
     align-items: center;
     gap: 0.6rem;
     color: #fff;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     font-weight: 600;
     text-decoration: none;
     letter-spacing: 0.2px;
-    padding: 0.85rem 0.7rem;
+    padding: 0.6rem 0.7rem;
     border-radius: 10px;
     transition: background-color 0.15s, color 0.15s;
 }
 .mobile-menu-link i {
-    width: 1.8rem;
+    width: 1.6rem;
     flex-shrink: 0;
     text-align: center;
-    font-size: 1.6rem;
+    font-size: 1.35rem;
     color: #fff;
 }
 .mobile-menu-link:hover,
@@ -203,7 +208,7 @@ nav {
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    gap: 0.7rem;
+    gap: 0.5rem;
     flex-shrink: 0;
 }
 .mobile-menu-action-btn {
@@ -211,8 +216,8 @@ nav {
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 0.85rem 0.9rem;
-    font-size: 1rem;
+    padding: 0.7rem 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
@@ -222,7 +227,7 @@ nav {
 
 /* "Exit" - panel ke sabse aakhir (last) me, menu ko band karta hai (X button jaisa hi kaam) */
 .mobile-menu-exit-btn {
-    margin-top: auto;
+    margin-top: 0.6rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -232,10 +237,10 @@ nav {
     border: 1px solid #3a3a3a;
     border-radius: 8px;
     color: #fff;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     font-family: inherit;
-    padding: 0.85rem 0.7rem;
+    padding: 0.7rem 0.7rem;
     cursor: pointer;
     flex-shrink: 0;
     transition: background-color 0.15s, border-color 0.15s;
