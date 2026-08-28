@@ -39,6 +39,7 @@
         // Premium tab agar khula ho to usko turant chupa do (naya tab khud
         // apna fade-in karega, isliye yahan animation ki zaroorat nahi).
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
+        if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
 
         fadeOutThen([...homeSections, playlistsSection, downloadsSection], () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });

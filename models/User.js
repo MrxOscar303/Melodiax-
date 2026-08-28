@@ -64,6 +64,26 @@ const userSchema = new mongoose.Schema(
             type: Date,
             select: false,
         },
+        // ---------------- Friend system: presence status ----------------
+        // User khud choose karta hai (customize karta hai) - kisi automatic
+        // detection se nahi. "offline" tab set hota hai jab user login hi
+        // nahi hai (frontend friends list mein khud handle karta hai).
+        status: {
+            type: String,
+            enum: ['online', 'dnd', 'night'],
+            default: 'online',
+        },
+        statusMessage: {
+            type: String,
+            trim: true,
+            maxlength: 60,
+            default: '',
+        },
+        // Friend request/accept notifications mute karne ka option
+        notificationsMuted: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true } // createdAt / updatedAt khud-b-khud add ho jayenge
 );

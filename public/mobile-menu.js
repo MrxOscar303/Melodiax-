@@ -38,8 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
         menuDownloadsLink.style.display = realHidden ? 'none' : '';
     }
 
+    function syncFriendsLink() {
+        const friendsModule = document.getElementById('friends-module');
+        const menuFriendsLink = document.getElementById('mobile-menu-friends');
+        if (!friendsModule || !menuFriendsLink) return;
+        const hidden = window.getComputedStyle(friendsModule).display === 'none';
+        menuFriendsLink.style.display = hidden ? 'none' : '';
+    }
+
     function openMenu() {
         syncDownloadsLink();
+        syncFriendsLink();
         overlay.classList.add('open');
         // Ek frame chhod dete hain taake "display" pehle apply ho jaye,
         // phir transform transition smoothly chal sake.
@@ -95,6 +104,15 @@ document.addEventListener('DOMContentLoaded', () => {
     wire('mobile-menu-browse-podcasts', 'browse-podcasts-btn');
     wire('mobile-menu-install', 'nav-install-btn');
 
+    // Friends - koi alag "nav-friends-btn" nahi hai (ye sidebar module hai,
+    // top-nav link nahi), is liye seedha friends.js ke expose kiye hue
+    // function ko call karte hain.
+    document.getElementById('mobile-menu-friends')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        closeMenu();
+        if (typeof window.melodiaxShowFriendsTab === 'function') window.melodiaxShowFriendsTab();
+    });
+
     // "Leave" buttons - Your Playlists / Downloads ke mobile full-screen
     // view se wapas Home par le jaate hain (home-icon jaisa hi behavior).
     function wireLeave(id) {
@@ -109,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wireLeave('downloads-view-leave-btn');
     wireLeave('about-view-leave-btn');
     wireLeave('premium-view-leave-btn');
+    wireLeave('friends-view-leave-btn');
 
     // Downloads nav-button ki visibility offline.js dynamically badalta
     // rehta hai (jab pehla gaana download/delete ho) - menu khulne par
@@ -118,6 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (realDownloadsBtn && window.MutationObserver) {
         const obs = new MutationObserver(syncDownloadsLink);
         obs.observe(realDownloadsBtn, { attributes: true, attributeFilter: ['style'] });
+    }
+    const friendsModuleEl = document.getElementById('friends-module');
+    if (friendsModuleEl && window.MutationObserver) {
+        const obs2 = new MutationObserver(syncFriendsLink);
+        obs2.observe(friendsModuleEl, { attributes: true, attributeFilter: ['style'] });
     }
 
     // Mobile par search-bar chhota hai (icon/folder hata diye) is liye

@@ -157,6 +157,7 @@
         // apna fade-in karega, isliye yahan animation ki zaroorat nahi -
         // warna overlap ki wajah se "jhalak" dikhti hai).
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
+        if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
 
         await loadPremiumPlans();
 

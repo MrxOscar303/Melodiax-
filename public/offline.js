@@ -645,6 +645,7 @@
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
         // Premium tab agar khula ho to usko bhi turant chupa do.
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
+        if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
 
         await renderDownloadsGrid();
 

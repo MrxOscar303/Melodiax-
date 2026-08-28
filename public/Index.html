@@ -106,6 +106,30 @@
             <div class="right-half-p2">
                 <div class="nav-text" id="nav-install-btn" title="Install Melodiax as an app" style="display:none;"><i class="fa-regular fa-circle-down"></i>Install App</div>
 
+                <!-- Notification bell - Install App aur account ke darmiyan.
+                     Sirf logged-in users ko dikhta hai (friends.js/notifications.js
+                     login hone par isay dikhata hai). -->
+                <div class="notif-bell-wrap" id="notif-bell-wrap" style="display:none;">
+                    <button type="button" id="notif-bell-btn" class="notif-bell-btn" title="Notifications" aria-label="Notifications">
+                        <i class="fa-regular fa-bell"></i>
+                        <span id="notif-bell-badge" class="notif-bell-badge" style="display:none;">0</span>
+                    </button>
+                    <div id="notif-panel" class="notif-panel" style="display:none;">
+                        <div class="notif-panel-header">
+                            <p>Notifications</p>
+                            <div class="notif-panel-header-actions">
+                                <button type="button" id="notif-mute-btn" class="notif-mute-btn" title="Mute notifications">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button type="button" id="notif-mark-all-btn" class="notif-mark-all-btn">Mark all read</button>
+                            </div>
+                        </div>
+                        <div id="notif-list" class="notif-list">
+                            <p class="notif-empty">No notifications yet.</p>
+                        </div>
+                    </div>
+                </div>
+
               
                 <div id="guest-auth-buttons" class="guest-auth-buttons">
                     <div class="nav-text" id="open-signup-btn">Sign up</div>
@@ -114,13 +138,25 @@
 
 
                 <div id="user-profile-box" class="user-profile-box" style="display:none;">
-                    <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
+                    <span class="my-status-dot-wrap">
+                        <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
+                        <span id="my-status-dot" class="status-dot status-online" title="Set your status"></span>
+                    </span>
                     <span id="user-name" class="user-name"></span>
                     
                     <button id="admin-panel-btn" class="admin-panel-btn" type="button" title="Add Song" style="display:none;">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                     <div class="user-dropdown">
+                        <div class="my-status-section">
+                            <p class="my-status-section-title">Your status</p>
+                            <div class="my-status-options">
+                                <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span>Online</button>
+                                <button type="button" class="my-status-option" data-status="dnd"><span class="status-dot status-dnd"></span>Do Not Disturb</button>
+                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"></span>Night</button>
+                            </div>
+                            <input type="text" id="my-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
+                        </div>
                         <button id="logout-btn" type="button">Log out</button>
                     </div>
                 </div>
@@ -143,6 +179,7 @@
                 <a href="#" class="mobile-menu-link mobile-menu-group-2" id="mobile-menu-playlist"><i class="fa-solid fa-compact-disc"></i><span>Playlist</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-premium"><i class="fa-solid fa-crown"></i><span>Premium</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-about"><i class="fa-solid fa-circle-info"></i><span>About us</span></a>
+                <a href="#" class="mobile-menu-link" id="mobile-menu-friends" style="display:none;"><i class="fa-solid fa-user-group"></i><span>Friends</span></a>
                 <a href="#" class="mobile-menu-link" id="mobile-menu-install" style="display:none;"><i class="fa-regular fa-circle-down"></i><span>Install App</span></a>
             </nav>
             <div class="mobile-menu-actions">
@@ -178,6 +215,33 @@
           
             <h5 class="user-playlists-heading">Your Playlists</h5>
             <div id="user-playlists-list" class="user-playlists-list"></div>
+
+            <!-- Friends module - sirf logged-in users ko dikhta hai -->
+            <div class="friends-module" id="friends-module" style="display:none;">
+                <div class="friends-module-header">
+                    <p>Friends</p>
+                    <button type="button" id="add-friend-toggle-btn" title="Add a friend">+</button>
+                </div>
+
+                <div id="add-friend-panel" class="add-friend-panel" style="display:none;">
+                    <div class="add-friend-input-row">
+                        <input type="text" id="add-friend-input" placeholder="@username" maxlength="30" autocomplete="off">
+                        <button type="button" id="send-friend-request-btn">Add</button>
+                    </div>
+                    <div id="add-friend-suggestions" class="add-friend-suggestions"></div>
+                    <p id="add-friend-feedback" class="add-friend-feedback"></p>
+                </div>
+
+                <div id="friend-requests-section" class="friend-requests-section" style="display:none;">
+                    <p class="friends-subheading">Requests</p>
+                    <div id="friend-requests-list"></div>
+                </div>
+
+                <p class="friends-subheading">Your Friends (<span id="friends-count">0</span>)</p>
+                <div id="friends-list" class="friends-list">
+                    <p class="friends-empty">No friends yet - add one with their @username above.</p>
+                </div>
+            </div>
         </div>
 
         <!-- main: right-part -->
@@ -263,6 +327,16 @@
 
 
                 <button type="button" id="premium-view-leave-btn" class="view-leave-btn">Leave</button>
+            </div>
+
+            <!-- Friends - mobile-only full view. Desktop par #friends-module
+                 (sidebar ke andar) hi seedha dikhta hai - is view ka mount
+                 point us module ko yahan "move" kar deta hai jab mobile par
+                 khola jaye, aur wapas sidebar me bhej deta hai jab band ho. -->
+            <div id="friends-view-section" class="playlists-view-section" style="display:none;">
+                <h2>Friends</h2>
+                <div id="friends-view-mount"></div>
+                <button type="button" id="friends-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
             <div class="music-section">
                 <h2>Trending Songs</h2>
@@ -500,6 +574,15 @@
 
     <!-- Player -->
     <div class="player-bar">
+        <!-- YouTube source wale songs/podcasts ke liye - unhe background me
+             (app se hatte hi) chalte rehne ki guarantee nahi di ja sakti,
+             ye YouTube/mobile OS ki apni limitation hai. Sirf ek chhoti si
+             informative pill hai jo YouTube track shuru hote hi thori der
+             ke liye dikh kar khud hi chali jati hai. -->
+        <div id="yt-bg-audio-notice" class="yt-bg-audio-notice" role="status" aria-live="polite">
+            <i class="fa-brands fa-youtube"></i>
+            <span>YouTube track - background pe (app se hatne par) nahi bajega</span>
+        </div>
         <div class="now-bar">
             <img src="/assets/default-song-cover.svg" alt="">
 
@@ -1105,6 +1188,8 @@
     <script src="podcast.js"></script>
     <script src="about.js"></script>
     <script src="premium.js"></script>
+    <script src="friends.js"></script>
+    <script src="notifications.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script src="pwa-install.js?v=1"></script>
     <script>

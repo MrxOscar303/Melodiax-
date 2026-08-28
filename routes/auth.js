@@ -68,6 +68,9 @@ function publicUser(user) {
         authProvider: user.authProvider,
         isAdmin: user.isAdmin === true,
         isVerified: user.isVerified === true,
+        status: user.status || 'online',
+        statusMessage: user.statusMessage || '',
+        notificationsMuted: user.notificationsMuted === true,
     };
 }
 
