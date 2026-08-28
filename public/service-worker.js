@@ -28,6 +28,8 @@ const APP_SHELL = [
     '/premium.js',
     '/friends.js',
     '/notifications.js',
+    '/profile.js',
+    '/chat.js',
     '/mobile-menu.js',
     '/pwa-install.js',
     '/manifest.json',

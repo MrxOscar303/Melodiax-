@@ -158,6 +158,7 @@
         // warna overlap ki wajah se "jhalak" dikhti hai).
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
         if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
+        if (typeof window.melodiaxHideChatTabInstant === 'function') window.melodiaxHideChatTabInstant();
 
         await loadPremiumPlans();
 

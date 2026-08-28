@@ -50,9 +50,18 @@
         return 'Online';
     }
 
+    // Status dot ke andar dnd/night ke liye chhota icon dalta hai (minus/moon) -
+    // online plain green circle hi rehta hai.
+    function statusDotInnerHtml(status) {
+        if (status === 'dnd') return '<i class="fa-solid fa-minus"></i>';
+        if (status === 'night') return '<i class="fa-solid fa-moon"></i>';
+        return '';
+    }
+
     function setStatusDotClass(el, status) {
         el.classList.remove('status-online', 'status-dnd', 'status-night');
         el.classList.add(`status-${status || 'online'}`);
+        el.innerHTML = statusDotInnerHtml(status);
     }
 
     async function apiGet(path) {
@@ -97,10 +106,10 @@
             return;
         }
         friendsListEl.innerHTML = friends.map((f) => `
-            <div class="friend-item">
+            <div class="friend-item" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-status-message="${escapeHtml(f.statusMessage || '')}">
                 <span class="friend-avatar-wrap">
                     <img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="friend-avatar">
-                    <span class="status-dot status-${f.status || 'online'}"></span>
+                    <span class="status-dot status-${f.status || 'online'}">${statusDotInnerHtml(f.status)}</span>
                 </span>
                 <span class="friend-info">
                     <span class="friend-username">@${escapeHtml(f.username)}</span>
@@ -111,6 +120,21 @@
                 </button>
             </div>
         `).join('');
+
+        friendsListEl.querySelectorAll('.friend-item').forEach((item) => {
+            item.addEventListener('click', (e) => {
+                if (e.target.closest('.friend-remove-btn')) return;
+                if (typeof window.melodiaxOpenChat === 'function') {
+                    window.melodiaxOpenChat({
+                        id: item.getAttribute('data-friend-id'),
+                        username: item.getAttribute('data-friend-username'),
+                        profilePicture: item.getAttribute('data-friend-avatar'),
+                        status: item.getAttribute('data-friend-status'),
+                        statusMessage: item.getAttribute('data-friend-status-message'),
+                    });
+                }
+            });
+        });
 
         friendsListEl.querySelectorAll('.friend-remove-btn').forEach((btn) => {
             btn.addEventListener('click', async () => {
@@ -318,6 +342,7 @@
         if (typeof window.melodiaxHideDownloadsTab === 'function') window.melodiaxHideDownloadsTab();
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
+        if (typeof window.melodiaxHideChatTabInstant === 'function') window.melodiaxHideChatTabInstant();
 
         const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));
         const playlistsSection = document.getElementById('playlists-view-section');

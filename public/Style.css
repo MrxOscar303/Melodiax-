@@ -469,15 +469,16 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     display: flex;
     align-items: center;
     height: 1.7rem;
-    margin: 0 1rem;
-    padding: 0 2rem 0 0;
+    margin: 0 0.6rem 0 0;
+    padding: 0 1.1rem 0 0;
     border-right: 2px solid rgb(179, 179, 179);
 }
 
 .nav-text {
-    padding: 0 0.5rem;
+    padding: 0 0.4rem;
     font-weight: 600;
     color: rgb(179, 179, 179);
+    white-space: nowrap;
     transition: 0.1;
 }
 
@@ -1337,6 +1338,73 @@ body.red-theme #progressBar {
 /* Red Theme Override */
 body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; }
 
+/* ---------------- Edit Profile modal ---------------- */
+.profile-modal-content { width: 420px; }
+.profile-avatar-edit-wrap {
+    position: relative;
+    width: 6rem;
+    height: 6rem;
+    margin: 0.5rem auto 1rem;
+}
+.profile-edit-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+.profile-edit-avatar-btn {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background-color: #1db954;
+    color: #000;
+    border: 3px solid #181818;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+body.red-theme .profile-edit-avatar-btn { background-color: #ff4d4d; color: #fff; border-color: #1a0000; }
+.profile-handle-display {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.85rem;
+    margin: 0 0 1.2rem;
+}
+.profile-handle-display strong { color: #fff; }
+.profile-field-label {
+    display: block;
+    color: #aaa;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0.9rem 0 0.35rem;
+}
+.profile-field-input {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1c1c1c;
+    border: 1px solid #3a3a3a;
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: inherit;
+    padding: 0.6rem 0.7rem;
+    border-radius: 6px;
+}
+.profile-field-input:focus { outline: none; border-color: #1db954; }
+body.red-theme .profile-field-input:focus { border-color: #ff4d4d; }
+.profile-field-textarea { resize: vertical; min-height: 3.5rem; }
+.profile-edit-feedback { font-size: 0.8rem; margin: 0.8rem 0 0; min-height: 1em; }
+.profile-edit-feedback-success { color: #1db954; }
+body.red-theme .profile-edit-feedback-success { color: #ff4d4d; }
+.profile-edit-feedback-error { color: #ed4245; }
+#profile-edit-save-btn { margin-top: 1rem; }
+
 
 /* Search Bar Container */
 .search-bar {
@@ -1670,16 +1738,26 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 
 /* ---------------- Presence status dots (Online / DND / Night) ---------------- */
 .status-dot {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 0.6rem;
     height: 0.6rem;
     border-radius: 50%;
     flex-shrink: 0;
     box-sizing: border-box;
+    line-height: 1;
 }
 .status-online { background-color: #1db954; border: 2px solid #131313; }
 .status-dnd { background-color: #ed4245; border: 2px solid #131313; }
-.status-night { background-color: #5865f2; border: 2px solid #131313; }
+.status-night { background-color: #131313; border: 2px solid #131313; }
+.status-dot i { line-height: 1; }
+.status-dnd i { color: #fff; font-size: 0.38rem; }
+.status-night i { color: #f1c40f; font-size: 0.5rem; }
+/* Status options list (account dropdown) - thora bara version, dark corner-border ki zaroorat nahi kyunki avatar corner par nahi baithti. */
+.my-status-option .status-dot { width: 1rem; height: 1rem; border: none; }
+.my-status-option .status-dnd i { font-size: 0.55rem; }
+.my-status-option .status-night i { color: #f1c40f; font-size: 0.75rem; }
 
 .my-status-dot-wrap {
     position: relative;
@@ -1866,18 +1944,6 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
     margin-bottom: 0.6rem;
 }
 .friends-module-header p { margin: 0; color: #fff; font-weight: 700; font-size: 0.95rem; }
-#add-friend-toggle-btn {
-    background-color: #2c2c2c;
-    color: #fff;
-    border: none;
-    width: 1.6rem;
-    height: 1.6rem;
-    border-radius: 50%;
-    font-size: 1rem;
-    line-height: 1;
-    cursor: pointer;
-}
-#add-friend-toggle-btn:hover { background-color: #3a3a3a; }
 
 .add-friend-panel { margin-bottom: 0.9rem; position: relative; }
 .add-friend-input-row { display: flex; gap: 0.4rem; }
@@ -1940,6 +2006,26 @@ body.red-theme .add-friend-feedback-success { color: #ff4d4d; }
     letter-spacing: 0.5px;
     margin: 0.8rem 0 0.4rem;
 }
+.friends-online-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.friends-online-header .friends-subheading { margin: 0.8rem 0 0.4rem; }
+.friends-online-header #add-friend-toggle-btn {
+    background-color: #2c2c2c;
+    color: #fff;
+    border: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.friends-online-header #add-friend-toggle-btn:hover { background-color: #3a3a3a; }
 .friend-requests-section { margin-bottom: 0.4rem; }
 .friend-request-item {
     display: flex;
@@ -2000,6 +2086,252 @@ body.red-theme .friend-request-accept { background-color: #ff4d4d; color: #fff; 
 }
 .friend-item:hover .friend-remove-btn { opacity: 1; }
 .friend-remove-btn:hover { color: #ed4245; }
+
+/* ---------------- Friends Chat (full-screen tab) ---------------- */
+.chat-view-section {
+    flex-direction: column;
+    height: calc(100vh - 10rem);
+    max-height: 42rem;
+    background-color: #131313;
+    border-radius: 12px;
+    overflow: hidden;
+    padding: 0 !important; /* .playlists-view-section ka default margin/padding chahiye nahi is par */
+}
+.chat-header {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid #262626;
+    flex-shrink: 0;
+}
+.chat-back-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.3rem;
+    margin-right: 0.2rem;
+}
+.chat-back-btn:hover { color: #fff; }
+.chat-header-avatar { width: 2.6rem; height: 2.6rem; }
+.chat-header-info { min-width: 0; }
+.chat-header-name { margin: 0; color: #fff; font-weight: 700; font-size: 1rem; }
+.chat-header-status-text { margin: 0.1rem 0 0; color: #888; font-size: 0.75rem; }
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    /* Achi, saaf, "messenger jaisi" font sirf chat text ke liye. */
+    font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+.chat-empty { color: #777; font-size: 0.85rem; text-align: center; margin: auto; }
+.chat-day-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.8rem 0;
+}
+.chat-day-divider span {
+    background-color: #1c1c1c;
+    color: #888;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+}
+.chat-bubble-row { display: flex; }
+.chat-bubble-row-mine { justify-content: flex-end; }
+.chat-bubble {
+    max-width: 70%;
+    background-color: #262626;
+    color: #fff;
+    padding: 0.55rem 0.8rem;
+    border-radius: 14px 14px 14px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+.chat-bubble-row-mine .chat-bubble {
+    background-color: #1db954;
+    color: #04210f;
+    border-radius: 14px 14px 4px 14px;
+}
+body.red-theme .chat-bubble-row-mine .chat-bubble { background-color: #ff4d4d; color: #2a0000; }
+.chat-bubble-text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.chat-bubble-time {
+    font-size: 0.65rem;
+    opacity: 0.65;
+    align-self: flex-end;
+}
+.chat-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.9rem 1.2rem;
+    border-top: 1px solid #262626;
+    flex-shrink: 0;
+}
+.chat-input {
+    flex: 1;
+    background-color: #1c1c1c;
+    border: 1px solid #3a3a3a;
+    color: #fff;
+    font-family: 'Nunito', 'Segoe UI', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.7rem 1rem;
+    border-radius: 999px;
+}
+.chat-input:focus { outline: none; border-color: #1db954; }
+body.red-theme .chat-input:focus { border-color: #ff4d4d; }
+.chat-send-btn {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    background-color: #1db954;
+    color: #000;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.chat-send-btn:hover { transform: scale(1.06); }
+body.red-theme .chat-send-btn { background-color: #ff4d4d; color: #fff; }
+
+/* Tool buttons (GIF / sticker / mic) next to chat input */
+.chat-tool-btn {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+.chat-tool-btn:hover { background-color: #2c2c2c; color: #fff; }
+.chat-tool-btn-recording { color: #ed4245; animation: mldx-mic-pulse 1s ease-in-out infinite; }
+@keyframes mldx-mic-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* GIF / sticker bubbles - koi background/padding nahi, seedha image/emoji */
+.chat-bubble-bare {
+    background: none !important;
+    padding: 0 !important;
+    max-width: 55% !important;
+}
+.chat-gif-img { max-width: 100%; border-radius: 10px; display: block; }
+.chat-sticker-emoji { font-size: 3rem; line-height: 1; display: block; }
+.chat-bubble-bare .chat-bubble-time { align-self: flex-end; color: #888; }
+
+/* Voice message bubble */
+.chat-bubble-voice { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.chat-voice-audio { height: 2.2rem; max-width: 15rem; }
+.chat-voice-duration { font-size: 0.7rem; opacity: 0.75; }
+.chat-bubble-voice .chat-bubble-time { width: 100%; text-align: right; }
+
+/* GIF / sticker picker panels */
+.chat-picker-panel {
+    border-top: 1px solid #262626;
+    padding: 0.8rem 1rem;
+    max-height: 14rem;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+.chat-picker-search-row { margin-bottom: 0.6rem; }
+#gif-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1c1c1c;
+    border: 1px solid #3a3a3a;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 999px;
+}
+#gif-search-input:focus { outline: none; border-color: #1db954; }
+body.red-theme #gif-search-input:focus { border-color: #ff4d4d; }
+.chat-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
+    gap: 0.5rem;
+}
+.chat-picker-gif-thumb {
+    width: 100%;
+    height: 5rem;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.12s;
+}
+.chat-picker-gif-thumb:hover { transform: scale(1.04); }
+.chat-picker-empty { grid-column: 1 / -1; color: #888; font-size: 0.8rem; text-align: center; padding: 1rem; }
+.chat-sticker-grid { grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr)); }
+.chat-sticker-option {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 8px;
+    transition: background-color 0.12s, transform 0.12s;
+}
+.chat-sticker-option:hover { background-color: #262626; transform: scale(1.12); }
+
+/* Voice recording bar */
+.voice-recording-bar {
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1.2rem;
+    border-top: 1px solid #262626;
+    flex-shrink: 0;
+    color: #fff;
+    font-size: 0.85rem;
+}
+.voice-recording-dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background-color: #ed4245;
+    animation: mldx-mic-pulse 1s ease-in-out infinite;
+    flex-shrink: 0;
+}
+.voice-recording-label { color: #aaa; flex: 1; }
+.voice-cancel-btn, .voice-stop-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+.voice-cancel-btn { background-color: #2c2c2c; color: #fff; }
+.voice-cancel-btn:hover { background-color: #3a3a3a; }
+.voice-stop-btn { background-color: #1db954; color: #000; }
+body.red-theme .voice-stop-btn { background-color: #ff4d4d; color: #fff; }
 
 #logout-btn {
     background: none;
@@ -3544,7 +3876,8 @@ body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 
 #playlists-view-section,
 #downloads-view-section,
 #premium-view-section,
-#friends-view-section {
+#friends-view-section,
+#chat-view-section {
     transition: opacity 0.28s ease, transform 0.28s ease;
     opacity: 1;
     transform: translateY(0);
@@ -3553,7 +3886,8 @@ body.red-theme .confirm-dialog-confirm:hover { box-shadow: 0 6px 16px rgba(255, 
 #playlists-view-section.view-hidden,
 #downloads-view-section.view-hidden,
 #premium-view-section.view-hidden,
-#friends-view-section.view-hidden {
+#friends-view-section.view-hidden,
+#chat-view-section.view-hidden {
     opacity: 0;
     transform: translateY(10px);
     pointer-events: none;
@@ -4005,6 +4339,13 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .search-bar { width: 22rem; }
     #progressBar { width: 100%; max-width: 420px; }
 
+    /* "About us"/"Install App" jaise text ab wrap nahi hote (upar .nav-text
+       mein nowrap laga di gayi hai) - yahan thori aur jagah bhi bacha dete
+       hain taake sab kuch aik hi line mein comfortably fit ho jaye. */
+    .right-half-p1 { margin-right: 0.3rem; padding-right: 0.8rem; }
+    .nav-text { padding: 0 0.3rem; }
+    .notif-bell-btn { padding: 0.3rem; }
+
     .playlists-view-grid { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
 }
 
@@ -4195,6 +4536,31 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     #playlists-view-section h2,
     #downloads-view-section h2 { margin: 0 0 1rem 0; flex-shrink: 0; font-size: 1.15rem; }
     .downloads-view-empty { flex-shrink: 0; }
+
+    /* Chat - Downloads/Playlist jaisi hi full-height treatment (poori
+       available height use karni hai taake message list aur input dono
+       comfortably fit hon, scroll na karna pade poori page ko). */
+    #chat-view-section {
+        position: static;
+        width: 100%;
+        height: calc(100vh - var(--mobile-navbar-h, calc(3.7rem + env(safe-area-inset-top, 0px))) - 10.5rem);
+        max-height: none;
+        z-index: auto;
+        background: #141414;
+        border-radius: 12px;
+        margin: 0 0 1.5rem 0;
+        padding: 0 !important;
+        box-sizing: border-box;
+    }
+    .chat-header { padding: 0.8rem 1rem; }
+    .chat-messages { padding: 0.9rem; }
+    .chat-input-row { padding: 0.7rem 0.9rem; }
+    .chat-bubble { max-width: 82%; }
+    .chat-picker-panel { max-height: 9.5rem; padding: 0.6rem 0.8rem; }
+    .chat-picker-grid { grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr)); }
+    .chat-picker-gif-thumb { height: 4rem; }
+    .voice-recording-bar { padding: 0.6rem 0.9rem; }
+    .voice-recording-label { display: none; } /* chhoti screen par sirf timer + dot kaafi hai */
 
     /* About Us aur Premium - pehle sirf desktop wala "margin: 2rem 0 2rem
        2rem" (left-heavy, asymmetric) inherit karte the, is liye poora

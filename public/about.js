@@ -40,6 +40,7 @@
         // apna fade-in karega, isliye yahan animation ki zaroorat nahi).
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
         if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
+        if (typeof window.melodiaxHideChatTabInstant === 'function') window.melodiaxHideChatTabInstant();
 
         fadeOutThen([...homeSections, playlistsSection, downloadsSection], () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });

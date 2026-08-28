@@ -71,6 +71,7 @@ function publicUser(user) {
         status: user.status || 'online',
         statusMessage: user.statusMessage || '',
         notificationsMuted: user.notificationsMuted === true,
+        bio: user.bio || '',
     };
 }
 
@@ -229,6 +230,36 @@ router.post('/login', authLimiter, async (req, res) => {
 // ============ CURRENT USER (device pe pehle se login check karne ke liye) ============
 router.get('/me', requireAuth, (req, res) => {
     res.json({ loggedIn: true, user: publicUser(req.user) });
+});
+
+// ============ UPDATE PROFILE (image, username, bio) ============
+router.patch('/me', requireAuth, upload.single('profilePicture'), async (req, res) => {
+    try {
+        const { username, bio } = req.body;
+
+        if (username && username !== req.user.username) {
+            if (username.length < 3 || username.length > 30) {
+                return res.status(400).json({ message: 'Username must be between 3 and 30 characters.' });
+            }
+            const existing = await User.findOne({ username: new RegExp(`^${username}$`, 'i') });
+            if (existing) return res.status(409).json({ message: 'This username is already taken.' });
+            req.user.username = username;
+        }
+
+        if (typeof bio === 'string') {
+            req.user.bio = bio.slice(0, 160);
+        }
+
+        if (req.file) {
+            req.user.profilePicture = `/uploads/avatars/${req.file.filename}`;
+        }
+
+        await req.user.save();
+        res.json({ message: 'Profile updated.', user: publicUser(req.user) });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Could not update profile, please try again.' });
+    }
 });
 
 // ============ LOGOUT ============

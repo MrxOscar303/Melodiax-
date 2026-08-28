@@ -269,6 +269,7 @@
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
         // Friends tab (agar mobile par khula ho) bhi turant chupa do.
         if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
+        if (typeof window.melodiaxHideChatTabInstant === 'function') window.melodiaxHideChatTabInstant();
         fadeOutThen(homeSections, () => {
             homeSections.forEach((sec) => { sec.style.display = 'none'; });
             renderPlaylistsView();
@@ -290,6 +291,7 @@
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
         if (typeof window.melodiaxHidePremiumTabInstant === 'function') window.melodiaxHidePremiumTabInstant();
         if (typeof window.melodiaxHideFriendsTabInstant === 'function') window.melodiaxHideFriendsTabInstant();
+        if (typeof window.melodiaxHideChatTabInstant === 'function') window.melodiaxHideChatTabInstant();
         fadeOutThen([playlistsViewSection], () => {
             if (playlistsViewSection) playlistsViewSection.style.display = 'none';
             const homeSections = Array.from(document.querySelectorAll('.main-right-part > .music-section'));

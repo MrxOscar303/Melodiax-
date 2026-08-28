@@ -84,6 +84,12 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        bio: {
+            type: String,
+            trim: true,
+            maxlength: 160,
+            default: '',
+        },
     },
     { timestamps: true } // createdAt / updatedAt khud-b-khud add ho jayenge
 );

@@ -27,7 +27,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="Style.css?v=3">
     <link rel="icon" id="favicon-ico" href="favicon.ico?v=2" type="image/x-icon">
@@ -152,8 +152,8 @@
                             <p class="my-status-section-title">Your status</p>
                             <div class="my-status-options">
                                 <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span>Online</button>
-                                <button type="button" class="my-status-option" data-status="dnd"><span class="status-dot status-dnd"></span>Do Not Disturb</button>
-                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"></span>Night</button>
+                                <button type="button" class="my-status-option" data-status="dnd"><span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>Do Not Disturb</button>
+                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span>Night</button>
                             </div>
                             <input type="text" id="my-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
                         </div>
@@ -220,16 +220,6 @@
             <div class="friends-module" id="friends-module" style="display:none;">
                 <div class="friends-module-header">
                     <p>Friends</p>
-                    <button type="button" id="add-friend-toggle-btn" title="Add a friend">+</button>
-                </div>
-
-                <div id="add-friend-panel" class="add-friend-panel" style="display:none;">
-                    <div class="add-friend-input-row">
-                        <input type="text" id="add-friend-input" placeholder="@username" maxlength="30" autocomplete="off">
-                        <button type="button" id="send-friend-request-btn">Add</button>
-                    </div>
-                    <div id="add-friend-suggestions" class="add-friend-suggestions"></div>
-                    <p id="add-friend-feedback" class="add-friend-feedback"></p>
                 </div>
 
                 <div id="friend-requests-section" class="friend-requests-section" style="display:none;">
@@ -237,9 +227,26 @@
                     <div id="friend-requests-list"></div>
                 </div>
 
-                <p class="friends-subheading">Your Friends (<span id="friends-count">0</span>)</p>
-                <div id="friends-list" class="friends-list">
-                    <p class="friends-empty">No friends yet - add one with their @username above.</p>
+                <!-- "Online" section - friend add karne ka poora system aur
+                     friends list dono isi ke andar. -->
+                <div class="friends-online-section">
+                    <div class="friends-online-header">
+                        <p class="friends-subheading">Online (<span id="friends-count">0</span>)</p>
+                        <button type="button" id="add-friend-toggle-btn" title="Add a friend"><i class="fa-solid fa-user-plus"></i></button>
+                    </div>
+
+                    <div id="add-friend-panel" class="add-friend-panel" style="display:none;">
+                        <div class="add-friend-input-row">
+                            <input type="text" id="add-friend-input" placeholder="@username" maxlength="30" autocomplete="off">
+                            <button type="button" id="send-friend-request-btn">Add</button>
+                        </div>
+                        <div id="add-friend-suggestions" class="add-friend-suggestions"></div>
+                        <p id="add-friend-feedback" class="add-friend-feedback"></p>
+                    </div>
+
+                    <div id="friends-list" class="friends-list">
+                        <p class="friends-empty">No friends yet - add one with their @username above.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -337,6 +344,53 @@
                 <h2>Friends</h2>
                 <div id="friends-view-mount"></div>
                 <button type="button" id="friends-view-leave-btn" class="view-leave-btn">Leave</button>
+            </div>
+
+            <!-- Chat - kisi friend par click karne se poori screen par khulti
+                 hai (Playlist/Downloads/Premium jaisa hi tab pattern). -->
+            <div id="chat-view-section" class="playlists-view-section chat-view-section" style="display:none;">
+                <div class="chat-header">
+                    <button type="button" id="chat-back-btn" class="chat-back-btn" title="Back"><i class="fa-solid fa-arrow-left"></i></button>
+                    <span class="friend-avatar-wrap">
+                        <img id="chat-header-avatar" src="/uploads/avatars/default-avatar.png" alt="" class="friend-avatar chat-header-avatar">
+                        <span id="chat-header-status-dot" class="status-dot status-online"></span>
+                    </span>
+                    <div class="chat-header-info">
+                        <p id="chat-header-name" class="chat-header-name">@username</p>
+                        <p id="chat-header-status-text" class="chat-header-status-text">Online</p>
+                    </div>
+                </div>
+                <div id="chat-messages" class="chat-messages"></div>
+
+                <!-- GIF picker (Giphy) -->
+                <div id="gif-picker-panel" class="chat-picker-panel" style="display:none;">
+                    <div class="chat-picker-search-row">
+                        <input type="text" id="gif-search-input" placeholder="Search GIFs..." autocomplete="off">
+                    </div>
+                    <div id="gif-picker-grid" class="chat-picker-grid"></div>
+                </div>
+
+                <!-- Sticker picker -->
+                <div id="sticker-picker-panel" class="chat-picker-panel" style="display:none;">
+                    <div id="sticker-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
+                </div>
+
+                <!-- Voice recording indicator -->
+                <div id="voice-recording-bar" class="voice-recording-bar" style="display:none;">
+                    <span class="voice-recording-dot"></span>
+                    <span id="voice-recording-timer">0:00</span>
+                    <span class="voice-recording-label">Recording voice message...</span>
+                    <button type="button" id="voice-cancel-btn" class="voice-cancel-btn" title="Cancel"><i class="fa-solid fa-xmark"></i></button>
+                    <button type="button" id="voice-stop-btn" class="voice-stop-btn" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+
+                <div class="chat-input-row">
+                    <button type="button" id="gif-picker-btn" class="chat-tool-btn" title="Send a GIF"><i class="fa-solid fa-film"></i></button>
+                    <button type="button" id="sticker-picker-btn" class="chat-tool-btn" title="Send a sticker"><i class="fa-regular fa-face-smile"></i></button>
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." maxlength="2000" autocomplete="off">
+                    <button type="button" id="voice-record-btn" class="chat-tool-btn" title="Record a voice message"><i class="fa-solid fa-microphone"></i></button>
+                    <button type="button" id="chat-send-btn" class="chat-send-btn" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
             </div>
             <div class="music-section">
                 <h2>Trending Songs</h2>
@@ -701,6 +755,36 @@
                     <button type="submit" class="auth-submit-btn">Sign up</button>
                     <p class="auth-switch-hint">Already have an account? <a id="switch-to-login">Log in</a></p>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile modal - avatar par click karte hi khulta hai -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content profile-modal-content">
+            <div class="modal-header">
+                <h2>Edit Profile</h2>
+                <span class="close-btn" id="profile-modal-close-btn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="profile-avatar-edit-wrap">
+                    <img id="profile-edit-avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Your avatar" class="profile-edit-avatar">
+                    <button type="button" id="profile-edit-avatar-btn" class="profile-edit-avatar-btn" title="Change photo">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                    <input type="file" id="profile-edit-avatar-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none;">
+                </div>
+
+                <p class="profile-handle-display">Your handle: <strong id="profile-handle-text">@username</strong></p>
+
+                <label class="profile-field-label" for="profile-edit-username">Username</label>
+                <input type="text" id="profile-edit-username" class="profile-field-input" maxlength="30" autocomplete="off">
+
+                <label class="profile-field-label" for="profile-edit-bio">Description</label>
+                <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="3" placeholder="Say something about yourself..."></textarea>
+
+                <p id="profile-edit-feedback" class="profile-edit-feedback"></p>
+                <button type="button" id="profile-edit-save-btn" class="auth-submit-btn">Save Changes</button>
             </div>
         </div>
     </div>
@@ -1190,6 +1274,8 @@
     <script src="premium.js"></script>
     <script src="friends.js"></script>
     <script src="notifications.js"></script>
+    <script src="profile.js"></script>
+    <script src="chat.js"></script>
     <script src="mobile-menu.js?v=2"></script>
     <script src="pwa-install.js?v=1"></script>
     <script>
