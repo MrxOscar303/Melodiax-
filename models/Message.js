@@ -19,10 +19,12 @@ const messageSchema = new mongoose.Schema(
             maxlength: 2000,
         },
         // text = normal message, gif = Giphy URL, sticker = emoji character,
-        // voice = uploaded audio file ka URL (/uploads/voice/...)
+        // voice = uploaded audio file ka URL (/uploads/voice/...),
+        // file = uploaded file/document ka JSON {url, filename, size},
+        // song = shared song ka JSON {dbId, title, image, section}
         type: {
             type: String,
-            enum: ['text', 'gif', 'sticker', 'voice'],
+            enum: ['text', 'gif', 'sticker', 'voice', 'file', 'song'],
             default: 'text',
         },
         voiceDuration: {

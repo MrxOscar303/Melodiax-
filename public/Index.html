@@ -370,6 +370,20 @@
                 </div>
                 <div id="chat-messages" class="chat-messages"></div>
 
+                <!-- "+" attach menu: File upload / Document upload / Share Song -->
+                <div id="attach-menu-panel" class="chat-picker-panel attach-menu-panel" style="display:none;">
+                    <button type="button" id="attach-upload-file-btn" class="attach-menu-item"><i class="fa-solid fa-image"></i> Upload File</button>
+                    <button type="button" id="attach-upload-document-btn" class="attach-menu-item"><i class="fa-solid fa-file-lines"></i> Upload Document</button>
+                    <button type="button" id="attach-share-song-btn" class="attach-menu-item"><i class="fa-solid fa-music"></i> Share Song</button>
+                    <input type="file" id="attach-file-input" style="display:none;" accept="image/*,video/*">
+                    <input type="file" id="attach-document-input" style="display:none;" accept=".pdf,.doc,.docx,.txt,.zip,.rar,.ppt,.pptx,.xls,.xlsx">
+                </div>
+
+                <!-- Emoji picker (text input mein emoji insert karta hai) -->
+                <div id="emoji-picker-panel" class="chat-picker-panel chat-picker-panel-emoji" style="display:none;">
+                    <div id="emoji-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
+                </div>
+
                 <!-- GIF picker (Giphy) -->
                 <div id="gif-picker-panel" class="chat-picker-panel" style="display:none;">
                     <div class="chat-picker-search-row">
@@ -383,6 +397,14 @@
                     <div id="sticker-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
                 </div>
 
+                <!-- Share Song picker -->
+                <div id="song-share-panel" class="chat-picker-panel song-share-panel" style="display:none;">
+                    <div class="chat-picker-search-row">
+                        <input type="text" id="song-share-search-input" placeholder="Search songs..." autocomplete="off">
+                    </div>
+                    <div id="song-share-list" class="song-share-list"></div>
+                </div>
+
                 <!-- Voice recording indicator -->
                 <div id="voice-recording-bar" class="voice-recording-bar" style="display:none;">
                     <span class="voice-recording-dot"></span>
@@ -392,11 +414,14 @@
                     <button type="button" id="voice-stop-btn" class="voice-stop-btn" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
 
+                <!-- Layout (screenshot ke mutabiq): [+] [emoji] [ Message... ] [mic] [image/GIF] [sticker] -->
                 <div class="chat-input-row">
-                    <button type="button" id="gif-picker-btn" class="chat-tool-btn" title="Send a GIF"><i class="fa-solid fa-film"></i></button>
-                    <button type="button" id="sticker-picker-btn" class="chat-tool-btn" title="Send a sticker"><i class="fa-regular fa-face-smile"></i></button>
-                    <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." maxlength="2000" autocomplete="off">
+                    <button type="button" id="attach-menu-btn" class="chat-tool-btn" title="Attach"><i class="fa-solid fa-plus"></i></button>
+                    <button type="button" id="emoji-picker-btn" class="chat-tool-btn" title="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                    <input type="text" id="chat-input" class="chat-input" placeholder="Message..." maxlength="2000" autocomplete="off">
                     <button type="button" id="voice-record-btn" class="chat-tool-btn" title="Record a voice message"><i class="fa-solid fa-microphone"></i></button>
+                    <button type="button" id="gif-picker-btn" class="chat-tool-btn" title="Send a GIF"><i class="fa-regular fa-image"></i></button>
+                    <button type="button" id="sticker-picker-btn" class="chat-tool-btn" title="Send a sticker"><i class="fa-solid fa-note-sticky"></i></button>
                     <button type="button" id="chat-send-btn" class="chat-send-btn" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>

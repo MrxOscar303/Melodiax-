@@ -1,8 +1,9 @@
 // ============================================================
 // Friends Chat - kisi friend par sidebar list mein click karte hi poori
 // screen par khulti hai (Playlist/Downloads/Premium jaisa hi tab pattern).
-// Text, GIF (Giphy), stickers (emoji), aur voice messages - sab support
-// karta hai. Har 4 second baad naye messages ke liye halka poll karta hai.
+// Text, GIF (Giphy), stickers (emoji), voice messages, file/document
+// uploads, aur song-sharing (embedded card) - sab support karta hai.
+// Har 4 second baad naye messages ke liye halka poll karta hai.
 // ============================================================
 (function () {
     const API = '/api/messages';
@@ -10,10 +11,7 @@
 
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // GIF picker Giphy API use karta hai - https://developers.giphy.com se
-    // (free) apni khud ki API key banayein aur yahan daal dein. Jab tak
-    // key nahi daali jati, GIF picker khulne par ek chhota sa message
-    // dikhayega ke key set nahi hui - baaki poora chat (text/sticker/voice)
-    // bina kisi key ke bhi kaam karta hai.
+    // (free) apni khud ki API key banayein aur yahan daal dein.
     const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -21,6 +19,17 @@
         '😀', '😂', '😍', '🥳', '😎', '🤔', '😢', '😡',
         '👍', '👎', '🙏', '👏', '💪', '🤝', '✌️', '🤞',
         '❤️', '🔥', '✨', '🎉', '🎶', '💯', '😴', '👀',
+    ];
+    // Emoji picker (chat text mein insert karne ke liye) - stickers se alag,
+    // koi bhi combination type kar sake, thora bara set.
+    const EMOJIS = [
+        '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '😉', '😊', '😇',
+        '🥰', '😍', '🤩', '😘', '😗', '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗',
+        '🤭', '🤫', '🤔', '🤐', '🙄', '😬', '😌', '😔', '😪', '🤤', '😴', '😷',
+        '🤒', '🤕', '🤢', '🥵', '🥶', '😵', '🤯', '🥳', '😎', '🤓', '🧐', '😕',
+        '😟', '🙁', '😮', '😯', '😲', '😳', '🥺', '😢', '😭', '😱', '😖', '😩',
+        '😤', '😡', '😠', '🤬', '👍', '👎', '👏', '🙌', '🤝', '🙏', '💪', '❤️',
+        '🔥', '✨', '🎉', '🎶', '💯', '👀', '💀', '🥹',
     ];
 
     const chatViewSection = document.getElementById('chat-view-section');
@@ -33,6 +42,18 @@
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
 
+    const attachMenuBtn = document.getElementById('attach-menu-btn');
+    const attachMenuPanel = document.getElementById('attach-menu-panel');
+    const attachUploadFileBtn = document.getElementById('attach-upload-file-btn');
+    const attachUploadDocumentBtn = document.getElementById('attach-upload-document-btn');
+    const attachShareSongBtn = document.getElementById('attach-share-song-btn');
+    const attachFileInput = document.getElementById('attach-file-input');
+    const attachDocumentInput = document.getElementById('attach-document-input');
+
+    const emojiPickerBtn = document.getElementById('emoji-picker-btn');
+    const emojiPickerPanel = document.getElementById('emoji-picker-panel');
+    const emojiPickerGrid = document.getElementById('emoji-picker-grid');
+
     const gifPickerBtn = document.getElementById('gif-picker-btn');
     const gifPickerPanel = document.getElementById('gif-picker-panel');
     const gifSearchInput = document.getElementById('gif-search-input');
@@ -41,6 +62,10 @@
     const stickerPickerBtn = document.getElementById('sticker-picker-btn');
     const stickerPickerPanel = document.getElementById('sticker-picker-panel');
     const stickerPickerGrid = document.getElementById('sticker-picker-grid');
+
+    const songSharePanel = document.getElementById('song-share-panel');
+    const songShareSearchInput = document.getElementById('song-share-search-input');
+    const songShareList = document.getElementById('song-share-list');
 
     const voiceRecordBtn = document.getElementById('voice-record-btn');
     const voiceRecordingBar = document.getElementById('voice-recording-bar');
@@ -54,6 +79,7 @@
     let pollTimer = null;
     let lastMessageCount = 0;
     let gifSearchDebounce = null;
+    let songSearchDebounce = null;
 
     // ---------------- Voice recording state ----------------
     let mediaRecorder = null;
@@ -90,6 +116,13 @@
         return `${mins}:${String(secs).padStart(2, '0')}`;
     }
 
+    function formatFileSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
     async function apiGet(path) {
         const res = await fetch(API + path, { credentials: 'include' });
         const data = await res.json();
@@ -109,6 +142,11 @@
     }
 
     // ---------------- Message bubble rendering (per type) ----------------
+    function songThumbnail(song) {
+        if (song.image) return song.image;
+        return `https://img.youtube.com/vi/${song.youtubeId}/hqdefault.jpg`;
+    }
+
     function renderBubbleContent(m) {
         if (m.type === 'gif') {
             return `<img src="${escapeHtml(m.content)}" alt="GIF" class="chat-gif-img">`;
@@ -122,7 +160,57 @@
                 ${m.voiceDuration ? `<span class="chat-voice-duration">${formatDuration(m.voiceDuration)}</span>` : ''}
             `;
         }
+        if (m.type === 'file') {
+            let file;
+            try { file = JSON.parse(m.content); } catch (e) { file = null; }
+            if (!file) return `<p class="chat-bubble-text">Shared a file</p>`;
+            return `
+                <a href="${escapeHtml(file.url)}" download="${escapeHtml(file.filename)}" target="_blank" rel="noopener" class="chat-file-card">
+                    <i class="fa-solid fa-file-arrow-down chat-file-icon"></i>
+                    <span class="chat-file-info">
+                        <span class="chat-file-name">${escapeHtml(file.filename)}</span>
+                        <span class="chat-file-size">${escapeHtml(formatFileSize(file.size))}</span>
+                    </span>
+                </a>
+            `;
+        }
+        if (m.type === 'song') {
+            let song;
+            try { song = JSON.parse(m.content); } catch (e) { song = null; }
+            if (!song) return `<p class="chat-bubble-text">Shared a song</p>`;
+            return `
+                <div class="chat-song-card" data-song-id="${escapeHtml(song.dbId)}">
+                    <img src="${escapeHtml(song.image)}" alt="" class="chat-song-thumb">
+                    <span class="chat-song-info">
+                        <span class="chat-song-title">${escapeHtml(song.title)}</span>
+                        <span class="chat-song-section">${escapeHtml(song.section || '')}</span>
+                    </span>
+                    <button type="button" class="chat-song-play-btn" data-song-id="${escapeHtml(song.dbId)}" title="Play">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                </div>
+            `;
+        }
         return `<p class="chat-bubble-text">${escapeHtml(m.content)}</p>`;
+    }
+
+    function wireSongPlayButtons(container) {
+        container.querySelectorAll('.chat-song-play-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const dbId = btn.getAttribute('data-song-id');
+                // "songs" Script.js mein `const` se bani hai - is liye
+                // window.songs nahi, seedha global identifier "songs" hi
+                // access hota hai (classic <script> tags aapas mein isi
+                // tarah top-level const/let share karte hain).
+                const list = (typeof songs !== 'undefined' && Array.isArray(songs)) ? songs : [];
+                const track = list.find((s) => s.dbId === dbId);
+                if (track && typeof window.playTrackData === 'function') {
+                    window.playTrackData(track);
+                } else {
+                    window.alert('This song could not be found - it may have been removed.');
+                }
+            });
+        });
     }
 
     function renderMessages(messages) {
@@ -133,8 +221,6 @@
             return;
         }
 
-        // Sabse aakhri "mine" (maine bheja hua) message dhoondo - usi ke
-        // neeche "Seen"/"Delivered" dikhana hai, real messenger jaisa.
         let lastMineIndex = -1;
         messages.forEach((m, i) => { if (m.mine) lastMineIndex = i; });
 
@@ -147,10 +233,11 @@
                 lastDay = dayLabel;
             }
             const bareType = m.type === 'gif' || m.type === 'sticker'; // in par bubble background nahi chahiye
+            const cardType = m.type === 'file' || m.type === 'song'; // in ka apna card-style look hai
             const seenLabel = (i === lastMineIndex) ? `<span class="chat-seen-label">${m.read ? 'Seen' : 'Delivered'}</span>` : '';
             html += `
                 <div class="chat-bubble-row ${m.mine ? 'chat-bubble-row-mine' : ''}">
-                    <div class="chat-bubble ${bareType ? 'chat-bubble-bare' : ''} ${m.type === 'voice' ? 'chat-bubble-voice' : ''}">
+                    <div class="chat-bubble ${bareType ? 'chat-bubble-bare' : ''} ${m.type === 'voice' ? 'chat-bubble-voice' : ''} ${cardType ? 'chat-bubble-card' : ''}">
                         ${renderBubbleContent(m)}
                         <span class="chat-bubble-time">${formatTime(m.createdAt)}</span>
                     </div>
@@ -159,6 +246,7 @@
             `;
         });
         chatMessagesEl.innerHTML = html;
+        wireSongPlayButtons(chatMessagesEl);
 
         if (messages.length !== lastMessageCount) {
             chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
@@ -216,6 +304,39 @@
         }
     }
 
+    async function sendSong(song) {
+        if (!currentFriend) return;
+        closeAllPickers();
+        try {
+            const payload = JSON.stringify({
+                dbId: song._id,
+                title: song.title,
+                image: songThumbnail(song),
+                section: song.section,
+            });
+            await apiPost('/', { to: currentFriend.id, content: payload, type: 'song' });
+            await loadHistory(currentFriend.id, { silent: true });
+        } catch (err) {
+            window.alert(err.message);
+        }
+    }
+
+    async function sendFile(file) {
+        if (!currentFriend) return;
+        closeAllPickers();
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('to', currentFriend.id);
+        try {
+            const res = await fetch(API + '/file', { method: 'POST', credentials: 'include', body: formData });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Could not send file.');
+            await loadHistory(currentFriend.id, { silent: true });
+        } catch (err) {
+            window.alert(err.message);
+        }
+    }
+
     if (chatSendBtn) chatSendBtn.addEventListener('click', sendMessage);
     if (chatInput) {
         chatInput.addEventListener('keydown', (e) => {
@@ -223,12 +344,61 @@
         });
     }
 
-    // ---------------- GIF picker (Giphy) ----------------
+    // ---------------- Panels: open/close (sirf ek waqt mein ek hi khula rahe) ----------------
     function closeAllPickers() {
+        if (attachMenuPanel) attachMenuPanel.style.display = 'none';
+        if (emojiPickerPanel) emojiPickerPanel.style.display = 'none';
         if (gifPickerPanel) gifPickerPanel.style.display = 'none';
         if (stickerPickerPanel) stickerPickerPanel.style.display = 'none';
+        if (songSharePanel) songSharePanel.style.display = 'none';
+    }
+    function togglePanel(panel, onOpen) {
+        const isOpen = panel.style.display === 'block';
+        closeAllPickers();
+        if (!isOpen) {
+            panel.style.display = 'block';
+            if (onOpen) onOpen();
+        }
     }
 
+    // ---------------- "+" attach menu ----------------
+    if (attachMenuBtn) attachMenuBtn.addEventListener('click', () => togglePanel(attachMenuPanel));
+    if (attachUploadFileBtn) {
+        attachUploadFileBtn.addEventListener('click', () => { closeAllPickers(); attachFileInput.click(); });
+    }
+    if (attachUploadDocumentBtn) {
+        attachUploadDocumentBtn.addEventListener('click', () => { closeAllPickers(); attachDocumentInput.click(); });
+    }
+    if (attachFileInput) {
+        attachFileInput.addEventListener('change', () => {
+            const file = attachFileInput.files[0];
+            attachFileInput.value = '';
+            if (file) sendFile(file);
+        });
+    }
+    if (attachDocumentInput) {
+        attachDocumentInput.addEventListener('change', () => {
+            const file = attachDocumentInput.files[0];
+            attachDocumentInput.value = '';
+            if (file) sendFile(file);
+        });
+    }
+
+    // ---------------- Emoji picker (insert into text input) ----------------
+    if (emojiPickerGrid) {
+        emojiPickerGrid.innerHTML = EMOJIS.map((e) => `<button type="button" class="chat-sticker-option">${e}</button>`).join('');
+        emojiPickerGrid.querySelectorAll('.chat-sticker-option').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                if (chatInput) {
+                    chatInput.value += btn.textContent;
+                    chatInput.focus();
+                }
+            });
+        });
+    }
+    if (emojiPickerBtn) emojiPickerBtn.addEventListener('click', () => togglePanel(emojiPickerPanel));
+
+    // ---------------- GIF picker (Giphy) ----------------
     async function searchGifs(query) {
         if (!gifPickerGrid) return;
         if (!GIPHY_API_KEY || GIPHY_API_KEY === 'YOUR_GIPHY_API_KEY') {
@@ -261,16 +431,11 @@
     }
 
     if (gifPickerBtn) {
-        gifPickerBtn.addEventListener('click', () => {
-            const isOpen = gifPickerPanel.style.display === 'block';
-            closeAllPickers();
-            if (!isOpen) {
-                gifPickerPanel.style.display = 'block';
-                gifSearchInput.value = '';
-                searchGifs('');
-                gifSearchInput.focus();
-            }
-        });
+        gifPickerBtn.addEventListener('click', () => togglePanel(gifPickerPanel, () => {
+            gifSearchInput.value = '';
+            searchGifs('');
+            gifSearchInput.focus();
+        }));
     }
     if (gifSearchInput) {
         gifSearchInput.addEventListener('input', () => {
@@ -286,11 +451,47 @@
             btn.addEventListener('click', () => sendSticker(btn.textContent));
         });
     }
-    if (stickerPickerBtn) {
-        stickerPickerBtn.addEventListener('click', () => {
-            const isOpen = stickerPickerPanel.style.display === 'block';
-            closeAllPickers();
-            if (!isOpen) stickerPickerPanel.style.display = 'block';
+    if (stickerPickerBtn) stickerPickerBtn.addEventListener('click', () => togglePanel(stickerPickerPanel));
+
+    // ---------------- Share Song picker ----------------
+    async function searchSongs(query) {
+        if (!songShareList) return;
+        songShareList.innerHTML = '<p class="chat-picker-empty">Loading...</p>';
+        try {
+            const data = await apiGet('/share/songs?q=' + encodeURIComponent(query || ''));
+            const results = data.songs || [];
+            if (!results.length) {
+                songShareList.innerHTML = '<p class="chat-picker-empty">No songs found.</p>';
+                return;
+            }
+            songShareList.innerHTML = results.map((s) => `
+                <div class="song-share-item" data-id="${escapeHtml(s._id)}">
+                    <img src="${escapeHtml(songThumbnail(s))}" alt="" class="chat-song-thumb">
+                    <span class="chat-song-info">
+                        <span class="chat-song-title">${escapeHtml(s.title)}</span>
+                        <span class="chat-song-section">${escapeHtml(s.section || '')}</span>
+                    </span>
+                    <button type="button" class="song-share-send-btn">Send</button>
+                </div>
+            `).join('');
+            songShareList.querySelectorAll('.song-share-item').forEach((item, i) => {
+                item.querySelector('.song-share-send-btn').addEventListener('click', () => sendSong(results[i]));
+            });
+        } catch (err) {
+            songShareList.innerHTML = '<p class="chat-picker-empty">Could not load songs.</p>';
+        }
+    }
+    if (attachShareSongBtn) {
+        attachShareSongBtn.addEventListener('click', () => togglePanel(songSharePanel, () => {
+            songShareSearchInput.value = '';
+            searchSongs('');
+            songShareSearchInput.focus();
+        }));
+    }
+    if (songShareSearchInput) {
+        songShareSearchInput.addEventListener('input', () => {
+            clearTimeout(songSearchDebounce);
+            songSearchDebounce = setTimeout(() => searchSongs(songShareSearchInput.value.trim()), 400);
         });
     }
 
@@ -341,7 +542,7 @@
         mediaRecorder.addEventListener('stop', async () => {
             const blob = new Blob(recordedChunks, { type: 'audio/webm' });
             resetRecordingUI();
-            if (blob.size < 500) return; // bohot chhoti recording (galti se tap) - bhejne ki zaroorat nahi
+            if (blob.size < 500) return;
             if (!currentFriend) return;
 
             const formData = new FormData();
@@ -436,7 +637,7 @@
             }
             if (chatHeaderStatusText) {
                 chatHeaderStatusText.textContent = friend.statusMessage
-                    || (friend.status === 'dnd' ? 'Do Not Disturb' : friend.status === 'night' ? 'Night' : 'Online');
+                    || (friend.status === 'dnd' ? 'Do Not Disturb' : friend.status === 'night' ? 'Idle' : friend.status === 'invisible' || friend.status === 'offline' ? 'Offline' : 'Online');
             }
 
             chatViewSection.style.display = 'flex';
