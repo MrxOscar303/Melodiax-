@@ -30,12 +30,10 @@
 
     const navOnlineBtn = document.getElementById('nav-online-btn');
     const homeIcon = document.querySelector('.home-icon');
-    const myStatusMessageInput = document.getElementById('my-status-message-input');
 
     if (!friendsModule && !friendsViewSection) return;
 
     let searchDebounceTimer = null;
-    let statusMsgDebounce = null;
 
     // ---------------- Helpers ----------------
     function escapeHtml(str) {
@@ -281,42 +279,19 @@
     if (sendFriendRequestBtn) sendFriendRequestBtn.addEventListener('click', sendRequest);
 
     // ---------------- My own status (Online / Idle / DND / Invisible + custom message) ----------------
+    // Status change karne ka poora UI ab profile card ke andar hai
+    // (profile.js handle karta hai) - yahan sirf sync karte hain: navbar
+    // ke chhote status-dot ko, aur "custom status" bubble ko turant update
+    // kar dete hain jab bhi kahin se (profile card se) status badle.
     function applyMyStatusToUI(status, statusMessage) {
         const dot = document.getElementById('my-status-dot');
         if (dot) setStatusDotClass(dot, status);
-        if (myStatusMessageInput) myStatusMessageInput.value = statusMessage || '';
-        document.querySelectorAll('.my-status-option').forEach((btn) => {
-            btn.classList.toggle('active', btn.getAttribute('data-status') === status);
-        });
         if (typeof window.melodiaxApplyProfileCardStatus === 'function') {
             window.melodiaxApplyProfileCardStatus(status, statusMessage);
         }
-    }
-
-    document.querySelectorAll('.my-status-option').forEach((btn) => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const status = btn.getAttribute('data-status');
-            applyMyStatusToUI(status, myStatusMessageInput ? myStatusMessageInput.value : '');
-            try {
-                await apiPatch('/status/me', { status });
-                if (window.currentUser) window.currentUser.status = status;
-                loadFriends(); // apna status friends ki list mein bhi turant reflect ho (agar khud ko dekh rahe hon kahin)
-            } catch (err) { /* silent */ }
-        });
-    });
-
-    if (myStatusMessageInput) {
-        myStatusMessageInput.addEventListener('click', (e) => e.stopPropagation());
-        myStatusMessageInput.addEventListener('input', () => {
-            clearTimeout(statusMsgDebounce);
-            statusMsgDebounce = setTimeout(async () => {
-                try {
-                    await apiPatch('/status/me', { statusMessage: myStatusMessageInput.value });
-                    if (window.currentUser) window.currentUser.statusMessage = myStatusMessageInput.value;
-                } catch (err) { /* silent */ }
-            }, 600);
-        });
+        if (typeof window.melodiaxUpdateNavStatusBubble === 'function') {
+            window.melodiaxUpdateNavStatusBubble(statusMessage);
+        }
     }
 
     window.melodiaxApplyMyStatusToUI = applyMyStatusToUI; // profile.js se bhi use hota hai

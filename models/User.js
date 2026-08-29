@@ -90,6 +90,18 @@ const userSchema = new mongoose.Schema(
             maxlength: 160,
             default: '',
         },
+        // Profile card ka banner - user khud color choose karta hai.
+        bannerColor: {
+            type: String,
+            trim: true,
+            default: '#1db954',
+        },
+        // Username sirf har 7 din mein ek baar change ho sakta hai (spam/
+        // confusion se bachne ke liye) - is field se pichli baar kab
+        // change hua tha, ye pata chalta hai.
+        usernameChangedAt: {
+            type: Date,
+        },
     },
     { timestamps: true } // createdAt / updatedAt khud-b-khud add ho jayenge
 );

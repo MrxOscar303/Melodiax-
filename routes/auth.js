@@ -72,8 +72,13 @@ function publicUser(user) {
         statusMessage: user.statusMessage || '',
         notificationsMuted: user.notificationsMuted === true,
         bio: user.bio || '',
+        bannerColor: user.bannerColor || '#1db954',
+        memberSince: user.createdAt,
+        usernameChangedAt: user.usernameChangedAt || null,
     };
 }
+
+const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
 // Naya verification token banata hai, user par save karta hai, aur email bhejta hai.
 async function issueVerificationEmail(user) {
@@ -235,19 +240,37 @@ router.get('/me', requireAuth, (req, res) => {
 // ============ UPDATE PROFILE (image, username, bio) ============
 router.patch('/me', requireAuth, upload.single('profilePicture'), async (req, res) => {
     try {
-        const { username, bio } = req.body;
+        const { username, bio, bannerColor } = req.body;
 
         if (username && username !== req.user.username) {
             if (username.length < 3 || username.length > 30) {
                 return res.status(400).json({ message: 'Username must be between 3 and 30 characters.' });
             }
+
+            // Username sirf har 7 din mein ek baar change ho sakta hai.
+            if (req.user.usernameChangedAt) {
+                const nextAllowed = new Date(req.user.usernameChangedAt);
+                nextAllowed.setDate(nextAllowed.getDate() + USERNAME_CHANGE_COOLDOWN_DAYS);
+                if (nextAllowed > new Date()) {
+                    return res.status(429).json({
+                        message: `You can change your username again on ${nextAllowed.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}.`,
+                        nextUsernameChangeAt: nextAllowed,
+                    });
+                }
+            }
+
             const existing = await User.findOne({ username: new RegExp(`^${username}$`, 'i') });
             if (existing) return res.status(409).json({ message: 'This username is already taken.' });
             req.user.username = username;
+            req.user.usernameChangedAt = new Date();
         }
 
         if (typeof bio === 'string') {
             req.user.bio = bio.slice(0, 160);
+        }
+
+        if (typeof bannerColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(bannerColor)) {
+            req.user.bannerColor = bannerColor;
         }
 
         if (req.file) {

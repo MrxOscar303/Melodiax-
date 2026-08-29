@@ -141,32 +141,21 @@
                 <div id="user-profile-box" class="user-profile-box" style="display:none;">
                     <span class="my-status-dot-wrap">
                         <img id="user-avatar" class="user-avatar" src="/uploads/avatars/default-avatar.png" alt="Profile">
-                        <span id="my-status-dot" class="status-dot status-online" title="Set your status"></span>
+                        <span id="my-status-dot" class="status-dot status-online"></span>
                     </span>
                     <span id="user-name" class="user-name"></span>
-                    
+
+                    <!-- Chhota "custom status" bubble - avatar ke neeche, sirf
+                         tab dikhta hai jab user ne koi status message set kiya
+                         ho. Smooth pop-in animation ke sath. Edit/clear profile
+                         card ke andar hota hai. -->
+                    <div id="nav-status-bubble" class="nav-status-bubble" style="display:none;">
+                        <span id="nav-status-bubble-text"></span>
+                    </div>
+
                     <button id="admin-panel-btn" class="admin-panel-btn" type="button" title="Add Song" style="display:none;">
                         <i class="fa-solid fa-plus"></i>
                     </button>
-                    <div class="user-dropdown">
-                        <div class="my-status-section">
-                            <p class="my-status-section-title">Your status</p>
-                            <div class="my-status-options">
-                                <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span><span class="my-status-option-text">Online</span></button>
-                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span><span class="my-status-option-text">Idle</span></button>
-                                <button type="button" class="my-status-option" data-status="dnd">
-                                    <span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>
-                                    <span class="my-status-option-text">Do Not Disturb<small>You will not receive desktop notifications</small></span>
-                                </button>
-                                <button type="button" class="my-status-option" data-status="invisible">
-                                    <span class="status-dot status-invisible"></span>
-                                    <span class="my-status-option-text">Invisible<small>You will appear offline</small></span>
-                                </button>
-                            </div>
-                            <input type="text" id="my-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
-                        </div>
-                        <button id="logout-btn" type="button">Log out</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -797,81 +786,90 @@
         <div class="modal-content profile-modal-content">
             <span class="close-btn profile-modal-close-x" id="profile-modal-close-btn">&times;</span>
 
-            <!-- ---------------- Profile card (default view) ---------------- -->
             <div id="profile-card-view" class="profile-card">
-                <div class="profile-card-avatar-wrap">
-                    <img id="profile-card-avatar" class="profile-card-avatar" src="/uploads/avatars/default-avatar.png" alt="Your avatar">
-                    <span id="profile-card-status-dot" class="status-dot status-online profile-card-status-dot"></span>
-                </div>
-                <h2 id="profile-card-username">Username</h2>
-                <p id="profile-card-handle" class="profile-card-handle">@username <span class="profile-card-handle-you">• You</span></p>
-
-                <p id="profile-card-bio" class="profile-card-bio"></p>
-                <button type="button" id="profile-card-view-bio-btn" class="profile-card-view-bio-btn" style="display:none;">View Full Bio</button>
-
-                <div class="profile-card-actions">
-                    <button type="button" id="profile-card-edit-btn" class="profile-card-action-item">
-                        <i class="fa-solid fa-pen"></i>
-                        <span>Edit Profile</span>
+                <!-- Banner - user khud color choose kar sakta hai -->
+                <div id="profile-banner" class="profile-banner">
+                    <button type="button" id="profile-banner-color-btn" class="profile-banner-color-btn" title="Change banner color">
+                        <i class="fa-solid fa-palette"></i>
                     </button>
-
-                    <button type="button" id="profile-card-status-toggle" class="profile-card-action-item">
-                        <span id="profile-card-status-icon" class="status-dot status-online"></span>
-                        <span id="profile-card-status-label">Online</span>
-                        <i class="fa-solid fa-chevron-right profile-card-chevron"></i>
-                    </button>
-                    <div id="profile-card-status-options" class="my-status-options profile-card-status-options" style="display:none;">
-                        <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span><span class="my-status-option-text">Online</span></button>
-                        <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span><span class="my-status-option-text">Idle</span></button>
-                        <button type="button" class="my-status-option" data-status="dnd">
-                            <span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>
-                            <span class="my-status-option-text">Do Not Disturb<small>You will not receive desktop notifications</small></span>
-                        </button>
-                        <button type="button" class="my-status-option" data-status="invisible">
-                            <span class="status-dot status-invisible"></span>
-                            <span class="my-status-option-text">Invisible<small>You will appear offline</small></span>
-                        </button>
-                        <input type="text" id="profile-card-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
+                    <div id="profile-banner-color-picker" class="profile-banner-color-picker" style="display:none;">
+                        <button type="button" class="banner-color-swatch" data-color="#1db954" style="background:#1db954;"></button>
+                        <button type="button" class="banner-color-swatch" data-color="#ff4d4d" style="background:#ff4d4d;"></button>
+                        <button type="button" class="banner-color-swatch" data-color="#5865f2" style="background:#5865f2;"></button>
+                        <button type="button" class="banner-color-swatch" data-color="#f1c40f" style="background:#f1c40f;"></button>
+                        <button type="button" class="banner-color-swatch" data-color="#e91e8c" style="background:#e91e8c;"></button>
+                        <button type="button" class="banner-color-swatch" data-color="#00bcd4" style="background:#00bcd4;"></button>
+                        <label class="banner-color-custom-label">
+                            <input type="color" id="profile-banner-color-input" value="#1db954">
+                            Custom
+                        </label>
                     </div>
-
-                    <button type="button" id="profile-card-copy-handle-btn" class="profile-card-action-item">
-                        <i class="fa-solid fa-copy"></i>
-                        <span>Copy Handle</span>
-                    </button>
                 </div>
-            </div>
 
-            <!-- ---------------- Edit form (Edit Profile click par khulti hai) ---------------- -->
-            <div id="profile-edit-form" class="profile-edit-form" style="display:none;">
-                <div class="modal-header">
-                    <button type="button" id="profile-edit-back-btn" class="profile-edit-back-btn" title="Back">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                    <h2>Edit Profile</h2>
-                </div>
-                <div class="modal-body">
-                    <div class="profile-avatar-edit-wrap">
-                        <img id="profile-edit-avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Your avatar" class="profile-edit-avatar">
-                        <button type="button" id="profile-edit-avatar-btn" class="profile-edit-avatar-btn" title="Change photo">
+                <div class="profile-card-body">
+                    <div class="profile-card-avatar-wrap">
+                        <img id="profile-card-avatar" class="profile-card-avatar" src="/uploads/avatars/default-avatar.png" alt="Your avatar">
+                        <span id="profile-card-status-dot" class="status-dot status-online profile-card-status-dot"></span>
+                        <button type="button" id="profile-card-avatar-edit-btn" class="profile-card-avatar-edit-btn" title="Change photo">
                             <i class="fa-solid fa-camera"></i>
                         </button>
                         <input type="file" id="profile-edit-avatar-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none;">
                     </div>
 
-                    <p class="profile-handle-display">Your handle: <strong id="profile-handle-text">@username</strong></p>
+                    <div class="profile-card-username-row">
+                        <h2 id="profile-card-username">Username</h2>
+                        <button type="button" id="profile-card-username-edit-btn" class="profile-card-inline-icon-btn" title="Edit username"><i class="fa-solid fa-pen"></i></button>
+                        <button type="button" id="profile-card-copy-handle-btn" class="profile-card-inline-icon-btn" title="Copy handle"><i class="fa-solid fa-copy"></i></button>
+                    </div>
+                    <div id="profile-username-edit-row" class="profile-username-edit-row" style="display:none;">
+                        <input type="text" id="profile-edit-username" class="profile-field-input" maxlength="30" autocomplete="off">
+                        <button type="button" id="profile-username-save-btn" class="profile-inline-save-btn">Save</button>
+                        <button type="button" id="profile-username-cancel-btn" class="profile-inline-cancel-btn">Cancel</button>
+                    </div>
+                    <p id="profile-username-feedback" class="profile-edit-feedback"></p>
 
-                    <label class="profile-field-label" for="profile-edit-username">Username</label>
-                    <input type="text" id="profile-edit-username" class="profile-field-input" maxlength="30" autocomplete="off">
+                    <p class="profile-card-handle">@<span id="profile-card-handle-text">username</span></p>
 
                     <label class="profile-field-label" for="profile-edit-bio">Description</label>
-                    <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="3" placeholder="Say something about yourself..."></textarea>
+                    <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="2" placeholder="Say something about yourself..."></textarea>
+                    <p id="profile-bio-feedback" class="profile-edit-feedback"></p>
 
-                    <p id="profile-edit-feedback" class="profile-edit-feedback"></p>
-                    <button type="button" id="profile-edit-save-btn" class="auth-submit-btn">Save Changes</button>
+                    <p class="profile-section-label">Status</p>
+                    <div id="profile-card-status-options" class="profile-status-grid">
+                        <button type="button" class="profile-status-option" data-status="online">
+                            <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
+                            <span>Online</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="night">
+                            <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
+                            <span>Idle</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="dnd">
+                            <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
+                            <span>Do Not Disturb</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="invisible">
+                            <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
+                            <span>Invisible</span>
+                        </button>
+                    </div>
+                    <div class="profile-status-message-row">
+                        <input type="text" id="profile-card-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
+                        <button type="button" id="profile-status-clear-btn" class="profile-status-clear-btn" title="Clear status" style="display:none;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <p id="profile-member-since" class="profile-member-since">
+                        <i class="fa-regular fa-calendar"></i> Member since <span id="profile-member-since-date">-</span>
+                    </p>
+
+                    <button id="logout-btn" type="button" class="profile-logout-btn">Log out</button>
                 </div>
             </div>
         </div>
     </div>
+
 
     <div id="playlist-modal-overlay" class="playlist-modal-overlay"></div>
     <div id="playlist-modal" class="playlist-modal">
