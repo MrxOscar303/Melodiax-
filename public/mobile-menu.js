@@ -39,10 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function syncFriendsLink() {
-        const friendsModule = document.getElementById('friends-module');
+        // #friends-module (sidebar) mobile par apne parent ki wajah se hamesha
+        // hidden rehta hai - is liye login state ke liye #nav-online-btn
+        // check karte hain (jo login/logout par friends.js khud toggle karta hai).
+        const navOnlineBtn = document.getElementById('nav-online-btn');
         const menuFriendsLink = document.getElementById('mobile-menu-friends');
-        if (!friendsModule || !menuFriendsLink) return;
-        const hidden = window.getComputedStyle(friendsModule).display === 'none';
+        if (!navOnlineBtn || !menuFriendsLink) return;
+        const hidden = navOnlineBtn.style.display === 'none';
         menuFriendsLink.style.display = hidden ? 'none' : '';
     }
 
@@ -138,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const obs = new MutationObserver(syncDownloadsLink);
         obs.observe(realDownloadsBtn, { attributes: true, attributeFilter: ['style'] });
     }
-    const friendsModuleEl = document.getElementById('friends-module');
+    const friendsModuleEl = document.getElementById('nav-online-btn');
     if (friendsModuleEl && window.MutationObserver) {
         const obs2 = new MutationObserver(syncFriendsLink);
         obs2.observe(friendsModuleEl, { attributes: true, attributeFilter: ['style'] });

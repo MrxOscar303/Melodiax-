@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema(
         // nahi hai (frontend friends list mein khud handle karta hai).
         status: {
             type: String,
-            enum: ['online', 'dnd', 'night'],
+            enum: ['online', 'dnd', 'night', 'invisible'],
             default: 'online',
         },
         statusMessage: {

@@ -100,6 +100,7 @@
             <div class="right-half-p1">
                 <p class="nav-text" id="nav-premium-btn" title="Explore Premium plans">Premium</p>
                 <p class="nav-text" id="nav-downloads-btn" title="Your downloaded songs" style="display:none;">Downloads</p>
+                <p class="nav-text" id="nav-online-btn" title="Add and manage friends" style="display:none;">Online</p>
                 <p class="nav-text" id="nav-playlist-btn" title="View and manage your playlists">Playlist</p>
                 <p class="nav-text" id="nav-about-btn" title="About Melodiax and contact us">About us</p>
             </div>
@@ -151,9 +152,16 @@
                         <div class="my-status-section">
                             <p class="my-status-section-title">Your status</p>
                             <div class="my-status-options">
-                                <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span>Online</button>
-                                <button type="button" class="my-status-option" data-status="dnd"><span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>Do Not Disturb</button>
-                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span>Night</button>
+                                <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span><span class="my-status-option-text">Online</span></button>
+                                <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span><span class="my-status-option-text">Idle</span></button>
+                                <button type="button" class="my-status-option" data-status="dnd">
+                                    <span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>
+                                    <span class="my-status-option-text">Do Not Disturb<small>You will not receive desktop notifications</small></span>
+                                </button>
+                                <button type="button" class="my-status-option" data-status="invisible">
+                                    <span class="status-dot status-invisible"></span>
+                                    <span class="my-status-option-text">Invisible<small>You will appear offline</small></span>
+                                </button>
                             </div>
                             <input type="text" id="my-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
                         </div>
@@ -216,37 +224,16 @@
             <h5 class="user-playlists-heading">Your Playlists</h5>
             <div id="user-playlists-list" class="user-playlists-list"></div>
 
-            <!-- Friends module - sirf logged-in users ko dikhta hai -->
+            <!-- Friends module - sirf logged-in users ko dikhta hai. Sirf
+                 friend count + list dikhata hai (read-only, click kar ke
+                 chat khulti hai) - "Add Friend" system yahan nahi, wo
+                 upar nav ke "Online" tab me hai. -->
             <div class="friends-module" id="friends-module" style="display:none;">
                 <div class="friends-module-header">
-                    <p>Friends</p>
+                    <p>Friends (<span id="friends-count">0</span>)</p>
                 </div>
-
-                <div id="friend-requests-section" class="friend-requests-section" style="display:none;">
-                    <p class="friends-subheading">Requests</p>
-                    <div id="friend-requests-list"></div>
-                </div>
-
-                <!-- "Online" section - friend add karne ka poora system aur
-                     friends list dono isi ke andar. -->
-                <div class="friends-online-section">
-                    <div class="friends-online-header">
-                        <p class="friends-subheading">Online (<span id="friends-count">0</span>)</p>
-                        <button type="button" id="add-friend-toggle-btn" title="Add a friend"><i class="fa-solid fa-user-plus"></i></button>
-                    </div>
-
-                    <div id="add-friend-panel" class="add-friend-panel" style="display:none;">
-                        <div class="add-friend-input-row">
-                            <input type="text" id="add-friend-input" placeholder="@username" maxlength="30" autocomplete="off">
-                            <button type="button" id="send-friend-request-btn">Add</button>
-                        </div>
-                        <div id="add-friend-suggestions" class="add-friend-suggestions"></div>
-                        <p id="add-friend-feedback" class="add-friend-feedback"></p>
-                    </div>
-
-                    <div id="friends-list" class="friends-list">
-                        <p class="friends-empty">No friends yet - add one with their @username above.</p>
-                    </div>
+                <div id="friends-list" class="friends-list">
+                    <p class="friends-empty">No friends yet - use the "Online" tab above to add one.</p>
                 </div>
             </div>
         </div>
@@ -336,13 +323,34 @@
                 <button type="button" id="premium-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
 
-            <!-- Friends - mobile-only full view. Desktop par #friends-module
-                 (sidebar ke andar) hi seedha dikhta hai - is view ka mount
-                 point us module ko yahan "move" kar deta hai jab mobile par
-                 khola jaye, aur wapas sidebar me bhej deta hai jab band ho. -->
+            <!-- Online - Add Friend + Requests + poori friends list. Desktop
+                 par top-nav ke "Online" button se khulti hai, mobile par
+                 hamburger menu ke "Friends" link se. -->
             <div id="friends-view-section" class="playlists-view-section" style="display:none;">
-                <h2>Friends</h2>
-                <div id="friends-view-mount"></div>
+                <h2>Online</h2>
+
+                <div class="friends-online-section">
+                    <p class="friends-subheading">Add a friend</p>
+                    <div class="add-friend-panel">
+                        <div class="add-friend-input-row">
+                            <input type="text" id="add-friend-input" placeholder="@username" maxlength="30" autocomplete="off">
+                            <button type="button" id="send-friend-request-btn">Add</button>
+                        </div>
+                        <div id="add-friend-suggestions" class="add-friend-suggestions"></div>
+                        <p id="add-friend-feedback" class="add-friend-feedback"></p>
+                    </div>
+                </div>
+
+                <div id="friend-requests-section" class="friend-requests-section" style="display:none;">
+                    <p class="friends-subheading">Requests</p>
+                    <div id="friend-requests-list"></div>
+                </div>
+
+                <p class="friends-subheading">Your Friends (<span id="friends-view-count">0</span>)</p>
+                <div id="friends-view-list" class="friends-list">
+                    <p class="friends-empty">No friends yet - add one with their @username above.</p>
+                </div>
+
                 <button type="button" id="friends-view-leave-btn" class="view-leave-btn">Leave</button>
             </div>
 
@@ -762,29 +770,80 @@
     <!-- Edit Profile modal - avatar par click karte hi khulta hai -->
     <div id="profile-modal" class="modal">
         <div class="modal-content profile-modal-content">
-            <div class="modal-header">
-                <h2>Edit Profile</h2>
-                <span class="close-btn" id="profile-modal-close-btn">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="profile-avatar-edit-wrap">
-                    <img id="profile-edit-avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Your avatar" class="profile-edit-avatar">
-                    <button type="button" id="profile-edit-avatar-btn" class="profile-edit-avatar-btn" title="Change photo">
-                        <i class="fa-solid fa-camera"></i>
-                    </button>
-                    <input type="file" id="profile-edit-avatar-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none;">
+            <span class="close-btn profile-modal-close-x" id="profile-modal-close-btn">&times;</span>
+
+            <!-- ---------------- Profile card (default view) ---------------- -->
+            <div id="profile-card-view" class="profile-card">
+                <div class="profile-card-avatar-wrap">
+                    <img id="profile-card-avatar" class="profile-card-avatar" src="/uploads/avatars/default-avatar.png" alt="Your avatar">
+                    <span id="profile-card-status-dot" class="status-dot status-online profile-card-status-dot"></span>
                 </div>
+                <h2 id="profile-card-username">Username</h2>
+                <p id="profile-card-handle" class="profile-card-handle">@username <span class="profile-card-handle-you">• You</span></p>
 
-                <p class="profile-handle-display">Your handle: <strong id="profile-handle-text">@username</strong></p>
+                <p id="profile-card-bio" class="profile-card-bio"></p>
+                <button type="button" id="profile-card-view-bio-btn" class="profile-card-view-bio-btn" style="display:none;">View Full Bio</button>
 
-                <label class="profile-field-label" for="profile-edit-username">Username</label>
-                <input type="text" id="profile-edit-username" class="profile-field-input" maxlength="30" autocomplete="off">
+                <div class="profile-card-actions">
+                    <button type="button" id="profile-card-edit-btn" class="profile-card-action-item">
+                        <i class="fa-solid fa-pen"></i>
+                        <span>Edit Profile</span>
+                    </button>
 
-                <label class="profile-field-label" for="profile-edit-bio">Description</label>
-                <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="3" placeholder="Say something about yourself..."></textarea>
+                    <button type="button" id="profile-card-status-toggle" class="profile-card-action-item">
+                        <span id="profile-card-status-icon" class="status-dot status-online"></span>
+                        <span id="profile-card-status-label">Online</span>
+                        <i class="fa-solid fa-chevron-right profile-card-chevron"></i>
+                    </button>
+                    <div id="profile-card-status-options" class="my-status-options profile-card-status-options" style="display:none;">
+                        <button type="button" class="my-status-option" data-status="online"><span class="status-dot status-online"></span><span class="my-status-option-text">Online</span></button>
+                        <button type="button" class="my-status-option" data-status="night"><span class="status-dot status-night"><i class="fa-solid fa-moon"></i></span><span class="my-status-option-text">Idle</span></button>
+                        <button type="button" class="my-status-option" data-status="dnd">
+                            <span class="status-dot status-dnd"><i class="fa-solid fa-minus"></i></span>
+                            <span class="my-status-option-text">Do Not Disturb<small>You will not receive desktop notifications</small></span>
+                        </button>
+                        <button type="button" class="my-status-option" data-status="invisible">
+                            <span class="status-dot status-invisible"></span>
+                            <span class="my-status-option-text">Invisible<small>You will appear offline</small></span>
+                        </button>
+                        <input type="text" id="profile-card-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
+                    </div>
 
-                <p id="profile-edit-feedback" class="profile-edit-feedback"></p>
-                <button type="button" id="profile-edit-save-btn" class="auth-submit-btn">Save Changes</button>
+                    <button type="button" id="profile-card-copy-handle-btn" class="profile-card-action-item">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Copy Handle</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ---------------- Edit form (Edit Profile click par khulti hai) ---------------- -->
+            <div id="profile-edit-form" class="profile-edit-form" style="display:none;">
+                <div class="modal-header">
+                    <button type="button" id="profile-edit-back-btn" class="profile-edit-back-btn" title="Back">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2>Edit Profile</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="profile-avatar-edit-wrap">
+                        <img id="profile-edit-avatar-preview" src="/uploads/avatars/default-avatar.png" alt="Your avatar" class="profile-edit-avatar">
+                        <button type="button" id="profile-edit-avatar-btn" class="profile-edit-avatar-btn" title="Change photo">
+                            <i class="fa-solid fa-camera"></i>
+                        </button>
+                        <input type="file" id="profile-edit-avatar-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none;">
+                    </div>
+
+                    <p class="profile-handle-display">Your handle: <strong id="profile-handle-text">@username</strong></p>
+
+                    <label class="profile-field-label" for="profile-edit-username">Username</label>
+                    <input type="text" id="profile-edit-username" class="profile-field-input" maxlength="30" autocomplete="off">
+
+                    <label class="profile-field-label" for="profile-edit-bio">Description</label>
+                    <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="3" placeholder="Say something about yourself..."></textarea>
+
+                    <p id="profile-edit-feedback" class="profile-edit-feedback"></p>
+                    <button type="button" id="profile-edit-save-btn" class="auth-submit-btn">Save Changes</button>
+                </div>
             </div>
         </div>
     </div>

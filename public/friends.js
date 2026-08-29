@@ -1,38 +1,38 @@
 // ============================================================
-// Friend system frontend (Phase 1 - Foundation):
-//   - Add/remove friend by @username, accept/decline requests
-//   - Friends list with presence status (Online / Do Not Disturb / Night)
-//   - User apna status khud customize karta hai (auto-detect nahi)
-//   - Desktop: #friends-module hamesha sidebar me dikhta hai (home page)
-//   - Mobile: wahi module #friends-view-section ke andar "move" ho jata hai
-//     jab hamburger menu se "Friends" khola jaye (jaisa Playlist/About/
-//     Premium tabs ka pattern hai)
+// Friend system frontend:
+//   - Sidebar (home page, #friends-module): sirf friend count + list
+//     dikhata hai (read-only, click kar ke chat khulti hai) - add-friend
+//     yahan nahi hai.
+//   - "Online" tab (#friends-view-section, top-nav "Online" button ya
+//     mobile hamburger "Friends" se khulti hai - Playlist/Downloads/
+//     Premium jaisa hi pattern): Add Friend, Requests, aur poori
+//     friends list - sab yahan hai.
+//   - Status: Online / Idle / Do Not Disturb / Invisible - khud
+//     customize karta hai (Discord jaisa hi system).
 // ============================================================
 (function () {
     const API = '/api/friends';
 
     const friendsModule = document.getElementById('friends-module');
-    if (!friendsModule) return;
+    const friendsListEl = document.getElementById('friends-list');
+    const friendsCountEl = document.getElementById('friends-count');
 
-    const addFriendToggleBtn = document.getElementById('add-friend-toggle-btn');
-    const addFriendPanel = document.getElementById('add-friend-panel');
+    const friendsViewSection = document.getElementById('friends-view-section');
+    const friendsViewListEl = document.getElementById('friends-view-list');
+    const friendsViewCountEl = document.getElementById('friends-view-count');
+
     const addFriendInput = document.getElementById('add-friend-input');
     const sendFriendRequestBtn = document.getElementById('send-friend-request-btn');
     const addFriendSuggestions = document.getElementById('add-friend-suggestions');
     const addFriendFeedback = document.getElementById('add-friend-feedback');
     const friendRequestsSection = document.getElementById('friend-requests-section');
     const friendRequestsList = document.getElementById('friend-requests-list');
-    const friendsListEl = document.getElementById('friends-list');
-    const friendsCountEl = document.getElementById('friends-count');
 
-    const friendsViewSection = document.getElementById('friends-view-section');
-    const friendsViewMount = document.getElementById('friends-view-mount');
+    const navOnlineBtn = document.getElementById('nav-online-btn');
     const homeIcon = document.querySelector('.home-icon');
-
     const myStatusMessageInput = document.getElementById('my-status-message-input');
 
-    const friendsModuleOriginalParent = friendsModule.parentElement;
-    const friendsModuleOriginalNextSibling = friendsModule.nextSibling;
+    if (!friendsModule && !friendsViewSection) return;
 
     let searchDebounceTimer = null;
     let statusMsgDebounce = null;
@@ -46,21 +46,31 @@
 
     function statusLabel(status) {
         if (status === 'dnd') return 'Do Not Disturb';
-        if (status === 'night') return 'Night';
+        if (status === 'night') return 'Idle';
+        if (status === 'invisible' || status === 'offline') return 'Offline';
         return 'Online';
     }
 
     // Status dot ke andar dnd/night ke liye chhota icon dalta hai (minus/moon) -
-    // online plain green circle hi rehta hai.
+    // online plain green circle, invisible/offline hollow circle rehta hai.
     function statusDotInnerHtml(status) {
         if (status === 'dnd') return '<i class="fa-solid fa-minus"></i>';
         if (status === 'night') return '<i class="fa-solid fa-moon"></i>';
         return '';
     }
 
+    // "invisible" khud apne liye hai; doosron ko backend khud hi "offline"
+    // bhej deta hai (routes/friends.js me mask hota hai) - is liye yahan
+    // dono cases (apna status "invisible" ho ya kisi friend ka "offline"
+    // aaya ho) same visual dikhate hain.
+    function statusDotClass(status) {
+        if (status === 'invisible' || status === 'offline') return 'status-invisible';
+        return `status-${status || 'online'}`;
+    }
+
     function setStatusDotClass(el, status) {
-        el.classList.remove('status-online', 'status-dnd', 'status-night');
-        el.classList.add(`status-${status || 'online'}`);
+        el.classList.remove('status-online', 'status-dnd', 'status-night', 'status-invisible');
+        el.classList.add(statusDotClass(status));
         el.innerHTML = statusDotInnerHtml(status);
     }
 
@@ -97,19 +107,13 @@
         return data;
     }
 
-    // ---------------- Render: friends list ----------------
-    function renderFriendsList(friends) {
-        if (!friendsListEl) return;
-        if (friendsCountEl) friendsCountEl.textContent = friends.length;
-        if (!friends.length) {
-            friendsListEl.innerHTML = '<p class="friends-empty">No friends yet - add one with their @username above.</p>';
-            return;
-        }
-        friendsListEl.innerHTML = friends.map((f) => `
+    // ---------------- Render: friends list (sidebar + Online tab, dono) ----------------
+    function friendItemHtml(f) {
+        return `
             <div class="friend-item" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-status-message="${escapeHtml(f.statusMessage || '')}">
                 <span class="friend-avatar-wrap">
                     <img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="friend-avatar">
-                    <span class="status-dot status-${f.status || 'online'}">${statusDotInnerHtml(f.status)}</span>
+                    <span class="status-dot ${statusDotClass(f.status)}">${statusDotInnerHtml(f.status)}</span>
                 </span>
                 <span class="friend-info">
                     <span class="friend-username">@${escapeHtml(f.username)}</span>
@@ -119,9 +123,12 @@
                     <i class="fa-solid fa-user-xmark"></i>
                 </button>
             </div>
-        `).join('');
+        `;
+    }
 
-        friendsListEl.querySelectorAll('.friend-item').forEach((item) => {
+    function wireFriendItemEvents(container) {
+        if (!container) return;
+        container.querySelectorAll('.friend-item').forEach((item) => {
             item.addEventListener('click', (e) => {
                 if (e.target.closest('.friend-remove-btn')) return;
                 if (typeof window.melodiaxOpenChat === 'function') {
@@ -135,9 +142,9 @@
                 }
             });
         });
-
-        friendsListEl.querySelectorAll('.friend-remove-btn').forEach((btn) => {
-            btn.addEventListener('click', async () => {
+        container.querySelectorAll('.friend-remove-btn').forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
                 if (!window.confirm('Remove this friend?')) return;
                 try {
                     await apiDelete('/' + btn.getAttribute('data-friendship-id'));
@@ -147,6 +154,22 @@
                 }
             });
         });
+    }
+
+    function renderFriendsInto(container, countEl, friends) {
+        if (!container) return;
+        if (countEl) countEl.textContent = friends.length;
+        if (!friends.length) {
+            container.innerHTML = '<p class="friends-empty">No friends yet - add one using the "Online" tab.</p>';
+            return;
+        }
+        container.innerHTML = friends.map(friendItemHtml).join('');
+        wireFriendItemEvents(container);
+    }
+
+    function renderFriendsList(friends) {
+        renderFriendsInto(friendsListEl, friendsCountEl, friends);
+        renderFriendsInto(friendsViewListEl, friendsViewCountEl, friends);
     }
 
     // ---------------- Render: incoming requests ----------------
@@ -202,17 +225,7 @@
         } catch (err) { /* silent */ }
     }
 
-    // ---------------- Add friend panel ----------------
-    if (addFriendToggleBtn) {
-        addFriendToggleBtn.addEventListener('click', () => {
-            const isOpen = addFriendPanel.style.display === 'block';
-            addFriendPanel.style.display = isOpen ? 'none' : 'block';
-            if (!isOpen && addFriendInput) addFriendInput.focus();
-            if (addFriendFeedback) addFriendFeedback.textContent = '';
-            if (addFriendSuggestions) addFriendSuggestions.innerHTML = '';
-        });
-    }
-
+    // ---------------- Add friend (ab sirf "Online" tab ke andar) ----------------
     function renderSuggestions(users) {
         if (!addFriendSuggestions) return;
         if (!users.length) { addFriendSuggestions.innerHTML = ''; return; }
@@ -267,7 +280,7 @@
     }
     if (sendFriendRequestBtn) sendFriendRequestBtn.addEventListener('click', sendRequest);
 
-    // ---------------- My own status (Online / DND / Night + custom message) ----------------
+    // ---------------- My own status (Online / Idle / DND / Invisible + custom message) ----------------
     function applyMyStatusToUI(status, statusMessage) {
         const dot = document.getElementById('my-status-dot');
         if (dot) setStatusDotClass(dot, status);
@@ -275,6 +288,9 @@
         document.querySelectorAll('.my-status-option').forEach((btn) => {
             btn.classList.toggle('active', btn.getAttribute('data-status') === status);
         });
+        if (typeof window.melodiaxApplyProfileCardStatus === 'function') {
+            window.melodiaxApplyProfileCardStatus(status, statusMessage);
+        }
     }
 
     document.querySelectorAll('.my-status-option').forEach((btn) => {
@@ -303,9 +319,12 @@
         });
     }
 
+    window.melodiaxApplyMyStatusToUI = applyMyStatusToUI; // profile.js se bhi use hota hai
+
     // ---------------- Login/logout wiring ----------------
     function refreshForLoggedIn() {
-        friendsModule.style.display = 'block';
+        if (friendsModule) friendsModule.style.display = 'block';
+        if (navOnlineBtn) navOnlineBtn.style.display = '';
         applyMyStatusToUI(window.currentUser.status, window.currentUser.statusMessage);
         loadFriends();
         loadRequests();
@@ -315,14 +334,14 @@
         if (window.currentUser) {
             refreshForLoggedIn();
         } else {
-            friendsModule.style.display = 'none';
+            if (friendsModule) friendsModule.style.display = 'none';
+            if (navOnlineBtn) navOnlineBtn.style.display = 'none';
             if (friendRequestsSection) friendRequestsSection.style.display = 'none';
-            if (addFriendPanel) addFriendPanel.style.display = 'none';
         }
     });
     if (window.currentUser) refreshForLoggedIn(); // race-condition safety agar event is script se pehle chal chuka ho
 
-    // ---------------- Mobile view: fade + move module in/out ----------------
+    // ---------------- "Online" tab open/close (Playlist/Downloads/Premium jaisa hi pattern) ----------------
     function fadeOutThen(elements, after) {
         const visible = elements.filter((el) => el && el.style.display !== 'none');
         if (!visible.length) { after(); return; }
@@ -338,6 +357,7 @@
     }
 
     function showFriendsTab() {
+        if (!window.currentUser) return;
         if (typeof window.melodiaxSetHomeBannerVisible === 'function') window.melodiaxSetHomeBannerVisible(false);
         if (typeof window.melodiaxHideDownloadsTab === 'function') window.melodiaxHideDownloadsTab();
         if (typeof window.melodiaxHideAboutTabInstant === 'function') window.melodiaxHideAboutTabInstant();
@@ -353,10 +373,6 @@
             if (playlistsSection) playlistsSection.style.display = 'none';
             if (downloadsSection) downloadsSection.style.display = 'none';
 
-            if (friendsViewMount && friendsModule.parentElement !== friendsViewMount) {
-                friendsViewMount.appendChild(friendsModule);
-            }
-            friendsModule.style.display = window.currentUser ? 'block' : 'none';
             if (friendsViewSection) {
                 friendsViewSection.style.display = 'block';
                 fadeIn([friendsViewSection]);
@@ -369,16 +385,14 @@
     // Turant (bina fade ke) chupata hai - jab koi doosra tab khule to ye call hota hai.
     function hideFriendsTabInstant() {
         if (friendsViewSection) friendsViewSection.style.display = 'none';
-        if (friendsModule.parentElement !== friendsModuleOriginalParent) {
-            friendsModuleOriginalParent.insertBefore(friendsModule, friendsModuleOriginalNextSibling);
-            friendsModule.style.display = window.currentUser ? 'block' : 'none';
-        }
     }
 
+    if (navOnlineBtn) navOnlineBtn.addEventListener('click', showFriendsTab);
     if (homeIcon) homeIcon.addEventListener('click', hideFriendsTabInstant);
 
-    // Doosre tabs (Playlist/Downloads/About/Premium) ko available karwana
-    // taake wo bhi Friends tab ko hide kar saken jab unpar switch kiya jaye.
+    // Doosre tabs (Playlist/Downloads/About/Premium/Chat) ko available
+    // karwana taake wo bhi "Online" tab ko hide kar saken jab unpar switch
+    // kiya jaye.
     window.melodiaxShowFriendsTab = showFriendsTab;
     window.melodiaxHideFriendsTab = hideFriendsTabInstant;
     window.melodiaxHideFriendsTabInstant = hideFriendsTabInstant;

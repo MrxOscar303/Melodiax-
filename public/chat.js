@@ -14,7 +14,7 @@
     // key nahi daali jati, GIF picker khulne par ek chhota sa message
     // dikhayega ke key set nahi hui - baaki poora chat (text/sticker/voice)
     // bina kisi key ke bhi kaam karta hai.
-    const GIPHY_API_KEY = 'zKDelWwdBYdYAWxBpJXyM8q4GBvXeZCC';
+    const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     const STICKERS = [
@@ -133,15 +133,21 @@
             return;
         }
 
+        // Sabse aakhri "mine" (maine bheja hua) message dhoondo - usi ke
+        // neeche "Seen"/"Delivered" dikhana hai, real messenger jaisa.
+        let lastMineIndex = -1;
+        messages.forEach((m, i) => { if (m.mine) lastMineIndex = i; });
+
         let html = '';
         let lastDay = null;
-        messages.forEach((m) => {
+        messages.forEach((m, i) => {
             const dayLabel = formatDayLabel(m.createdAt);
             if (dayLabel !== lastDay) {
                 html += `<div class="chat-day-divider"><span>${dayLabel}</span></div>`;
                 lastDay = dayLabel;
             }
             const bareType = m.type === 'gif' || m.type === 'sticker'; // in par bubble background nahi chahiye
+            const seenLabel = (i === lastMineIndex) ? `<span class="chat-seen-label">${m.read ? 'Seen' : 'Delivered'}</span>` : '';
             html += `
                 <div class="chat-bubble-row ${m.mine ? 'chat-bubble-row-mine' : ''}">
                     <div class="chat-bubble ${bareType ? 'chat-bubble-bare' : ''} ${m.type === 'voice' ? 'chat-bubble-voice' : ''}">
@@ -149,6 +155,7 @@
                         <span class="chat-bubble-time">${formatTime(m.createdAt)}</span>
                     </div>
                 </div>
+                ${seenLabel}
             `;
         });
         chatMessagesEl.innerHTML = html;

@@ -20,8 +20,11 @@ function publicFriendUser(user) {
         id: user._id,
         username: user.username,
         profilePicture: user.profilePicture,
-        status: user.status || 'online',
-        statusMessage: user.statusMessage || '',
+        // "invisible" khud user ke apne account me hi sahi dikhta hai -
+        // doosron ke liye ye hamesha "offline" jaisa hi nazar aata hai
+        // (Discord jaisa hi behavior - is liye "Invisible" kehte hain).
+        status: user.status === 'invisible' ? 'offline' : (user.status || 'online'),
+        statusMessage: user.status === 'invisible' ? '' : (user.statusMessage || ''),
     };
 }
 
@@ -195,7 +198,7 @@ router.delete('/:friendshipId', requireAuth, async (req, res) => {
 router.patch('/status/me', requireAuth, async (req, res) => {
     try {
         const { status, statusMessage } = req.body;
-        if (status && !['online', 'dnd', 'night'].includes(status)) {
+        if (status && !['online', 'dnd', 'night', 'invisible'].includes(status)) {
             return res.status(400).json({ message: 'Invalid status.' });
         }
         if (status) req.user.status = status;
