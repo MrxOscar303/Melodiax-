@@ -17,6 +17,16 @@
     const bannerColorBtn = document.getElementById('profile-banner-color-btn');
     const bannerColorPicker = document.getElementById('profile-banner-color-picker');
     const bannerColorInput = document.getElementById('profile-banner-color-input');
+    const bannerImageBtn = document.getElementById('profile-banner-image-btn');
+    const bannerImageInput = document.getElementById('profile-banner-image-input');
+
+    const bannerAdjustOverlay = document.getElementById('banner-adjust-overlay');
+    const bannerAdjustPreview = document.getElementById('banner-adjust-preview');
+    const bannerAdjustImg = document.getElementById('banner-adjust-img');
+    const bannerAdjustCancelBtn = document.getElementById('banner-adjust-cancel-btn');
+    const bannerAdjustConfirmBtn = document.getElementById('banner-adjust-confirm-btn');
+
+    const copyUserIdBtn = document.getElementById('profile-copy-userid-btn');
 
     const cardAvatar = document.getElementById('profile-card-avatar');
     const cardStatusDot = document.getElementById('profile-card-status-dot');
@@ -240,6 +250,20 @@
     if (statusEmojiPanel) statusEmojiPanel.addEventListener('click', (e) => e.stopPropagation());
     document.addEventListener('click', () => { if (statusEmojiPanel) statusEmojiPanel.style.display = 'none'; });
 
+    // ---------------- Banner rendering (color OR custom image) ----------------
+    function applyBannerFromUser(u) {
+        if (!banner) return;
+        if (u.bannerImage) {
+            banner.style.backgroundColor = '';
+            banner.style.backgroundImage = `url('${u.bannerImage}')`;
+            banner.style.backgroundSize = 'cover';
+            banner.style.backgroundPosition = `center ${typeof u.bannerImagePosition === 'number' ? u.bannerImagePosition : 50}%`;
+        } else {
+            banner.style.backgroundImage = '';
+            banner.style.backgroundColor = u.bannerColor || '#1db954';
+        }
+    }
+
     // ---------------- Open / close modal ----------------
     function formatMemberSince(dateStr) {
         if (!dateStr) return '-';
@@ -250,9 +274,9 @@
         if (!window.currentUser) return;
         const u = window.currentUser;
 
-        if (banner) banner.style.backgroundColor = u.bannerColor || '#1db954';
         if (bannerColorInput) bannerColorInput.value = u.bannerColor || '#1db954';
         if (bannerColorPicker) bannerColorPicker.style.display = 'none';
+        applyBannerFromUser(u);
 
         cardAvatar.src = u.profilePicture || '/uploads/avatars/default-avatar.png';
         selectedAvatarFile = null;
@@ -288,8 +312,15 @@
 
     // ---------------- Banner color ----------------
     async function saveBannerColor(color) {
-        if (banner) banner.style.backgroundColor = color;
-        if (window.currentUser) window.currentUser.bannerColor = color;
+        if (banner) {
+            banner.style.backgroundImage = '';
+            banner.style.backgroundColor = color;
+        }
+        if (window.currentUser) {
+            window.currentUser.bannerColor = color;
+            window.currentUser.bannerImage = '';
+        }
+        if (bannerColorPicker) bannerColorPicker.style.display = 'none';
         try {
             const formData = new FormData();
             formData.append('bannerColor', color);
@@ -310,6 +341,91 @@
     }
     if (bannerColorInput) {
         bannerColorInput.addEventListener('input', () => saveBannerColor(bannerColorInput.value));
+    }
+
+    // ---------------- Banner custom image (pick -> adjust/drag -> confirm) ----------------
+    let selectedBannerFile = null;
+    let bannerAdjustPos = 50; // % (background-position-y), 0 = top, 100 = bottom
+    let bannerDragging = false;
+    let bannerDragStartY = 0;
+    let bannerDragStartPos = 50;
+
+    if (bannerImageBtn) {
+        bannerImageBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bannerImageInput.click();
+        });
+    }
+    if (bannerImageInput) {
+        bannerImageInput.addEventListener('change', () => {
+            const file = bannerImageInput.files[0];
+            if (!file) return;
+            selectedBannerFile = file;
+            bannerAdjustPos = 50;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                bannerAdjustImg.src = ev.target.result;
+                bannerAdjustImg.style.transform = `translateY(-50%)`;
+                bannerAdjustImg.style.top = '50%';
+                if (bannerColorPicker) bannerColorPicker.style.display = 'none';
+                bannerAdjustOverlay.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function bannerAdjustApplyPos() {
+        // 0-100 -> image ko preview ke andar upar/neeche shift karta hai
+        bannerAdjustImg.style.top = `${bannerAdjustPos}%`;
+    }
+    if (bannerAdjustPreview) {
+        bannerAdjustPreview.addEventListener('pointerdown', (e) => {
+            bannerDragging = true;
+            bannerDragStartY = e.clientY;
+            bannerDragStartPos = bannerAdjustPos;
+            bannerAdjustPreview.setPointerCapture(e.pointerId);
+        });
+        bannerAdjustPreview.addEventListener('pointermove', (e) => {
+            if (!bannerDragging) return;
+            const deltaY = e.clientY - bannerDragStartY;
+            const rangePx = bannerAdjustPreview.offsetHeight || 144;
+            const deltaPct = (deltaY / rangePx) * 100;
+            bannerAdjustPos = Math.min(100, Math.max(0, bannerDragStartPos + deltaPct));
+            bannerAdjustApplyPos();
+        });
+        ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => {
+            bannerAdjustPreview.addEventListener(ev, () => { bannerDragging = false; });
+        });
+    }
+    if (bannerAdjustCancelBtn) {
+        bannerAdjustCancelBtn.addEventListener('click', () => {
+            bannerAdjustOverlay.style.display = 'none';
+            selectedBannerFile = null;
+            bannerImageInput.value = '';
+        });
+    }
+    if (bannerAdjustConfirmBtn) {
+        bannerAdjustConfirmBtn.addEventListener('click', async () => {
+            if (!selectedBannerFile) { bannerAdjustOverlay.style.display = 'none'; return; }
+            bannerAdjustConfirmBtn.disabled = true;
+            try {
+                const formData = new FormData();
+                formData.append('bannerImage', selectedBannerFile);
+                formData.append('bannerImagePosition', String(Math.round(bannerAdjustPos)));
+                const res = await fetch('/api/auth/me', { method: 'PATCH', credentials: 'include', body: formData });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Could not update banner.');
+                window.currentUser = data.user;
+                applyBannerFromUser(data.user);
+            } catch (err) {
+                window.alert(err.message);
+            } finally {
+                bannerAdjustConfirmBtn.disabled = false;
+                bannerAdjustOverlay.style.display = 'none';
+                selectedBannerFile = null;
+                bannerImageInput.value = '';
+            }
+        });
     }
 
     // ---------------- Avatar (camera icon on card) ----------------
@@ -425,6 +541,18 @@
             const handle = '@' + window.currentUser.username;
             try { await navigator.clipboard.writeText(handle); } catch (err) { /* clipboard blocked - not critical */ }
             const icon = copyHandleBtn.querySelector('i');
+            const original = icon.className;
+            icon.className = 'fa-solid fa-check';
+            setTimeout(() => { icon.className = original; }, 1200);
+        });
+    }
+
+    // ---------------- Copy User ID ----------------
+    if (copyUserIdBtn) {
+        copyUserIdBtn.addEventListener('click', async () => {
+            if (!window.currentUser || !window.currentUser.id) return;
+            try { await navigator.clipboard.writeText(String(window.currentUser.id)); } catch (err) { /* clipboard blocked - not critical */ }
+            const icon = copyUserIdBtn.querySelector('i');
             const original = icon.className;
             icon.className = 'fa-solid fa-check';
             setTimeout(() => { icon.className = original; }, 1200);

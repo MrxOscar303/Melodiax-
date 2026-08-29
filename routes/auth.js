@@ -14,9 +14,12 @@ const { sendVerificationEmail } = require('../utils/mailer');
 
 const router = express.Router();
 
-// ---------- Profile picture upload (Multer) ----------
+// ---------- Profile picture / banner upload (Multer) ----------
 const avatarDir = path.join(__dirname, '..', 'public', 'uploads', 'avatars');
 if (!fs.existsSync(avatarDir)) fs.mkdirSync(avatarDir, { recursive: true });
+
+const bannerDir = path.join(__dirname, '..', 'public', 'uploads', 'banners');
+if (!fs.existsSync(bannerDir)) fs.mkdirSync(bannerDir, { recursive: true });
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, avatarDir),
@@ -29,6 +32,27 @@ const storage = multer.diskStorage({
 const upload = multer({
     storage,
     limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
+    fileFilter: (req, file, cb) => {
+        const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (allowed.includes(file.mimetype)) cb(null, true);
+        else cb(new Error('Only Images Files (jpg, png, webp, gif) allowed hain'));
+    },
+});
+
+// Profile modal se profilePicture AND bannerImage dono ek hi request mein aa
+// sakte hain (dono optional) - fieldname ke hisaab se sahi folder mein jaate hain.
+const profileMediaStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, file.fieldname === 'bannerImage' ? bannerDir : avatarDir);
+    },
+    filename: (req, file, cb) => {
+        const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+        cb(null, `${unique}${path.extname(file.originalname)}`);
+    },
+});
+const uploadProfileMedia = multer({
+    storage: profileMediaStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB (banners can be a bit bigger)
     fileFilter: (req, file, cb) => {
         const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (allowed.includes(file.mimetype)) cb(null, true);
@@ -73,6 +97,8 @@ function publicUser(user) {
         notificationsMuted: user.notificationsMuted === true,
         bio: user.bio || '',
         bannerColor: user.bannerColor || '#1db954',
+        bannerImage: user.bannerImage || '',
+        bannerImagePosition: typeof user.bannerImagePosition === 'number' ? user.bannerImagePosition : 50,
         memberSince: user.createdAt,
         usernameChangedAt: user.usernameChangedAt || null,
         statusExpiresAt: user.statusExpiresAt || null,
@@ -247,10 +273,13 @@ router.get('/me', requireAuth, async (req, res) => {
     res.json({ loggedIn: true, user: publicUser(req.user) });
 });
 
-// ============ UPDATE PROFILE (image, username, bio) ============
-router.patch('/me', requireAuth, upload.single('profilePicture'), async (req, res) => {
+// ============ UPDATE PROFILE (image, username, bio, banner) ============
+router.patch('/me', requireAuth, uploadProfileMedia.fields([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'bannerImage', maxCount: 1 },
+]), async (req, res) => {
     try {
-        const { username, bio, bannerColor } = req.body;
+        const { username, bio, bannerColor, bannerImagePosition, removeBannerImage } = req.body;
 
         if (username && username !== req.user.username) {
             if (username.length < 3 || username.length > 30) {
@@ -281,10 +310,27 @@ router.patch('/me', requireAuth, upload.single('profilePicture'), async (req, re
 
         if (typeof bannerColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(bannerColor)) {
             req.user.bannerColor = bannerColor;
+            // Solid color chuna matlab custom image ab nahi chahiye.
+            req.user.bannerImage = '';
         }
 
-        if (req.file) {
-            req.user.profilePicture = `/uploads/avatars/${req.file.filename}`;
+        if (removeBannerImage === 'true') {
+            req.user.bannerImage = '';
+        }
+
+        if (typeof bannerImagePosition !== 'undefined') {
+            const pos = Number(bannerImagePosition);
+            if (!Number.isNaN(pos)) req.user.bannerImagePosition = Math.min(100, Math.max(0, pos));
+        }
+
+        const avatarFile = req.files && req.files.profilePicture && req.files.profilePicture[0];
+        const bannerFile = req.files && req.files.bannerImage && req.files.bannerImage[0];
+
+        if (avatarFile) {
+            req.user.profilePicture = `/uploads/avatars/${avatarFile.filename}`;
+        }
+        if (bannerFile) {
+            req.user.bannerImage = `/uploads/banners/${bannerFile.filename}`;
         }
 
         await req.user.save();

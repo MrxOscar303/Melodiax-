@@ -1435,6 +1435,69 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     background: none;
     cursor: pointer;
 }
+.banner-image-upload-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    background-color: #262626;
+    color: #fff;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.78rem;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+.banner-image-upload-btn:hover { background-color: #333; }
+
+/* ---- Banner image adjust overlay ---- */
+.banner-adjust-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.banner-adjust-box {
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.2rem;
+    width: 26rem;
+    max-width: 92vw;
+}
+.banner-adjust-title { margin: 0 0 0.8rem; color: #fff; font-weight: 700; }
+.banner-adjust-preview {
+    position: relative;
+    width: 100%;
+    height: 9rem;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #111;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+.banner-adjust-preview:active { cursor: grabbing; }
+.banner-adjust-preview img {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: auto;
+    min-height: 100%;
+    transform: translateY(-50%);
+    object-fit: cover;
+    pointer-events: none;
+    -webkit-user-drag: none;
+}
+.banner-adjust-hint { margin: 0.6rem 0 0; color: #999; font-size: 0.75rem; text-align: center; }
+.banner-adjust-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1rem; }
 
 /* ---- Card body ---- */
 .profile-card-body { padding: 0 1.8rem 1.6rem; }
@@ -1457,11 +1520,11 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 }
 .profile-card-status-dot {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 2.1rem;
-    height: 2.1rem;
-    border-width: 4px;
+    bottom: -0.1rem;
+    right: -0.1rem;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-width: 5px;
     border-style: solid;
     border-color: #181818 !important;
     background-clip: padding-box;
@@ -1477,7 +1540,7 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 .profile-card-status-dot.status-dnd { background-color: #ed4245; }
 .profile-card-status-dot.status-night { background-color: #2c2c2c; }
 .profile-card-status-dot.status-invisible { background-color: #181818; border-color: #747f8d !important; }
-.profile-card-status-dot i { font-size: 1rem; }
+.profile-card-status-dot i { font-size: 1.2rem; }
 .profile-card-status-dot.status-dnd i { color: #000; }
 
 .profile-card-avatar-edit-btn {
@@ -1758,6 +1821,46 @@ body.red-theme .profile-status-info-btn.active { color: #ff4d4d; border-color: #
 .profile-field-input:focus { outline: none; border-color: #1db954; }
 body.red-theme .profile-field-input:focus { border-color: #ff4d4d; }
 .profile-field-textarea { resize: vertical; min-height: 3.5rem; }
+
+/* Bio - Discord jaisa: koi label, koi box/border nahi, sirf plain text
+   jo edit mode mein bhi seedha likha jaata hai. */
+.profile-bio-plain {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: none;
+    border: none;
+    outline: none;
+    resize: none;
+    color: #d4d4d4;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    font-family: inherit;
+    padding: 0;
+    margin: 0.2rem 0 0.9rem;
+}
+.profile-bio-plain::placeholder { color: #777; }
+
+/* Copy User ID - Discord account-menu jaisi plain row */
+.profile-copy-userid-row {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    border-top: 1px solid #2c2c2c;
+    color: #ccc;
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 0.7rem 0.1rem;
+    margin-top: 0.9rem;
+    cursor: pointer;
+}
+.profile-copy-userid-row:hover { color: #fff; }
+.profile-copy-userid-row i { color: #888; }
+.profile-copy-userid-row:hover i { color: #fff; }
 .profile-edit-feedback { font-size: 0.78rem; margin: 0.4rem 0 0; min-height: 1em; }
 .profile-edit-feedback-success { color: #1db954; }
 body.red-theme .profile-edit-feedback-success { color: #ff4d4d; }
@@ -2479,20 +2582,87 @@ body.red-theme .friend-request-accept { background-color: #ff4d4d; color: #fff; 
 .friend-info { min-width: 0; display: flex; flex-direction: column; }
 .friend-username { color: #fff; font-size: 0.82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .friend-status-text { color: #888; font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.friend-remove-btn {
-    margin-left: auto;
+.friend-message-btn, .friend-more-btn {
     background: none;
     border: none;
     color: #777;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
-    padding: 0.3rem;
+    padding: 0.35rem;
     opacity: 0;
     transition: opacity 0.15s, color 0.15s;
     flex-shrink: 0;
 }
-.friend-item:hover .friend-remove-btn { opacity: 1; }
-.friend-remove-btn:hover { color: #ed4245; }
+.friend-message-btn { margin-left: auto; }
+.friend-more-btn { margin-left: 0.1rem; }
+.friend-item:hover .friend-message-btn,
+.friend-item:hover .friend-more-btn { opacity: 1; }
+.friend-message-btn:hover { color: #1db954; }
+body.red-theme .friend-message-btn:hover { color: #ff4d4d; }
+.friend-more-btn:hover { color: #fff; }
+
+.friend-muted-icon { color: #777; font-size: 0.7rem; margin-left: 0.3rem; }
+
+/* Divider - Discord-jaisi seedhi gray line, ek section ko doosre se alag
+   karne ke liye (friends list ke neeche). */
+.friends-list-divider {
+    height: 1px;
+    background-color: #2c2c2c;
+    margin: 0.6rem 0.2rem 0.2rem;
+    flex-shrink: 0;
+}
+
+/* ---------------- Per-friend "..." context menu ---------------- */
+.friend-context-menu {
+    position: fixed;
+    z-index: 400;
+    width: 210px;
+    background-color: #141414;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 0.35rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+.friend-context-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
+    background: none;
+    border: none;
+    color: #ddd;
+    font-family: inherit;
+    font-size: 0.82rem;
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.friend-context-item span { display: flex; align-items: center; gap: 0.5rem; }
+.friend-context-item:hover { background-color: #1db954; color: #000; }
+body.red-theme .friend-context-item:hover { background-color: #ff4d4d; color: #fff; }
+.friend-context-item.friend-context-danger { color: #ed4245; }
+.friend-context-item.friend-context-danger:hover { background-color: #ed4245; color: #fff; }
+.friend-context-chevron { font-size: 0.65rem; }
+
+.friend-context-submenu-wrap { position: relative; }
+.friend-context-submenu {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: -0.35rem;
+    margin-left: 0.3rem;
+    width: 200px;
+    background-color: #141414;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    padding: 0.35rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+.friend-context-submenu-wrap:hover .friend-context-submenu,
+.friend-context-submenu-wrap.submenu-open .friend-context-submenu { display: block; }
 
 /* ---------------- Friends Chat (full-screen tab) ---------------- */
 .chat-view-section {
@@ -5120,7 +5290,7 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
         padding-top: 0;
         border-top: none;
     }
-    .friend-remove-btn { opacity: 1; } /* mobile par hover nahi hota - hamesha visible rakho */
+    .friend-message-btn, .friend-more-btn { opacity: 1; } /* mobile par hover nahi hota - hamesha visible rakho */
 
     .playlists-view-grid {
         display: grid;

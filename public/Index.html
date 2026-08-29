@@ -805,6 +805,26 @@
                             <input type="color" id="profile-banner-color-input" value="#1db954">
                             Custom
                         </label>
+                        <button type="button" id="profile-banner-image-btn" class="banner-image-upload-btn">
+                            <i class="fa-regular fa-image"></i> Upload image
+                        </button>
+                        <input type="file" id="profile-banner-image-input" accept="image/png, image/jpeg, image/webp, image/gif" style="display:none;">
+                    </div>
+                </div>
+
+                <!-- Banner image adjust overlay - image select karne ke baad yahan
+                     drag kar ke position set karte hain, phir Confirm/Cancel. -->
+                <div id="banner-adjust-overlay" class="banner-adjust-overlay" style="display:none;">
+                    <div class="banner-adjust-box">
+                        <p class="banner-adjust-title">Adjust banner image</p>
+                        <div id="banner-adjust-preview" class="banner-adjust-preview">
+                            <img id="banner-adjust-img" src="" alt="">
+                        </div>
+                        <p class="banner-adjust-hint">Drag the image up or down to reposition it</p>
+                        <div class="banner-adjust-actions">
+                            <button type="button" id="banner-adjust-cancel-btn" class="profile-inline-cancel-btn">Cancel</button>
+                            <button type="button" id="banner-adjust-confirm-btn" class="profile-inline-save-btn">Confirm</button>
+                        </div>
                     </div>
                 </div>
 
@@ -832,8 +852,7 @@
 
                     <p class="profile-card-handle">@<span id="profile-card-handle-text">username</span></p>
 
-                    <label class="profile-field-label" for="profile-edit-bio">Description</label>
-                    <textarea id="profile-edit-bio" class="profile-field-input profile-field-textarea" maxlength="160" rows="2" placeholder="Say something about yourself..."></textarea>
+                    <textarea id="profile-edit-bio" class="profile-bio-plain" maxlength="160" rows="2" placeholder="Say something about yourself..."></textarea>
                     <p id="profile-bio-feedback" class="profile-edit-feedback"></p>
 
                     <p class="profile-section-label">Status</p>
@@ -874,11 +893,12 @@
                          ke hisaab se content yahan set ho kar side mein dikhta hai. -->
                     <div id="profile-status-flyout" class="profile-status-flyout" style="display:none;">
                         <p id="profile-status-flyout-desc" class="profile-status-flyout-desc"></p>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="30">For 30 minutes</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="60">For 1 hour</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="240">For 4 hours</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="1440">For 24 hours</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="0">Until I turn it back on</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="15">For 15 Minutes</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="60">For 1 Hour</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="480">For 8 Hours</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="1440">For 24 Hours</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="4320">For 3 Days</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="0">Forever</button>
                     </div>
 
                     <div class="profile-status-message-row">
@@ -895,6 +915,11 @@
                     <p id="profile-member-since" class="profile-member-since">
                         <i class="fa-regular fa-calendar"></i> Member since <span id="profile-member-since-date">-</span>
                     </p>
+
+                    <button type="button" id="profile-copy-userid-btn" class="profile-copy-userid-row">
+                        <span>Copy User ID</span>
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
 
                     <button id="logout-btn" type="button" class="profile-logout-btn">Log out</button>
                 </div>

@@ -190,8 +190,44 @@
         return data;
     }
 
+    // ---------------- Mute (client-side only - stored per friendship id) ----------------
+    const MUTE_STORE_KEY = 'melodiax_muted_friends';
+    function readMuteStore() {
+        try { return JSON.parse(localStorage.getItem(MUTE_STORE_KEY) || '{}'); } catch (err) { return {}; }
+    }
+    function writeMuteStore(store) {
+        try { localStorage.setItem(MUTE_STORE_KEY, JSON.stringify(store)); } catch (err) { /* ignore */ }
+    }
+    function isFriendMuted(friendshipId) {
+        const store = readMuteStore();
+        const until = store[friendshipId];
+        if (!until) return false;
+        if (until !== 0 && Date.now() > until) { delete store[friendshipId]; writeMuteStore(store); return false; }
+        return true;
+    }
+    function muteFriend(friendshipId, minutes) {
+        const store = readMuteStore();
+        store[friendshipId] = minutes > 0 ? (Date.now() + minutes * 60 * 1000) : 0; // 0 = "Forever"
+        writeMuteStore(store);
+    }
+    function unmuteFriend(friendshipId) {
+        const store = readMuteStore();
+        delete store[friendshipId];
+        writeMuteStore(store);
+    }
+
+    const MUTE_DURATIONS = [
+        { label: 'For 15 Minutes', minutes: 15 },
+        { label: 'For 1 Hour', minutes: 60 },
+        { label: 'For 8 Hours', minutes: 480 },
+        { label: 'For 24 Hours', minutes: 1440 },
+        { label: 'For 3 Days', minutes: 4320 },
+        { label: 'Forever', minutes: 0 },
+    ];
+
     // ---------------- Render: friends list (sidebar + Online tab, dono) ----------------
     function friendItemHtml(f) {
+        const muted = isFriendMuted(f.friendshipId);
         return `
             <div class="friend-item" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-status-message="${escapeHtml(f.statusMessage || '')}">
                 <span class="friend-avatar-wrap">
@@ -199,21 +235,100 @@
                     <span class="status-dot ${statusDotClass(f.status)}">${statusDotInnerHtml(f.status)}</span>
                 </span>
                 <span class="friend-info">
-                    <span class="friend-username">@${escapeHtml(f.username)}</span>
+                    <span class="friend-username">@${escapeHtml(f.username)}${muted ? ' <i class="fa-solid fa-volume-xmark friend-muted-icon" title="Muted"></i>' : ''}</span>
                     <span class="friend-status-text">${f.statusMessage ? escapeHtml(f.statusMessage) : statusLabel(f.status)}</span>
                 </span>
-                <button type="button" class="friend-remove-btn" title="Remove friend" data-friendship-id="${f.friendshipId}">
-                    <i class="fa-solid fa-user-xmark"></i>
+                <button type="button" class="friend-message-btn" title="Message" data-friendship-id="${f.friendshipId}">
+                    <i class="fa-regular fa-comment-dots"></i>
+                </button>
+                <button type="button" class="friend-more-btn" title="More" data-friendship-id="${f.friendshipId}">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
                 </button>
             </div>
         `;
+    }
+
+    // ---------------- Per-friend "more" context menu (Remove Friend / Mute + durations) ----------------
+    let openFriendMenuEl = null;
+    function closeFriendMenu() {
+        if (openFriendMenuEl) { openFriendMenuEl.remove(); openFriendMenuEl = null; }
+    }
+    document.addEventListener('click', closeFriendMenu);
+    window.addEventListener('scroll', closeFriendMenu, true);
+
+    function openFriendMenu(anchorBtn, friendshipId) {
+        closeFriendMenu();
+        const muted = isFriendMuted(friendshipId);
+        const menu = document.createElement('div');
+        menu.className = 'friend-context-menu';
+        menu.innerHTML = `
+            <button type="button" class="friend-context-item friend-context-danger" data-action="remove">
+                <i class="fa-solid fa-user-xmark"></i> Remove Friend
+            </button>
+            <button type="button" class="friend-context-item" data-action="mute-toggle">
+                <i class="fa-solid fa-volume-${muted ? 'high' : 'xmark'}"></i> ${muted ? 'Unmute' : 'Mute'}
+            </button>
+            ${muted ? '' : `
+            <div class="friend-context-submenu-wrap">
+                <div class="friend-context-item friend-context-parent" data-action="mute-durations">
+                    <span><i class="fa-solid fa-clock"></i> Mute for...</span>
+                    <i class="fa-solid fa-chevron-right friend-context-chevron"></i>
+                </div>
+                <div class="friend-context-submenu">
+                    ${MUTE_DURATIONS.map((d) => `<button type="button" class="friend-context-item" data-action="mute" data-minutes="${d.minutes}">${d.label}</button>`).join('')}
+                </div>
+            </div>`}
+        `;
+        document.body.appendChild(menu);
+
+        const rect = anchorBtn.getBoundingClientRect();
+        const menuWidth = 210;
+        let left = rect.right - menuWidth;
+        if (left < 8) left = 8;
+        let top = rect.bottom + 4;
+        if (top + 260 > window.innerHeight) top = Math.max(8, rect.top - 260);
+        menu.style.left = `${left}px`;
+        menu.style.top = `${top}px`;
+
+        menu.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const actionEl = e.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.getAttribute('data-action');
+            if (action === 'mute-durations') {
+                // Touch devices ke liye - tap se submenu toggle (desktop par hover se bhi khulta hai)
+                actionEl.closest('.friend-context-submenu-wrap').classList.toggle('submenu-open');
+                return;
+            }
+            if (action === 'remove') {
+                closeFriendMenu();
+                if (!window.confirm('Remove this friend?')) return;
+                try {
+                    await apiDelete('/' + friendshipId);
+                    loadFriends();
+                } catch (err) {
+                    window.alert(err.message);
+                }
+            } else if (action === 'mute-toggle' && muted) {
+                unmuteFriend(friendshipId);
+                closeFriendMenu();
+                loadFriends();
+            } else if (action === 'mute') {
+                const minutes = Number(actionEl.getAttribute('data-minutes'));
+                muteFriend(friendshipId, minutes);
+                closeFriendMenu();
+                loadFriends();
+            }
+        });
+
+        openFriendMenuEl = menu;
     }
 
     function wireFriendItemEvents(container) {
         if (!container) return;
         container.querySelectorAll('.friend-item').forEach((item) => {
             item.addEventListener('click', (e) => {
-                if (e.target.closest('.friend-remove-btn')) return;
+                if (e.target.closest('.friend-message-btn') || e.target.closest('.friend-more-btn')) return;
                 if (typeof window.melodiaxOpenChat === 'function') {
                     window.melodiaxOpenChat({
                         id: item.getAttribute('data-friend-id'),
@@ -225,16 +340,25 @@
                 }
             });
         });
-        container.querySelectorAll('.friend-remove-btn').forEach((btn) => {
-            btn.addEventListener('click', async (e) => {
+        container.querySelectorAll('.friend-message-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (!window.confirm('Remove this friend?')) return;
-                try {
-                    await apiDelete('/' + btn.getAttribute('data-friendship-id'));
-                    loadFriends();
-                } catch (err) {
-                    window.alert(err.message);
+                const item = btn.closest('.friend-item');
+                if (item && typeof window.melodiaxOpenChat === 'function') {
+                    window.melodiaxOpenChat({
+                        id: item.getAttribute('data-friend-id'),
+                        username: item.getAttribute('data-friend-username'),
+                        profilePicture: item.getAttribute('data-friend-avatar'),
+                        status: item.getAttribute('data-friend-status'),
+                        statusMessage: item.getAttribute('data-friend-status-message'),
+                    });
                 }
+            });
+        });
+        container.querySelectorAll('.friend-more-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openFriendMenu(btn, btn.getAttribute('data-friendship-id'));
             });
         });
     }
@@ -246,7 +370,7 @@
             container.innerHTML = '<p class="friends-empty">No friends yet - add one using the "Online" tab.</p>';
             return;
         }
-        container.innerHTML = friends.map(friendItemHtml).join('');
+        container.innerHTML = friends.map(friendItemHtml).join('') + '<div class="friends-list-divider"></div>';
         wireFriendItemEvents(container);
     }
 

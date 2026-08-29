@@ -110,6 +110,18 @@ const userSchema = new mongoose.Schema(
             trim: true,
             default: '#1db954',
         },
+        // Banner par custom image bhi laga sakte hain (color ki jagah). Agar
+        // ye set hai to banner mein color ke bajaye ye image dikhti hai.
+        bannerImage: {
+            type: String,
+            default: '',
+        },
+        // Image ko upar/neeche adjust karne ke baad us position ko yaad
+        // rakhne ke liye (CSS background-position-y %, 0-100).
+        bannerImagePosition: {
+            type: Number,
+            default: 50,
+        },
         // Username sirf har 7 din mein ek baar change ho sakta hai (spam/
         // confusion se bachne ke liye) - is field se pichli baar kab
         // change hua tha, ye pata chalta hai.
