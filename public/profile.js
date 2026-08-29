@@ -39,6 +39,12 @@
     const statusOptionsWrap = document.getElementById('profile-card-status-options');
     const statusMessageInput = document.getElementById('profile-card-status-message-input');
     const statusClearBtn = document.getElementById('profile-status-clear-btn');
+    const statusFlyout = document.getElementById('profile-status-flyout');
+    const statusFlyoutDesc = document.getElementById('profile-status-flyout-desc');
+
+    const statusEmojiBtn = document.getElementById('profile-status-emoji-btn');
+    const statusEmojiPanel = document.getElementById('profile-status-emoji-panel');
+    const statusEmojiGrid = document.getElementById('profile-status-emoji-grid');
 
     const memberSinceDateEl = document.getElementById('profile-member-since-date');
 
@@ -107,19 +113,79 @@
         return res.json();
     }
 
+    const STATUS_DESCRIPTIONS = {
+        online: 'You are visible and available to friends.',
+        night: 'You appear idle - friends can see you are away for a bit.',
+        dnd: 'You will not receive desktop notifications.',
+        invisible: 'You will appear offline to everyone, even friends.',
+    };
+
     if (statusOptionsWrap) {
+        // Row ka button (icon+label) = turant apply karo (koi duration nahi, jab tak khud na badlein)
         statusOptionsWrap.querySelectorAll('.profile-status-option').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const status = btn.getAttribute('data-status');
+                closeStatusFlyout();
+                if (typeof window.melodiaxResetAutoIdle === 'function') window.melodiaxResetAutoIdle();
+                applyStatusToCard(status, statusMessageInput ? statusMessageInput.value : '');
+                if (window.currentUser) { window.currentUser.status = status; window.currentUser.statusExpiresAt = null; }
+                if (typeof window.melodiaxApplyMyStatusToUI === 'function') {
+                    window.melodiaxApplyMyStatusToUI(status, statusMessageInput ? statusMessageInput.value : '');
+                }
+                try { await patchStatus({ status, durationMinutes: 0 }); } catch (err) { /* silent */ }
+            });
+        });
+
+        // "..." icon = side flyout: description + "kitni der ke liye rakhna hai"
+        statusOptionsWrap.querySelectorAll('.profile-status-info-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const status = btn.getAttribute('data-status');
+                const isOpen = statusFlyout.classList.contains('profile-status-flyout-show') && statusFlyout.dataset.status === status;
+                closeStatusFlyout();
+                if (isOpen) return;
+                openStatusFlyout(btn, status);
+            });
+        });
+    }
+
+    function openStatusFlyout(anchorBtn, status) {
+        if (!statusFlyout) return;
+        statusFlyoutDesc.textContent = STATUS_DESCRIPTIONS[status] || '';
+        statusFlyout.dataset.status = status;
+        // Flyout ko us status-option-row ke against position karo (anchorBtn ki row).
+        const row = anchorBtn.closest('.profile-status-option-row');
+        if (row) statusFlyout.style.top = row.offsetTop + 'px';
+        statusFlyout.style.display = 'block';
+        requestAnimationFrame(() => statusFlyout.classList.add('profile-status-flyout-show'));
+        anchorBtn.classList.add('active');
+    }
+    function closeStatusFlyout() {
+        if (!statusFlyout) return;
+        statusFlyout.classList.remove('profile-status-flyout-show');
+        setTimeout(() => { statusFlyout.style.display = 'none'; }, 180);
+        if (statusOptionsWrap) {
+            statusOptionsWrap.querySelectorAll('.profile-status-info-btn').forEach((b) => b.classList.remove('active'));
+        }
+    }
+    if (statusFlyout) {
+        statusFlyout.addEventListener('click', (e) => e.stopPropagation());
+        statusFlyout.querySelectorAll('.profile-status-flyout-duration').forEach((durBtn) => {
+            durBtn.addEventListener('click', async () => {
+                const status = statusFlyout.dataset.status;
+                const minutes = Number(durBtn.getAttribute('data-minutes')) || 0;
+                closeStatusFlyout();
+                if (typeof window.melodiaxResetAutoIdle === 'function') window.melodiaxResetAutoIdle();
                 applyStatusToCard(status, statusMessageInput ? statusMessageInput.value : '');
                 if (window.currentUser) window.currentUser.status = status;
                 if (typeof window.melodiaxApplyMyStatusToUI === 'function') {
                     window.melodiaxApplyMyStatusToUI(status, statusMessageInput ? statusMessageInput.value : '');
                 }
-                try { await patchStatus({ status }); } catch (err) { /* silent */ }
+                try { await patchStatus({ status, durationMinutes: minutes }); } catch (err) { /* silent */ }
             });
         });
     }
+    document.addEventListener('click', closeStatusFlyout);
 
     let statusMsgDebounce = null;
     if (statusMessageInput) {
@@ -146,6 +212,33 @@
             try { await patchStatus({ statusMessage: '' }); } catch (err) { /* silent */ }
         });
     }
+
+    // ---------------- Custom status emoji picker (Discord-style) ----------------
+    const STATUS_EMOJIS = [
+        '😀', '😄', '😊', '😉', '😎', '🤔', '😴', '🤒', '🎮', '🎧', '🎵', '📚',
+        '💻', '☕', '🍕', '🏃', '🚗', '✈️', '🏠', '💼', '🎬', '📺', '🛠️', '🌙',
+    ];
+    if (statusEmojiGrid) {
+        statusEmojiGrid.innerHTML = STATUS_EMOJIS.map((e) => `<button type="button" class="chat-sticker-option">${e}</button>`).join('');
+        statusEmojiGrid.querySelectorAll('.chat-sticker-option').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                if (statusMessageInput) {
+                    statusMessageInput.value = (btn.textContent + ' ' + statusMessageInput.value).trim();
+                    statusMessageInput.dispatchEvent(new Event('input'));
+                    statusMessageInput.focus();
+                }
+                if (statusEmojiPanel) statusEmojiPanel.style.display = 'none';
+            });
+        });
+    }
+    if (statusEmojiBtn) {
+        statusEmojiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            statusEmojiPanel.style.display = statusEmojiPanel.style.display === 'block' ? 'none' : 'block';
+        });
+    }
+    if (statusEmojiPanel) statusEmojiPanel.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => { if (statusEmojiPanel) statusEmojiPanel.style.display = 'none'; });
 
     // ---------------- Open / close modal ----------------
     function formatMemberSince(dateStr) {

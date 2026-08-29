@@ -13,6 +13,91 @@
 (function () {
     const API = '/api/friends';
 
+    // ---------------- Heartbeat + auto Idle/Offline detection ----------------
+    // Har 30 second (tab visible/focused hote hue) backend ko batate hain
+    // "main abhi active hoon" - agar ye rukk jaye (tab/app band, internet
+    // gaya), thodi der mein user doosron ko khud "offline" dikhne lagta hai
+    // (backend staleness ke hisaab se calculate karta hai - routes/friends.js).
+    //
+    // Agar tab khuli hai lekin 5 minute se koi mouse/keyboard activity nahi
+    // hui, to status khud "Idle" ho jata hai (agar manually DND/Invisible
+    // set na kiya ho) - dobara activity hote hi wapas "Online".
+    const HEARTBEAT_INTERVAL_MS = 30 * 1000;
+    const IDLE_AFTER_MS = 5 * 60 * 1000;
+    let heartbeatTimer = null;
+    let idleCheckTimer = null;
+    let lastActivityAt = Date.now();
+    let isAutoIdle = false; // true = hum ne khud "night" laga diya inactivity ki wajah se (user ne khud nahi chuna)
+
+    async function sendHeartbeat() {
+        try { await fetch(API + '/heartbeat', { method: 'POST', credentials: 'include' }); } catch (err) { /* silent */ }
+    }
+
+    function markActivity() {
+        lastActivityAt = Date.now();
+        if (isAutoIdle && window.currentUser && window.currentUser.status === 'night') {
+            isAutoIdle = false;
+            setMyStatus('online', { silent: true });
+        }
+    }
+
+    async function setMyStatus(status, opts = {}) {
+        if (window.currentUser) window.currentUser.status = status;
+        if (typeof window.melodiaxApplyProfileCardStatus === 'function') {
+            window.melodiaxApplyProfileCardStatus(status, window.currentUser ? window.currentUser.statusMessage : '');
+        }
+        const dot = document.getElementById('my-status-dot');
+        if (dot) setStatusDotClass(dot, status);
+        if (!opts.silent) return;
+        try {
+            await fetch(API + '/status/me', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ status, durationMinutes: 0 }),
+            });
+        } catch (err) { /* silent */ }
+    }
+
+    function checkIdle() {
+        if (!window.currentUser) return;
+        // Sirf tab hi auto-idle lagate hain jab user "online" par ho (khud
+        // DND/Invisible/Idle na chuna ho) - manual choice ko kabhi override nahi karte.
+        const currentlyAutoEligible = window.currentUser.status === 'online' || (isAutoIdle && window.currentUser.status === 'night');
+        if (!currentlyAutoEligible) return;
+        const idleFor = Date.now() - lastActivityAt;
+        if (idleFor >= IDLE_AFTER_MS && !isAutoIdle) {
+            isAutoIdle = true;
+            setMyStatus('night', { silent: true });
+        }
+    }
+
+    function startPresenceTracking() {
+        stopPresenceTracking();
+        sendHeartbeat();
+        heartbeatTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') sendHeartbeat();
+        }, HEARTBEAT_INTERVAL_MS);
+        idleCheckTimer = setInterval(checkIdle, 15000);
+        ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach((evt) => {
+            document.addEventListener(evt, markActivity, { passive: true });
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') { markActivity(); sendHeartbeat(); }
+        });
+    }
+    function stopPresenceTracking() {
+        clearInterval(heartbeatTimer);
+        clearInterval(idleCheckTimer);
+        heartbeatTimer = null;
+        idleCheckTimer = null;
+    }
+    // Jab bhi user khud (profile card se) koi status manually chune, us
+    // choice ko auto-idle timer se "protect" karne ke liye ye flag reset
+    // kar dete hain - warna agli activity par auto-revert-to-online ho
+    // jata (jo sirf hamare khud lagaye "auto idle" ke liye theek hai).
+    window.melodiaxResetAutoIdle = () => { isAutoIdle = false; };
+
     const friendsModule = document.getElementById('friends-module');
     const friendsListEl = document.getElementById('friends-list');
     const friendsCountEl = document.getElementById('friends-count');
@@ -303,6 +388,9 @@
         applyMyStatusToUI(window.currentUser.status, window.currentUser.statusMessage);
         loadFriends();
         loadRequests();
+        lastActivityAt = Date.now();
+        isAutoIdle = false;
+        startPresenceTracking();
     }
 
     window.addEventListener('melodiax-auth-changed', () => {
@@ -312,6 +400,7 @@
             if (friendsModule) friendsModule.style.display = 'none';
             if (navOnlineBtn) navOnlineBtn.style.display = 'none';
             if (friendRequestsSection) friendRequestsSection.style.display = 'none';
+            stopPresenceTracking();
         }
     });
     if (window.currentUser) refreshForLoggedIn(); // race-condition safety agar event is script se pehle chal chuka ho

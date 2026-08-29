@@ -787,7 +787,9 @@
             <span class="close-btn profile-modal-close-x" id="profile-modal-close-btn">&times;</span>
 
             <div id="profile-card-view" class="profile-card">
-                <!-- Banner - user khud color choose kar sakta hai -->
+                <!-- Banner - user khud color choose kar sakta hai. Color-change
+                     button banner ke NEECHE-right corner mein hai (close "X"
+                     se takra na jaye, jo upar-right mein hai). -->
                 <div id="profile-banner" class="profile-banner">
                     <button type="button" id="profile-banner-color-btn" class="profile-banner-color-btn" title="Change banner color">
                         <i class="fa-solid fa-palette"></i>
@@ -835,29 +837,59 @@
                     <p id="profile-bio-feedback" class="profile-edit-feedback"></p>
 
                     <p class="profile-section-label">Status</p>
+                    <!-- Har status row: click = turant apply, "..." icon = side
+                         mein flyout (description + kitni der ke liye rakhna hai). -->
                     <div id="profile-card-status-options" class="profile-status-grid">
-                        <button type="button" class="profile-status-option" data-status="online">
-                            <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
-                            <span>Online</span>
-                        </button>
-                        <button type="button" class="profile-status-option" data-status="night">
-                            <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
-                            <span>Idle</span>
-                        </button>
-                        <button type="button" class="profile-status-option" data-status="dnd">
-                            <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
-                            <span>Do Not Disturb</span>
-                        </button>
-                        <button type="button" class="profile-status-option" data-status="invisible">
-                            <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
-                            <span>Invisible</span>
-                        </button>
+                        <div class="profile-status-option-row">
+                            <button type="button" class="profile-status-option active" data-status="online">
+                                <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
+                                <span>Online</span>
+                            </button>
+                            <button type="button" class="profile-status-info-btn" data-status="online" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        <div class="profile-status-option-row">
+                            <button type="button" class="profile-status-option" data-status="night">
+                                <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
+                                <span>Idle</span>
+                            </button>
+                            <button type="button" class="profile-status-info-btn" data-status="night" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        <div class="profile-status-option-row">
+                            <button type="button" class="profile-status-option" data-status="dnd">
+                                <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
+                                <span>Do Not Disturb</span>
+                            </button>
+                            <button type="button" class="profile-status-info-btn" data-status="dnd" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
+                        <div class="profile-status-option-row">
+                            <button type="button" class="profile-status-option" data-status="invisible">
+                                <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
+                                <span>Invisible</span>
+                            </button>
+                            <button type="button" class="profile-status-info-btn" data-status="invisible" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
+                        </div>
                     </div>
+
+                    <!-- Shared flyout - jo bhi "..." dabaya jaye, usi status
+                         ke hisaab se content yahan set ho kar side mein dikhta hai. -->
+                    <div id="profile-status-flyout" class="profile-status-flyout" style="display:none;">
+                        <p id="profile-status-flyout-desc" class="profile-status-flyout-desc"></p>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="30">For 30 minutes</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="60">For 1 hour</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="240">For 4 hours</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="1440">For 24 hours</button>
+                        <button type="button" class="profile-status-flyout-duration" data-minutes="0">Until I turn it back on</button>
+                    </div>
+
                     <div class="profile-status-message-row">
+                        <button type="button" id="profile-status-emoji-btn" class="profile-status-emoji-btn" title="Add an emoji"><i class="fa-regular fa-face-smile"></i></button>
                         <input type="text" id="profile-card-status-message-input" class="my-status-message-input" placeholder="Set a custom status..." maxlength="60">
                         <button type="button" id="profile-status-clear-btn" class="profile-status-clear-btn" title="Clear status" style="display:none;">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
+                        <div id="profile-status-emoji-panel" class="chat-picker-panel chat-picker-panel-emoji profile-status-emoji-panel" style="display:none;">
+                            <div id="profile-status-emoji-grid" class="chat-picker-grid chat-sticker-grid"></div>
+                        </div>
                     </div>
 
                     <p id="profile-member-since" class="profile-member-since">

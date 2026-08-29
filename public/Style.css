@@ -1290,6 +1290,7 @@ body.red-theme #progressBar {
     top: 0;
     width: 100%;
     height: 100%;
+    overflow-y: auto; /* agar content lamba ho to poora backdrop scroll ho - modal ke andar apna scrollbar nahi chahiye */
     background-color: rgba(0, 0, 0, 0.6); /* Halka dark */
     backdrop-filter: blur(4px); /* Blur kam kar diya */
 }
@@ -1343,8 +1344,8 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     width: 50vw;
     max-width: 640px;
     min-width: 360px;
-    max-height: 85vh;
-    overflow-y: auto;
+    max-height: none; /* modal ke andar apna scroll nahi - poori page ke sath hi scroll ho agar chahiye ho */
+    overflow: visible;
     padding: 0 !important;
     position: relative;
 }
@@ -1370,15 +1371,18 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     height: 8rem;
     background-color: #1db954;
     transition: background-color 0.25s ease;
+    border-radius: 12px 12px 0 0;
 }
+/* Color-change button banner ke NEECHE-right corner mein - close "X"
+   (jo upar-right mein hai) se kabhi takrata nahi. */
 .profile-banner-color-btn {
     position: absolute;
-    top: 0.8rem;
+    bottom: 0.7rem;
     right: 0.8rem;
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.35);
+    background-color: rgba(0, 0, 0, 0.4);
     color: #fff;
     border: none;
     cursor: pointer;
@@ -1387,10 +1391,10 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
     align-items: center;
     justify-content: center;
 }
-.profile-banner-color-btn:hover { background-color: rgba(0, 0, 0, 0.55); }
+.profile-banner-color-btn:hover { background-color: rgba(0, 0, 0, 0.6); }
 .profile-banner-color-picker {
     position: absolute;
-    top: 2.9rem;
+    bottom: 2.8rem;
     right: 0.8rem;
     background-color: #1c1c1c;
     border: 1px solid #333;
@@ -1453,11 +1457,11 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 }
 .profile-card-status-dot {
     position: absolute;
-    bottom: 0.1rem;
-    right: 0.1rem;
-    width: 1.4rem;
-    height: 1.4rem;
-    border-width: 3px;
+    bottom: 0;
+    right: 0;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-width: 4px;
     border-style: solid;
     border-color: #181818 !important;
     background-clip: padding-box;
@@ -1473,7 +1477,8 @@ body.red-theme .modal-content { background: #1a0000; border: 1px solid #4e0000; 
 .profile-card-status-dot.status-dnd { background-color: #ed4245; }
 .profile-card-status-dot.status-night { background-color: #2c2c2c; }
 .profile-card-status-dot.status-invisible { background-color: #181818; border-color: #747f8d !important; }
-.profile-card-status-dot i { font-size: 0.65rem; }
+.profile-card-status-dot i { font-size: 1rem; }
+.profile-card-status-dot.status-dnd i { color: #000; }
 
 .profile-card-avatar-edit-btn {
     position: absolute;
@@ -1536,8 +1541,15 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
+    position: relative; /* flyout isi ke against position hota hai */
+}
+.profile-status-option-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.3rem;
 }
 .profile-status-option {
+    flex: 1;
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -1550,7 +1562,13 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     font-family: inherit;
     cursor: pointer;
     text-align: left;
+    min-width: 0;
     transition: border-color 0.15s, background-color 0.15s, transform 0.15s;
+}
+.profile-status-option span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .profile-status-option:hover { border-color: #444; transform: translateY(-1px); }
 .profile-status-option.active {
@@ -1560,6 +1578,21 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     font-weight: 600;
 }
 body.red-theme .profile-status-option.active { border-color: #ff4d4d; background-color: rgba(255, 77, 77, 0.08); }
+
+.profile-status-info-btn {
+    flex-shrink: 0;
+    width: 2rem;
+    background-color: #1c1c1c;
+    border: 1px solid #2c2c2c;
+    border-radius: 8px;
+    color: #888;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background-color 0.15s, color 0.15s;
+}
+.profile-status-info-btn:hover { background-color: #2c2c2c; color: #fff; }
+.profile-status-info-btn.active { color: #1db954; border-color: #1db954; }
+body.red-theme .profile-status-info-btn.active { color: #ff4d4d; border-color: #ff4d4d; }
 
 .profile-status-icon {
     width: 1.7rem;
@@ -1575,11 +1608,91 @@ body.red-theme .profile-status-option.active { border-color: #ff4d4d; background
 .profile-status-option.active .profile-status-icon { transform: scale(1.12); }
 .profile-status-icon.status-online { background-color: #1db954; color: #06280f; }
 .profile-status-icon.status-night { background-color: #2c2c2c; color: #f1c40f; border: 1px solid #444; }
-.profile-status-icon.status-dnd { background-color: #ed4245; color: #fff; }
+.profile-status-icon.status-dnd { background-color: #ed4245; color: #000; }
 .profile-status-icon.status-invisible { background-color: transparent; color: #747f8d; border: 2px solid #747f8d; }
 
-.profile-status-message-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; }
+/* Side flyout - description + kitni der ke liye status rakhna hai */
+.profile-status-flyout {
+    position: absolute;
+    left: calc(100% + 0.6rem);
+    top: 0;
+    width: 13rem;
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 0.7rem;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+    z-index: 12;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+}
+.profile-status-flyout.profile-status-flyout-show {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+.profile-status-flyout-desc {
+    color: #aaa;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    margin: 0 0 0.6rem;
+}
+.profile-status-flyout-duration {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    color: #ddd;
+    font-size: 0.78rem;
+    font-family: inherit;
+    text-align: left;
+    padding: 0.45rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.profile-status-flyout-duration:hover { background-color: #2c2c2c; color: #fff; }
+
+/* Mobile/narrow screens par side mein jagah nahi hoti - neeche khulti hai */
+@media (max-width: 768px) {
+    .profile-status-flyout {
+        left: 0;
+        right: 0;
+        top: calc(100% + 0.4rem);
+        width: auto;
+        transform: translateY(-6px);
+    }
+    .profile-status-flyout.profile-status-flyout-show { transform: translateY(0); }
+}
+
+.profile-status-message-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; position: relative; }
 .profile-status-message-row .my-status-message-input { flex: 1; }
+.profile-status-emoji-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid #3a3a3a;
+    border-radius: 6px;
+    width: 2.3rem;
+    height: 2.3rem;
+    color: #aaa;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.profile-status-emoji-btn:hover { color: #fff; border-color: #555; }
+.profile-status-emoji-panel {
+    position: absolute;
+    bottom: calc(100% + 0.4rem);
+    left: 0;
+    right: 0;
+    z-index: 12;
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
+}
 .profile-status-clear-btn {
     background: none;
     border: none;
@@ -2016,7 +2129,7 @@ body.red-theme .profile-edit-feedback-success { color: #ff4d4d; }
 .status-night { background-color: #131313; border: 2px solid #131313; }
 .status-invisible { background-color: transparent; border: 2px solid #747f8d; }
 .status-dot i { line-height: 1; }
-.status-dnd i { color: #fff; font-size: 0.38rem; }
+.status-dnd i { color: #000; font-size: 0.38rem; }
 .status-night i { color: #f1c40f; font-size: 0.5rem; }
 /* Status options list (account dropdown) - thora bara version, dark corner-border ki zaroorat nahi kyunki avatar corner par nahi baithti. */
 .my-status-option .status-dot { width: 1rem; height: 1rem; border: none; }

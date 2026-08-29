@@ -15,18 +15,45 @@ const actionLimiter = rateLimit({
     message: { message: 'Too many requests, please slow down.' },
 });
 
+// Agar is der tak koi "heartbeat" na aaye (tab/app band ho chuka, ya
+// internet chala gaya), to doosron ko wo user "offline" dikhta hai -
+// chahe uska stored status kuch bhi ho.
+const ACTIVE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minute
+
+function isRecentlyActive(user) {
+    if (!user.lastActiveAt) return false;
+    return (Date.now() - new Date(user.lastActiveAt).getTime()) < ACTIVE_THRESHOLD_MS;
+}
+
+// Agar status ek waqt ke liye set kiya gaya tha (jaise "30 minute ke liye
+// DND") aur wo waqt guzar chuka hai, to status wapas "online" par le aata
+// hai aur save kar deta hai. Har jagah call karna safe hai (no-op agar
+// expiry set hi nahi).
+async function revertExpiredStatus(user) {
+    if (user.statusExpiresAt && new Date(user.statusExpiresAt) <= new Date()) {
+        user.status = 'online';
+        user.statusExpiresAt = undefined;
+        await user.save();
+    }
+}
+
 function publicFriendUser(user) {
+    let status = user.status || 'online';
+    if (status === 'invisible') {
+        status = 'offline'; // khud ke liye "Invisible" hi rehta hai, doosron ko "offline" dikhta hai
+    } else if (!isRecentlyActive(user)) {
+        status = 'offline'; // device/tab band hai (heartbeat rukk gaya)
+    }
     return {
         id: user._id,
         username: user.username,
         profilePicture: user.profilePicture,
-        // "invisible" khud user ke apne account me hi sahi dikhta hai -
-        // doosron ke liye ye hamesha "offline" jaisa hi nazar aata hai
-        // (Discord jaisa hi behavior - is liye "Invisible" kehte hain).
-        status: user.status === 'invisible' ? 'offline' : (user.status || 'online'),
-        statusMessage: user.status === 'invisible' ? '' : (user.statusMessage || ''),
+        status,
+        statusMessage: (user.status === 'invisible' || status === 'offline') ? '' : (user.statusMessage || ''),
     };
 }
+
+const FRIEND_SELECT_FIELDS = 'username profilePicture status statusMessage lastActiveAt';
 
 // ============ SEARCH USERS (by @username) ============
 router.get('/search', requireAuth, actionLimiter, async (req, res) => {
@@ -39,7 +66,7 @@ router.get('/search', requireAuth, actionLimiter, async (req, res) => {
             username: { $regex: q, $options: 'i' },
         })
             .limit(10)
-            .select('username profilePicture status statusMessage');
+            .select(FRIEND_SELECT_FIELDS);
 
         res.json({ users: users.map(publicFriendUser) });
     } catch (err) {
@@ -98,7 +125,7 @@ router.post('/request', requireAuth, actionLimiter, async (req, res) => {
 router.get('/requests', requireAuth, async (req, res) => {
     try {
         const requests = await Friendship.find({ recipient: req.user._id, status: 'pending' })
-            .populate('requester', 'username profilePicture status statusMessage')
+            .populate('requester', FRIEND_SELECT_FIELDS)
             .sort({ createdAt: -1 });
 
         res.json({
@@ -163,8 +190,8 @@ router.get('/', requireAuth, async (req, res) => {
             status: 'accepted',
             $or: [{ requester: req.user._id }, { recipient: req.user._id }],
         })
-            .populate('requester', 'username profilePicture status statusMessage')
-            .populate('recipient', 'username profilePicture status statusMessage');
+            .populate('requester', FRIEND_SELECT_FIELDS)
+            .populate('recipient', FRIEND_SELECT_FIELDS);
 
         const friends = friendships.map((f) => {
             const other = f.requester._id.equals(req.user._id) ? f.recipient : f.requester;
@@ -194,17 +221,47 @@ router.delete('/:friendshipId', requireAuth, async (req, res) => {
     }
 });
 
-// ============ UPDATE MY STATUS (Online / Do Not Disturb / Night + custom message) ============
+// ============ HEARTBEAT ============
+// Har 30 second (frontend se) jab tak tab khuli/focused hai - isse
+// lastActiveAt taaza rehta hai. Agar ye aana ruk jaye (tab/app band, ya
+// internet chala gaya), kuch hi minute mein user doosron ko "offline"
+// dikhne lagta hai (upar wala ACTIVE_THRESHOLD_MS dekhein) - alag se
+// "logout"/"disconnect" detect karne ki zaroorat nahi.
+router.post('/heartbeat', requireAuth, async (req, res) => {
+    try {
+        req.user.lastActiveAt = new Date();
+        await revertExpiredStatus(req.user); // isi call mein expiry bhi check kar lete hain
+        if (!req.user.isModified()) await req.user.save();
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ ok: false });
+    }
+});
+
+// ============ UPDATE MY STATUS (Online / Do Not Disturb / Idle / Invisible + custom message + duration) ============
 router.patch('/status/me', requireAuth, async (req, res) => {
     try {
-        const { status, statusMessage } = req.body;
+        const { status, statusMessage, durationMinutes } = req.body;
         if (status && !['online', 'dnd', 'night', 'invisible'].includes(status)) {
             return res.status(400).json({ message: 'Invalid status.' });
         }
-        if (status) req.user.status = status;
+
+        await revertExpiredStatus(req.user); // purani expiry (agar guzar chuki ho) pehle clear kar lo
+
+        if (status) {
+            req.user.status = status;
+            // durationMinutes: 0/undefined = "jab tak khud na badlein" (koi expiry nahi)
+            if (durationMinutes && Number(durationMinutes) > 0) {
+                req.user.statusExpiresAt = new Date(Date.now() + Number(durationMinutes) * 60 * 1000);
+            } else {
+                req.user.statusExpiresAt = undefined;
+            }
+        }
         if (typeof statusMessage === 'string') req.user.statusMessage = statusMessage.slice(0, 60);
+
+        req.user.lastActiveAt = new Date(); // status badalna khud ek "active hone" ka sign hai
         await req.user.save();
-        res.json({ status: req.user.status, statusMessage: req.user.statusMessage });
+        res.json({ status: req.user.status, statusMessage: req.user.statusMessage, statusExpiresAt: req.user.statusExpiresAt });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Could not update status.' });

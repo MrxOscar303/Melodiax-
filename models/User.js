@@ -84,6 +84,20 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        // Har baar jab user active ho (tab khuli/focused ho) to ye update
+        // hota rehta hai ("heartbeat"). Isi se pata chalta hai ke doosron
+        // ko is user ka status "online/dnd/idle" dikhana hai ya "offline"
+        // (agar device/tab band ho chuka ho, heartbeat aana ruk jata hai).
+        lastActiveAt: {
+            type: Date,
+            default: Date.now,
+        },
+        // Agar user ne status ek waqt ke liye set kiya ho (jaise "30 minute
+        // ke liye Do Not Disturb"), to us waqt ke baad status khud "online"
+        // par wapas aa jata hai.
+        statusExpiresAt: {
+            type: Date,
+        },
         bio: {
             type: String,
             trim: true,

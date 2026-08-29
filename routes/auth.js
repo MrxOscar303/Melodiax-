@@ -75,6 +75,7 @@ function publicUser(user) {
         bannerColor: user.bannerColor || '#1db954',
         memberSince: user.createdAt,
         usernameChangedAt: user.usernameChangedAt || null,
+        statusExpiresAt: user.statusExpiresAt || null,
     };
 }
 
@@ -233,7 +234,16 @@ router.post('/login', authLimiter, async (req, res) => {
 });
 
 // ============ CURRENT USER (device pe pehle se login check karne ke liye) ============
-router.get('/me', requireAuth, (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
+    // Agar status ek waqt ke liye set kiya gaya tha (jaise "30 minute ke
+    // liye DND") aur wo waqt guzar chuka hai, wapas "online" par le aao.
+    if (req.user.statusExpiresAt && new Date(req.user.statusExpiresAt) <= new Date()) {
+        req.user.status = 'online';
+        req.user.statusExpiresAt = undefined;
+        await req.user.save();
+    }
+    req.user.lastActiveAt = new Date(); // page load bhi ek "active" signal hai
+    await req.user.save();
     res.json({ loggedIn: true, user: publicUser(req.user) });
 });
 
