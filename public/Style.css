@@ -541,19 +541,18 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     overflow: hidden;
 }
 .sidebar-scroll-top {
-    /* Upar wala hissa (library, onboarding boxes, "Your Playlists") -
-       agar ye sab mil ke available jagah se zyada ho jaye to sirf YE
-       hissa apne andar scroll karta hai, taake neeche wale friends-module
-       ki guaranteed space kabhi na chhine. */
+    /* Ye khud koi scrollbar nahi dikhata (pehle wala "bara scrollbar" isi
+       wajah se ban gaya tha). Sirf itna karta hai: agar library +
+       onboarding boxes + playlists mil ke bahut zyada jagah le lein to ye
+       hissa chup chap thoda clip ho jayega (koi scrollbar nahi), taake
+       neeche "Friends" ki apni guaranteed jagah kabhi na chhine. "Your
+       Playlists" list ka apna chota scrollbar bilkul pehle jaisa hi hai
+       (#user-playlists-list wali CSS, neeche dekhein) - wahi asli/wanted
+       scrollbar hai. */
     flex: 1 1 auto;
     min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #4d4d4d transparent;
+    overflow: hidden;
 }
-.sidebar-scroll-top::-webkit-scrollbar { width: 6px; }
-.sidebar-scroll-top::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 
 .library {
