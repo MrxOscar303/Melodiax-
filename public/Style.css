@@ -5225,7 +5225,7 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .main-left-part {
         width: 100%;
         height: auto;
-        max-height: 22rem;
+        max-height: 18rem;
         /* Neeche wala friend (Friends list ka 2nd/3rd item) pehle is liye
            nahi dikhta tha kewnky friends-module fixed max-height ke
            andar clip ho jata tha. Ab poora panel nahi, balke sirf
