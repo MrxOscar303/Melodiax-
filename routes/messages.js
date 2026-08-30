@@ -79,6 +79,27 @@ function serializeMessage(m, currentUserId) {
     };
 }
 
+// ============ UNREAD COUNT (total + per-friend breakdown) ============
+// "Online" nav tab ke badge aur browser tab title (jaise "(2) Melodiax")
+// dono isi endpoint se feed hote hain. Ye route "/:friendId" se PEHLE hona
+// zaroori hai warna Express "unread-count" ko ek friendId samajh lega.
+router.get('/unread-count', requireAuth, async (req, res) => {
+    try {
+        const unreadMsgs = await Message.find({ recipient: req.user._id, read: false })
+            .select('sender')
+            .lean();
+        const perFriend = {};
+        unreadMsgs.forEach((m) => {
+            const id = String(m.sender);
+            perFriend[id] = (perFriend[id] || 0) + 1;
+        });
+        res.json({ total: unreadMsgs.length, perFriend });
+    } catch (err) {
+        console.error('Unread count error:', err);
+        res.status(500).json({ message: 'Server error while fetching unread count.' });
+    }
+});
+
 // ============ CONVERSATION HISTORY (with a specific friend) ============
 router.get('/:friendId', requireAuth, async (req, res) => {
     try {

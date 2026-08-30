@@ -129,6 +129,15 @@ function showLoggedInUI(user) {
     userProfileBox.style.display = 'flex';
     userAvatar.src = user.profilePicture;
     userName.textContent = user.username;
+    // Profile effect (avatar decoration) - nav ke avatar par bhi login/reload
+    // hote hi apply ho jaye, sirf profile card khulne par nahi.
+    const navAvatarWrap = document.querySelector('.my-status-dot-wrap');
+    if (navAvatarWrap) {
+        navAvatarWrap.classList.remove('profile-effect-glow', 'profile-effect-ring', 'profile-effect-sparkle', 'profile-effect-confetti');
+        if (user.profileEffect && user.profileEffect !== 'none') {
+            navAvatarWrap.classList.add(`profile-effect-${user.profileEffect}`);
+        }
+    }
     if (adminPanelBtn) adminPanelBtn.style.display = user.isAdmin ? 'flex' : 'none';
     window.dispatchEvent(new Event('melodiax-auth-changed')); // playlist.js is user ki apni playlists load karta hai
 }

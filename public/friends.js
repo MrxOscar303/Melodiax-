@@ -131,7 +131,15 @@
         if (status === 'dnd') return 'Do Not Disturb';
         if (status === 'night') return 'Idle';
         if (status === 'invisible' || status === 'offline') return 'Offline';
-        return 'Online';
+        return 'Active now';
+    }
+
+    // Profile effect - avatar ke gird animated decoration. Backend se
+    // 'none' | 'glow' | 'ring' | 'sparkle' | 'confetti' aata hai; CSS class
+    // "profile-effect-<name>" wrapper span par lag jati hai (Style.css me
+    // saari animations already defined hain).
+    function profileEffectClass(effect) {
+        return effect && effect !== 'none' ? `profile-effect-${effect}` : '';
     }
 
     // Status dot ke andar dnd/night ke liye chhota icon dalta hai (minus/moon) -
@@ -229,8 +237,8 @@
     function friendItemHtml(f) {
         const muted = isFriendMuted(f.friendshipId);
         return `
-            <div class="friend-item" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-status-message="${escapeHtml(f.statusMessage || '')}">
-                <span class="friend-avatar-wrap">
+            <div class="friend-item" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-status-message="${escapeHtml(f.statusMessage || '')}" data-friend-effect="${escapeHtml(f.profileEffect || 'none')}">
+                <span class="friend-avatar-wrap ${profileEffectClass(f.profileEffect)}">
                     <img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="friend-avatar">
                     <span class="status-dot ${statusDotClass(f.status)}">${statusDotInnerHtml(f.status)}</span>
                 </span>
@@ -332,6 +340,7 @@
                         profilePicture: item.getAttribute('data-friend-avatar'),
                         status: item.getAttribute('data-friend-status'),
                         statusMessage: item.getAttribute('data-friend-status-message'),
+                        profileEffect: item.getAttribute('data-friend-effect'),
                     });
                 }
             });
@@ -347,6 +356,7 @@
                         profilePicture: item.getAttribute('data-friend-avatar'),
                         status: item.getAttribute('data-friend-status'),
                         statusMessage: item.getAttribute('data-friend-status-message'),
+                        profileEffect: item.getAttribute('data-friend-effect'),
                     });
                 }
             });

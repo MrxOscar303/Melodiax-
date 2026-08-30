@@ -1626,7 +1626,8 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     flex-direction: column;
     gap: 0.35rem;
 }
-.profile-status-option {
+.profile-status-option,
+.profile-effect-option {
     display: flex;
     align-items: center;
     gap: 0.7rem;
@@ -1643,14 +1644,17 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     box-sizing: border-box;
     transition: border-color 0.15s, background-color 0.15s;
 }
-.profile-status-option:hover { background-color: #222; }
-.profile-status-option.active {
+.profile-status-option:hover,
+.profile-effect-option:hover { background-color: #222; }
+.profile-status-option.active,
+.profile-effect-option.active {
     border-color: #1db954;
     background-color: rgba(29, 185, 84, 0.1);
     color: #fff;
     font-weight: 600;
 }
-body.red-theme .profile-status-option.active { border-color: #ff4d4d; background-color: rgba(255, 77, 77, 0.08); }
+body.red-theme .profile-status-option.active,
+body.red-theme .profile-effect-option.active { border-color: #ff4d4d; background-color: rgba(255, 77, 77, 0.08); }
 
 .profile-status-icon {
     width: 1.5rem;
@@ -1663,11 +1667,86 @@ body.red-theme .profile-status-option.active { border-color: #ff4d4d; background
     font-size: 0.75rem;
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.profile-status-option.active .profile-status-icon { transform: scale(1.12); }
+.profile-status-option.active .profile-status-icon,
+.profile-effect-option.active .profile-status-icon { transform: scale(1.12); }
 .profile-status-icon.status-online { background-color: #1db954; color: #06280f; }
 .profile-status-icon.status-night { background-color: #2c2c2c; color: #f1c40f; border: 1px solid #444; }
 .profile-status-icon.status-dnd { background-color: #ed4245; color: #000; }
 .profile-status-icon.status-invisible { background-color: transparent; color: #747f8d; border: 2px solid #747f8d; }
+
+/* ---------------- Profile effects (avatar decorations) ----------------
+   Wrapper span (friend-avatar-wrap / profile-card-avatar-wrap /
+   my-status-dot-wrap / profile-effect-preview-icon - sab already
+   position:relative hain) par "profile-effect-<name>" class lagti hai.
+   Andar wala <img> ya <i> untouched rehta hai - decoration khud
+   ::before/::after pseudo-elements se banti hai jo wrapper ke bounds se
+   thora bahar (inset negative) nikal kar avatar ke gird "halo" jaisa
+   dikhte hain. */
+.profile-effect-preview-icon { position: relative; background-color: #2c2c2c; color: #aaa; }
+
+@keyframes profileEffectGlowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.55), 0 0 8px 2px rgba(29, 185, 84, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(29, 185, 84, 0), 0 0 16px 5px rgba(29, 185, 84, 0.55); }
+}
+.profile-effect-glow { border-radius: 50%; animation: profileEffectGlowPulse 2.2s ease-in-out infinite; }
+body.red-theme .profile-effect-glow { animation-name: profileEffectGlowPulseRed; }
+@keyframes profileEffectGlowPulseRed {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.55), 0 0 8px 2px rgba(255, 77, 77, 0.3); }
+    50% { box-shadow: 0 0 0 5px rgba(255, 77, 77, 0), 0 0 16px 5px rgba(255, 77, 77, 0.55); }
+}
+
+@keyframes profileEffectSpin { to { transform: rotate(360deg); } }
+.profile-effect-ring::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0deg, #1db954 90deg, transparent 200deg, #1db954 320deg, transparent 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    animation: profileEffectSpin 3s linear infinite;
+    pointer-events: none;
+}
+body.red-theme .profile-effect-ring::before {
+    background: conic-gradient(from 0deg, transparent 0deg, #ff4d4d 90deg, transparent 200deg, #ff4d4d 320deg, transparent 360deg);
+}
+
+@keyframes profileEffectTwinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.6); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+.profile-effect-sparkle::before,
+.profile-effect-sparkle::after {
+    content: '\2726'; /* ✦ */
+    position: absolute;
+    font-size: 0.85rem;
+    line-height: 1;
+    color: #1db954;
+    text-shadow: 0 0 4px rgba(29, 185, 84, 0.8);
+    pointer-events: none;
+    animation: profileEffectTwinkle 1.6s ease-in-out infinite;
+}
+.profile-effect-sparkle::before { top: -0.3rem; right: -0.2rem; animation-delay: 0s; }
+.profile-effect-sparkle::after { bottom: -0.2rem; left: -0.3rem; font-size: 0.6rem; animation-delay: 0.7s; }
+body.red-theme .profile-effect-sparkle::before,
+body.red-theme .profile-effect-sparkle::after { color: #ff4d4d; text-shadow: 0 0 4px rgba(255, 77, 77, 0.8); }
+
+@keyframes profileEffectConfettiSpin { to { transform: rotate(360deg); } }
+.profile-effect-confetti::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle 2.5px at 50% 2%, #1db954 98%, transparent),
+        radial-gradient(circle 2.5px at 85% 20%, #ffd166 98%, transparent),
+        radial-gradient(circle 2.5px at 92% 60%, #ff4d6d 98%, transparent),
+        radial-gradient(circle 2.5px at 65% 92%, #4dabf7 98%, transparent),
+        radial-gradient(circle 2.5px at 20% 85%, #ffd166 98%, transparent),
+        radial-gradient(circle 2.5px at 5% 45%, #ff4d6d 98%, transparent);
+    animation: profileEffectConfettiSpin 4.5s linear infinite;
+    pointer-events: none;
+}
 
 .profile-status-message-row { display: flex; gap: 0.5rem; margin-top: 0.6rem; align-items: center; position: relative; }
 .profile-status-message-row .my-status-message-input { flex: 1; }
@@ -2292,6 +2371,26 @@ body.red-theme .status-online { background-color: #1db954; }
     justify-content: center;
     border: 2px solid #131313;
 }
+/* "Online" nav tab ka inline unread-messages badge - notif bell badge jaisa
+   hi look, bas nav-text ke andar inline rehta hai (dot ki jagah nahi). */
+.nav-text-with-badge { position: relative; }
+.nav-inline-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ed4245;
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    margin-left: 0.35rem;
+    vertical-align: middle;
+}
+body.red-theme .nav-inline-badge { background-color: #ff4d4d; }
 .notif-panel {
     position: absolute;
     top: 2.6rem;
@@ -2785,11 +2884,75 @@ body.red-theme .chat-send-btn { background-color: #ff4d4d; color: #fff; }
 }
 .chat-gif-img { max-width: 100%; border-radius: 10px; display: block; }
 .chat-sticker-emoji { font-size: 3rem; line-height: 1; display: block; }
+/* Real (Giphy) sticker jab chat bubble me bheja jaye - emoji se chhota,
+   GIF se bhi chhota rakha hai kewnky stickers usually square/transparent
+   hote hain aur bahut bara feel nahi hona chahiye. */
+.chat-sticker-img { max-width: 8rem; max-height: 8rem; display: block; }
 
-/* Voice message bubble */
-.chat-bubble-voice { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.chat-voice-audio { height: 2.2rem; max-width: 15rem; }
-.chat-voice-duration { font-size: 0.7rem; opacity: 0.75; }
+/* Voice message bubble - custom player (play button + dotted "waveform"
+   track + time pill). "Mine" bubble background already accent-colored
+   (green/red), is liye us par player white/light hota hai (accent bg par
+   contrast ke liye) - doosre ke message wale dark bubble par player khud
+   accent-colored hota hai (jaisa chat-song-play-btn already karta hai). */
+.chat-bubble-voice { display: flex; flex-direction: row; align-items: center; gap: 0.5rem; flex-wrap: nowrap; }
+.chat-voice-player { display: flex; align-items: center; gap: 0.55rem; width: 100%; min-width: 11rem; }
+.chat-voice-play-btn {
+    flex-shrink: 0;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    background-color: #1db954;
+    color: #04210f;
+}
+body.red-theme .chat-voice-play-btn { background-color: #ff4d4d; color: #2a0000; }
+.chat-bubble-row-mine .chat-voice-play-btn { background-color: #fff; color: #1db954; }
+body.red-theme .chat-bubble-row-mine .chat-voice-play-btn { color: #ff4d4d; }
+.chat-voice-play-btn i.fa-play { margin-left: 2px; } /* play triangle ko optically center karta hai */
+
+.chat-voice-track {
+    position: relative;
+    flex: 1;
+    height: 1.3rem;
+    min-width: 5rem;
+    cursor: pointer;
+}
+.chat-voice-dots,
+.chat-voice-progress {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, currentColor 1.4px, transparent 1.6px);
+    background-size: 7px 100%;
+    background-position: left center;
+    background-repeat: repeat-x;
+}
+.chat-voice-dots { color: #6b6b6b; }
+.chat-voice-progress { width: 0%; overflow: hidden; color: #1db954; transition: width 0.1s linear; }
+body.red-theme .chat-voice-progress { color: #ff4d4d; }
+.chat-bubble-row-mine .chat-voice-dots { color: rgba(4, 33, 15, 0.35); }
+.chat-bubble-row-mine .chat-voice-progress { color: #04210f; }
+body.red-theme .chat-bubble-row-mine .chat-voice-dots { color: rgba(42, 0, 0, 0.35); }
+body.red-theme .chat-bubble-row-mine .chat-voice-progress { color: #2a0000; }
+
+.chat-voice-audio-el { display: none; }
+.chat-voice-time {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    min-width: 2.4rem;
+    text-align: center;
+}
+.chat-bubble-row-mine .chat-voice-time { background-color: rgba(4, 33, 15, 0.18); }
+body.red-theme .chat-bubble-row-mine .chat-voice-time { background-color: rgba(42, 0, 0, 0.18); }
 
 /* GIF / sticker / music picker panels */
 .chat-picker-panel {
@@ -2840,6 +3003,11 @@ body.red-theme .chat-picker-search-row input:focus { border-color: #ff4d4d; }
     transition: transform 0.12s;
 }
 .chat-picker-gif-thumb:hover { transform: scale(1.04); }
+/* Sticker picker grid me thumbnails GIF jaisi hi hain lekin transparent
+   background wale hote hain, is liye object-fit: contain rakha - crop
+   nahi hote aur halka checkerboard-jaisa dark bg se contrast bhi theek
+   dikhta hai. */
+.chat-picker-sticker-thumb { object-fit: contain; background-color: #1c1c1c; padding: 0.3rem; box-sizing: border-box; }
 .chat-picker-empty { grid-column: 1 / -1; color: #888; font-size: 0.8rem; text-align: center; padding: 1rem; }
 .chat-sticker-grid { grid-template-columns: repeat(auto-fill, minmax(3rem, 1fr)); }
 .chat-sticker-option {
@@ -4999,6 +5167,26 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
         width: 100%;
         height: auto;
         max-height: 18rem;
+        /* Neeche wala friend (Friends list ka 2nd/3rd item) pehle is liye
+           nahi dikhta tha kewnky poora .main-left-part overflow:hidden tha
+           aur friends-module us fixed 18rem ke andar hi clip ho jata tha -
+           iske andar wala #friends-list scrollbar bhi isi wajah se
+           invisible ho jata tha. Ab poora sidebar hi vertically scroll
+           hota hai is breakpoint par, taake friends module (aur uska
+           scrollbar) hamesha reachable rahe. */
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    .friends-module {
+        /* is breakpoint par outer sidebar khud scroll karta hai, is liye
+           yahan overflow:hidden hata ke friends-list ko apni poori height
+           lene dete hain warna wahi clipping wapas aa jati. */
+        overflow: visible;
+        flex: none;
+        min-height: auto;
+    }
+    #friends-list.friends-list {
+        max-height: 12rem;
     }
     .main-right-part {
         width: 100%;
@@ -5245,7 +5433,7 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .chat-send-btn { width: 2.1rem; height: 2.1rem; }
     .chat-bubble { max-width: 82%; }
     .chat-bubble-card { max-width: 88% !important; }
-    .chat-file-card, .chat-song-card { min-width: 0; }
+    .chat-file-card, .chat-song-card { min-width: 0; max-width: 100%; box-sizing: border-box; }
     .chat-picker-panel { max-height: 9.5rem; padding: 0.6rem 0.8rem; }
     .chat-picker-grid { grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr)); }
     .media-picker-panel { max-height: 13rem; padding: 0; }
@@ -5547,4 +5735,20 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .auth-modal-content { padding: 18px 14px; }
     .auth-modal-content .modal-header h2 { font-size: 1.25rem; }
     .avatar-upload-wrapper, .avatar-upload img { width: 64px; height: 64px; }
+
+    /* Chat me bheja hua "shared song" card - pehle thumb/play-button/padding
+       fixed size ke hone ki wajah se chhoti screen par disproportionately
+       bara dikhta tha. Ab card apni bubble se bahar nahi jaa sakta aur
+       thumb/button/padding bhi thora chhote ho gaye taake sab kuch
+       comfortably fit ho jaye. */
+    .chat-song-card, .chat-file-card {
+        max-width: 100%;
+        box-sizing: border-box;
+        gap: 0.5rem;
+        padding: 0.5rem 0.6rem;
+    }
+    .chat-song-thumb { width: 2.2rem; height: 2.2rem; }
+    .chat-song-play-btn { width: 1.7rem; height: 1.7rem; font-size: 0.75rem; }
+    .chat-song-title { font-size: 0.78rem; }
+    .chat-song-section { font-size: 0.68rem; }
 }

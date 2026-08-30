@@ -54,6 +54,9 @@
     const statusEmojiPanel = document.getElementById('profile-status-emoji-panel');
     const statusEmojiGrid = document.getElementById('profile-status-emoji-grid');
 
+    const cardAvatarWrap = document.querySelector('.profile-card-avatar-wrap');
+    const effectOptionsWrap = document.getElementById('profile-effect-options');
+
     const memberSinceDateEl = document.getElementById('profile-member-since-date');
 
     const navStatusBubble = document.getElementById('nav-status-bubble');
@@ -93,6 +96,47 @@
         }
     }
     window.melodiaxApplyProfileCardStatus = applyStatusToCard; // friends.js se bhi sync hota hai
+
+    // ---------------- Profile effect (avatar decoration) ----------------
+    function profileEffectClass(effect) {
+        return effect && effect !== 'none' ? `profile-effect-${effect}` : '';
+    }
+    window.melodiaxProfileEffectClass = profileEffectClass; // friends.js/chat.js bhi isi naam se use karte hain
+
+    function applyEffectToWrap(wrapEl, effect) {
+        if (!wrapEl) return;
+        wrapEl.classList.remove('profile-effect-glow', 'profile-effect-ring', 'profile-effect-sparkle', 'profile-effect-confetti');
+        const cls = profileEffectClass(effect);
+        if (cls) wrapEl.classList.add(cls);
+    }
+
+    function applyEffectToCard(effect) {
+        applyEffectToWrap(cardAvatarWrap, effect);
+        if (effectOptionsWrap) {
+            effectOptionsWrap.querySelectorAll('.profile-effect-option').forEach((btn) => {
+                btn.classList.toggle('active', btn.getAttribute('data-effect') === (effect || 'none'));
+            });
+        }
+    }
+    window.melodiaxApplyProfileCardEffect = applyEffectToCard;
+
+    if (effectOptionsWrap) {
+        effectOptionsWrap.querySelectorAll('.profile-effect-option').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const effect = btn.getAttribute('data-effect');
+                applyEffectToCard(effect);
+                if (window.currentUser) window.currentUser.profileEffect = effect;
+                // Nav avatar (top-right corner) par bhi turant reflect ho jaye.
+                const navAvatarWrap = document.querySelector('.my-status-dot-wrap');
+                if (navAvatarWrap) applyEffectToWrap(navAvatarWrap, effect);
+                try {
+                    const formData = new FormData();
+                    formData.append('profileEffect', effect);
+                    await fetch('/api/auth/me', { method: 'PATCH', credentials: 'include', body: formData });
+                } catch (err) { /* silent - agli profile load par sync ho jayega */ }
+            });
+        });
+    }
 
     // ---------------- Nav status bubble (avatar ke neeche, navbar mein) ----------------
     function updateNavStatusBubble(statusMessage) {
@@ -241,6 +285,7 @@
         bioFeedback.textContent = '';
 
         applyStatusToCard(u.status, u.statusMessage);
+        applyEffectToCard(u.profileEffect || 'none');
         memberSinceDateEl.textContent = formatMemberSince(u.memberSince);
 
         modal.style.display = 'block';

@@ -1,7 +1,8 @@
 // ============================================================
 // Friends Chat - kisi friend par sidebar list mein click karte hi poori
 // screen par khulti hai (Playlist/Downloads/Premium jaisa hi tab pattern).
-// Text, GIF (Giphy), stickers (emoji), voice messages, file/document
+// Text, GIF (Giphy), stickers (Giphy Stickers API - same key as GIF; emoji
+// list is the fallback when no key is set), voice messages, file/document
 // uploads, aur song-sharing (embedded card) - sab support karta hai.
 // Har 4 second baad naye messages ke liye halka poll karta hai.
 // ============================================================
@@ -102,6 +103,7 @@
     let pollTimer = null;
     let lastMessageCount = 0;
     let gifSearchDebounce = null;
+    let stickerSearchDebounce = null;
     let songSearchDebounce = null;
 
     // ---------------- Voice recording state ----------------
@@ -175,12 +177,33 @@
             return `<img src="${escapeHtml(m.content)}" alt="GIF" class="chat-gif-img">`;
         }
         if (m.type === 'sticker') {
-            return `<span class="chat-sticker-emoji">${escapeHtml(m.content)}</span>`;
+            // Naya Giphy-based sticker (image URL) ya purana emoji-based
+            // sticker (single character) - content dekh kar decide karte hain.
+            const isImageSticker = /^https?:\/\//i.test(m.content);
+            return isImageSticker
+                ? `<img src="${escapeHtml(m.content)}" alt="Sticker" class="chat-sticker-img">`
+                : `<span class="chat-sticker-emoji">${escapeHtml(m.content)}</span>`;
         }
         if (m.type === 'voice') {
+            // Custom voice-message player - reference design: round
+            // play/pause button, ek dotted "waveform" track jiska progress
+            // playback ke saath fill hota hai, aur duration/elapsed time ek
+            // chhoti pill me. Rang (green/red) theme ke hisaab se CSS me
+            // change hota hai, browser ka default <audio controls> ab use
+            // nahi ho raha.
+            const dur = m.voiceDuration || 0;
             return `
-                <audio controls preload="none" class="chat-voice-audio" src="${escapeHtml(m.content)}"></audio>
-                ${m.voiceDuration ? `<span class="chat-voice-duration">${formatDuration(m.voiceDuration)}</span>` : ''}
+                <div class="chat-voice-player" data-msg-id="${escapeHtml(String(m.id))}">
+                    <button type="button" class="chat-voice-play-btn" aria-label="Play voice message">
+                        <i class="fa-solid fa-play"></i>
+                    </button>
+                    <div class="chat-voice-track">
+                        <div class="chat-voice-dots"></div>
+                        <div class="chat-voice-progress" style="width:0%"></div>
+                    </div>
+                    <span class="chat-voice-time" data-duration="${dur}">${formatDuration(dur)}</span>
+                    <audio class="chat-voice-audio-el" preload="none" src="${escapeHtml(m.content)}"></audio>
+                </div>
             `;
         }
         if (m.type === 'file') {
@@ -215,6 +238,64 @@
             `;
         }
         return `<p class="chat-bubble-text">${escapeHtml(m.content)}</p>`;
+    }
+
+    // ---------------- Voice message player (custom, theme-colored) ----------------
+    function wireVoicePlayers(container) {
+        container.querySelectorAll('.chat-voice-player').forEach((player) => {
+            const audio = player.querySelector('.chat-voice-audio-el');
+            const playBtn = player.querySelector('.chat-voice-play-btn');
+            const icon = playBtn ? playBtn.querySelector('i') : null;
+            const track = player.querySelector('.chat-voice-track');
+            const progress = player.querySelector('.chat-voice-progress');
+            const timeEl = player.querySelector('.chat-voice-time');
+            if (!audio || !playBtn) return;
+
+            const savedDuration = timeEl ? timeEl.getAttribute('data-duration') : '';
+            const idleLabel = timeEl ? timeEl.textContent : '0:00';
+
+            function setPlayingUI(isPlaying) {
+                if (icon) icon.className = isPlaying ? 'fa-solid fa-pause' : 'fa-solid fa-play';
+            }
+
+            playBtn.addEventListener('click', () => {
+                // Ek waqt me sirf ek hi voice message chale - baaki jo already
+                // chal rahe hain unhe pause kar do.
+                document.querySelectorAll('.chat-voice-audio-el').forEach((a) => {
+                    if (a !== audio && !a.paused) a.pause();
+                });
+                if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+            });
+
+            audio.addEventListener('play', () => setPlayingUI(true));
+            audio.addEventListener('pause', () => setPlayingUI(false));
+            audio.addEventListener('ended', () => {
+                setPlayingUI(false);
+                if (progress) progress.style.width = '0%';
+                if (timeEl) timeEl.textContent = idleLabel;
+            });
+            audio.addEventListener('timeupdate', () => {
+                if (!audio.duration || !isFinite(audio.duration)) return;
+                if (progress) progress.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+                if (timeEl) timeEl.textContent = formatDuration(Math.floor(audio.currentTime));
+            });
+            audio.addEventListener('loadedmetadata', () => {
+                // Agar server-saved duration missing/galat ho, actual audio
+                // duration se time label sahi kar dete hain.
+                if (!savedDuration && audio.duration && isFinite(audio.duration) && timeEl) {
+                    timeEl.textContent = formatDuration(Math.floor(audio.duration));
+                }
+            });
+
+            if (track) {
+                track.addEventListener('click', (e) => {
+                    if (!audio.duration || !isFinite(audio.duration)) return;
+                    const rect = track.getBoundingClientRect();
+                    const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+                    audio.currentTime = pct * audio.duration;
+                });
+            }
+        });
     }
 
     function wireSongPlayButtons(container) {
@@ -275,6 +356,7 @@
         });
         chatMessagesEl.innerHTML = html;
         wireSongPlayButtons(chatMessagesEl);
+        wireVoicePlayers(chatMessagesEl);
 
         if (messages.length !== lastMessageCount) {
             chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
@@ -286,6 +368,11 @@
         try {
             const data = await apiGet('/' + friendId);
             renderMessages(data.messages || []);
+            // Chat khulte hi backend un messages ko "read" mark kar chuka
+            // hai (GET /:friendId route ke andar) - is liye "Online" tab
+            // ka badge aur tab title turant refresh kar dete hain, 25
+            // second wale poll ka wait nahi karte.
+            if (window.melodiaxRefreshUnreadMessages) window.melodiaxRefreshUnreadMessages();
         } catch (err) {
             if (!silent && chatMessagesEl) {
                 chatMessagesEl.innerHTML = `<p class="chat-empty">${escapeHtml(err.message)}</p>`;
@@ -497,10 +584,46 @@
     }
 
     // ---------------- Sticker picker ----------------
-    function renderStickers(query) {
+    // Pehle sirf hardcoded emoji list thi. Ab agar GIPHY_API_KEY set hai
+    // (GIF picker jaisi hi key - Giphy ka Stickers endpoint bhi wahi key
+    // use karta hai) to real "stickers" (animated/transparent images)
+    // Giphy Stickers API se search hote hain, exactly GIF picker jaisa
+    // UX. Key na ho to purani emoji list fallback ke tor par chalti
+    // rehti hai, taake feature turant broken na dikhe.
+    async function renderStickers(query) {
         if (!stickerPickerGrid) return;
-        const q = (query || '').trim().toLowerCase();
-        const filtered = q ? STICKERS.filter((s) => (s.keywords || []).some((k) => k.includes(q))) : STICKERS;
+        const q = (query || '').trim();
+
+        if (GIPHY_API_KEY && GIPHY_API_KEY !== 'YOUR_GIPHY_API_KEY') {
+            stickerPickerGrid.innerHTML = '<p class="chat-picker-empty">Loading...</p>';
+            try {
+                const endpoint = q
+                    ? `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(q)}&limit=24&rating=pg`
+                    : `https://api.giphy.com/v1/stickers/trending?api_key=${GIPHY_API_KEY}&limit=24&rating=pg`;
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                const stickers = data.data || [];
+                if (!stickers.length) {
+                    stickerPickerGrid.innerHTML = '<p class="chat-picker-empty">No stickers found.</p>';
+                    return;
+                }
+                stickerPickerGrid.innerHTML = stickers.map((s) => `
+                    <img src="${escapeHtml(s.images.fixed_width_small.url)}"
+                         data-full="${escapeHtml(s.images.fixed_height.url)}"
+                         alt="Sticker" class="chat-picker-gif-thumb chat-picker-sticker-thumb">
+                `).join('');
+                stickerPickerGrid.querySelectorAll('.chat-picker-sticker-thumb').forEach((img) => {
+                    img.addEventListener('click', () => sendSticker(img.getAttribute('data-full')));
+                });
+            } catch (err) {
+                stickerPickerGrid.innerHTML = '<p class="chat-picker-empty">Could not load stickers, please try again.</p>';
+            }
+            return;
+        }
+
+        // Fallback: koi Giphy key set nahi - purani emoji-based quick stickers.
+        const ql = q.toLowerCase();
+        const filtered = ql ? STICKERS.filter((s) => (s.keywords || []).some((k) => k.includes(ql))) : STICKERS;
         if (!filtered.length) {
             stickerPickerGrid.innerHTML = '<p class="chat-picker-empty">No stickers found.</p>';
             return;
@@ -512,7 +635,10 @@
     }
     if (stickerPickerBtn) stickerPickerBtn.addEventListener('click', () => openMediaPicker('stickers'));
     if (stickerSearchInput) {
-        stickerSearchInput.addEventListener('input', () => renderStickers(stickerSearchInput.value));
+        stickerSearchInput.addEventListener('input', () => {
+            clearTimeout(stickerSearchDebounce);
+            stickerSearchDebounce = setTimeout(() => renderStickers(stickerSearchInput.value), 400);
+        });
     }
 
     // ---------------- Share Song (Music tab) ----------------
@@ -684,6 +810,13 @@
             if (downloadsSection) downloadsSection.style.display = 'none';
 
             chatHeaderAvatar.src = friend.profilePicture || '/uploads/avatars/default-avatar.png';
+            const chatHeaderAvatarWrap = document.getElementById('chat-header-avatar-wrap');
+            if (chatHeaderAvatarWrap) {
+                chatHeaderAvatarWrap.classList.remove('profile-effect-glow', 'profile-effect-ring', 'profile-effect-sparkle', 'profile-effect-confetti');
+                if (friend.profileEffect && friend.profileEffect !== 'none') {
+                    chatHeaderAvatarWrap.classList.add(`profile-effect-${friend.profileEffect}`);
+                }
+            }
             chatHeaderName.textContent = '@' + friend.username;
             if (chatHeaderStatusDot) {
                 chatHeaderStatusDot.className = 'status-dot status-' + (friend.status || 'online');
@@ -692,7 +825,7 @@
             }
             if (chatHeaderStatusText) {
                 chatHeaderStatusText.textContent = friend.statusMessage
-                    || (friend.status === 'dnd' ? 'Do Not Disturb' : friend.status === 'night' ? 'Idle' : friend.status === 'invisible' || friend.status === 'offline' ? 'Offline' : 'Online');
+                    || (friend.status === 'dnd' ? 'Do Not Disturb' : friend.status === 'night' ? 'Idle' : friend.status === 'invisible' || friend.status === 'offline' ? 'Offline' : 'Active now');
             }
 
             chatViewSection.style.display = 'flex';

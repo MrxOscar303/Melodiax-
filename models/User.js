@@ -98,6 +98,15 @@ const userSchema = new mongoose.Schema(
         statusExpiresAt: {
             type: Date,
         },
+        // Profile effect - avatar ke gird chalne wala chhota animated
+        // decoration (Discord "avatar decoration" jaisa). User khud choose
+        // karta hai apni profile settings se; friends list, chat header,
+        // aur profile card - sab jagah dikhta hai.
+        profileEffect: {
+            type: String,
+            enum: ['none', 'glow', 'ring', 'sparkle', 'confetti'],
+            default: 'none',
+        },
         bio: {
             type: String,
             trim: true,

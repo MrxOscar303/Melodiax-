@@ -102,6 +102,7 @@ function publicUser(user) {
         memberSince: user.createdAt,
         usernameChangedAt: user.usernameChangedAt || null,
         statusExpiresAt: user.statusExpiresAt || null,
+        profileEffect: user.profileEffect || 'none',
     };
 }
 
@@ -279,7 +280,7 @@ router.patch('/me', requireAuth, uploadProfileMedia.fields([
     { name: 'bannerImage', maxCount: 1 },
 ]), async (req, res) => {
     try {
-        const { username, bio, bannerColor, bannerImagePosition, removeBannerImage } = req.body;
+        const { username, bio, bannerColor, bannerImagePosition, removeBannerImage, profileEffect } = req.body;
 
         if (username && username !== req.user.username) {
             if (username.length < 3 || username.length > 30) {
@@ -306,6 +307,11 @@ router.patch('/me', requireAuth, uploadProfileMedia.fields([
 
         if (typeof bio === 'string') {
             req.user.bio = bio.slice(0, 160);
+        }
+
+        const ALLOWED_PROFILE_EFFECTS = ['none', 'glow', 'ring', 'sparkle', 'confetti'];
+        if (typeof profileEffect === 'string' && ALLOWED_PROFILE_EFFECTS.includes(profileEffect)) {
+            req.user.profileEffect = profileEffect;
         }
 
         if (typeof bannerColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(bannerColor)) {

@@ -50,10 +50,11 @@ function publicFriendUser(user) {
         profilePicture: user.profilePicture,
         status,
         statusMessage: (user.status === 'invisible' || status === 'offline') ? '' : (user.statusMessage || ''),
+        profileEffect: user.profileEffect || 'none',
     };
 }
 
-const FRIEND_SELECT_FIELDS = 'username profilePicture status statusMessage lastActiveAt';
+const FRIEND_SELECT_FIELDS = 'username profilePicture status statusMessage lastActiveAt profileEffect';
 
 // ============ SEARCH USERS (by @username) ============
 router.get('/search', requireAuth, actionLimiter, async (req, res) => {

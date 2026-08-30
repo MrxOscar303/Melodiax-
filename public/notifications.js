@@ -60,6 +60,12 @@
         } else {
             badge.style.display = 'none';
         }
+        // Tab title (Messages + Notifications dono ka combined "(N)" prefix)
+        // window.melodiaxUpdateTabTitle isi file ke neeche ya messages-badge
+        // wale hisse se milta hai - dono modules apna apna count report karte
+        // hain aur wo function unhe jod kar title set kar deta hai.
+        window.melodiaxNotifUnreadCount = count;
+        if (window.melodiaxUpdateTabTitle) window.melodiaxUpdateTabTitle();
     }
 
     function setMuteUI(muted) {
