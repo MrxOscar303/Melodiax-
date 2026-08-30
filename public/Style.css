@@ -533,22 +533,27 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    /* Pehle overflow:hidden tha ("sirf playlists list scroll ho, poora
-       left part nahi") - lekin jab library+playlists+friends sab milkar
-       available height se zyada ho jate the, to friends-module (aur uska
-       apna scrollbar) neeche clip ho ke poori tarah invisible ho jata
-       tha - scroll karne ka option hi nahi milta tha. Ab poora sidebar
-       khud vertically scroll ho sakta hai (nested scroll: "Your
-       Playlists" ki apni list abhi bhi apni jagah 38% par scroll karti
-       hai, bas ab agar sab kuch overall bhi na sama to poora panel
-       scroll ho jayega taake "Friends" module hamesha reachable rahe). */
+    /* Poora panel khud scroll nahi karta - iski bajaye do alag hisse hain:
+       .sidebar-scroll-top (library+playlists, apna scroll) aur
+       .friends-module (apna fixed-space + apna scroll, "Your Playlists"
+       jaisa hi). Isse "Friends" ka apna dedicated scrollbar rehta hai,
+       poore panel ka nahi. */
+    overflow: hidden;
+}
+.sidebar-scroll-top {
+    /* Upar wala hissa (library, onboarding boxes, "Your Playlists") -
+       agar ye sab mil ke available jagah se zyada ho jaye to sirf YE
+       hissa apne andar scroll karta hai, taake neeche wale friends-module
+       ki guaranteed space kabhi na chhine. */
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #4d4d4d transparent;
 }
-.main-left-part::-webkit-scrollbar { width: 6px; }
-.main-left-part::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
+.sidebar-scroll-top::-webkit-scrollbar { width: 6px; }
+.sidebar-scroll-top::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 
 .library {
@@ -2521,14 +2526,14 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
     margin: 1.2rem 0 0;
     padding: 1rem 1.5rem 0.8rem;
     border-top: 1px solid #262626;
-    flex: 1 1 auto;
-    min-height: 6rem;
+    /* Ab flex:1 auto-shrink nahi - fixed/guaranteed space hai (jaise
+       "Your Playlists" list ki apni fixed max-height hai), taake ye kabhi
+       squeeze ho ke clip na ho. Upar wala .sidebar-scroll-top hissa khud
+       apni jagah scroll kar lega agar tight ho. */
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    /* Ab outer .main-left-part khud scroll karta hai, is liye yahan
-       overflow:hidden nahi rakha - warna friends-list wapas clip ho
-       jayegi jab sidebar apni poori natural height le raha ho. */
-    overflow: visible;
+    overflow: hidden; /* header fixed rehta hai, sirf list neeche scroll hoti hai */
 }
 .friends-module-header {
     display: flex;
@@ -5221,27 +5226,21 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .main-left-part {
         width: 100%;
         height: auto;
-        max-height: 18rem;
+        max-height: 22rem;
         /* Neeche wala friend (Friends list ka 2nd/3rd item) pehle is liye
-           nahi dikhta tha kewnky poora .main-left-part overflow:hidden tha
-           aur friends-module us fixed 18rem ke andar hi clip ho jata tha -
-           iske andar wala #friends-list scrollbar bhi isi wajah se
-           invisible ho jata tha. Ab poora sidebar hi vertically scroll
-           hota hai is breakpoint par, taake friends module (aur uska
-           scrollbar) hamesha reachable rahe. */
-        overflow-y: auto;
-        overflow-x: hidden;
+           nahi dikhta tha kewnky friends-module fixed max-height ke
+           andar clip ho jata tha. Ab poora panel nahi, balke sirf
+           andar ke do hisse (upar library/playlists, neeche friends)
+           apna-apna independent scroll rakhte hain - dono ka guaranteed
+           space milta hai. */
+        overflow: hidden;
     }
+    .sidebar-scroll-top { flex: 1 1 auto; min-height: 5rem; }
     .friends-module {
-        /* is breakpoint par outer sidebar khud scroll karta hai, is liye
-           yahan overflow:hidden hata ke friends-list ko apni poori height
-           lene dete hain warna wahi clipping wapas aa jati. */
-        overflow: visible;
-        flex: none;
-        min-height: auto;
+        flex: 0 0 auto;
     }
     #friends-list.friends-list {
-        max-height: 12rem;
+        max-height: 9rem;
     }
     .main-right-part {
         width: 100%;

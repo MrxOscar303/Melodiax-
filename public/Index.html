@@ -190,33 +190,38 @@
     <!-- Main - Left part -->
     <div class="main">
         <div class="main-left-part">
-            <div class="library">
-                <p>Your Library</p>
-                <div>+</div>
-            </div>
-
-
-            <div class="box-container">
-                <div class="box">
-                    <h4>Create your first playlist</h4>
-                    <p>It's easy we'll help you</p>
-                    <button id="create-playlist-btn" type="button">Create Playlist</button>
+            <div class="sidebar-scroll-top">
+                <div class="library">
+                    <p>Your Library</p>
+                    <div>+</div>
                 </div>
-                <div class="box">
-                    <h4>Let's find some E-learning to follow</h4>
-                    <p>We'll keep you updated on new updates</p>
-                    <button id="browse-podcasts-btn">Browse Podcasts</button>
-                </div>
-            </div>
 
-          
-            <h5 class="user-playlists-heading">Your Playlists</h5>
-            <div id="user-playlists-list" class="user-playlists-list"></div>
+
+                <div class="box-container">
+                    <div class="box">
+                        <h4>Create your first playlist</h4>
+                        <p>It's easy we'll help you</p>
+                        <button id="create-playlist-btn" type="button">Create Playlist</button>
+                    </div>
+                    <div class="box">
+                        <h4>Let's find some E-learning to follow</h4>
+                        <p>We'll keep you updated on new updates</p>
+                        <button id="browse-podcasts-btn">Browse Podcasts</button>
+                    </div>
+                </div>
+
+              
+                <h5 class="user-playlists-heading">Your Playlists</h5>
+                <div id="user-playlists-list" class="user-playlists-list"></div>
+            </div>
 
             <!-- Friends module - sirf logged-in users ko dikhta hai. Sirf
                  friend count + list dikhata hai (read-only, click kar ke
                  chat khulti hai) - "Add Friend" system yahan nahi, wo
-                 upar nav ke "Online" tab me hai. -->
+                 upar nav ke "Online" tab me hai. Ye ab upar wale
+                 (library/playlists) scroll se ALAG, apna dedicated
+                 guaranteed-space section hai - jaise "Your Playlists" ka
+                 apna internal scroll hai, waisa hi is section ka apna. -->
             <div class="friends-module" id="friends-module" style="display:none;">
                 <div class="friends-module-header">
                     <p>Friends (<span id="friends-count">0</span>)</p>
