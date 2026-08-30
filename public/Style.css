@@ -548,7 +548,15 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
        neeche "Friends" ki apni guaranteed jagah kabhi na chhine. "Your
        Playlists" list ka apna chota scrollbar bilkul pehle jaisa hi hai
        (#user-playlists-list wali CSS, neeche dekhein) - wahi asli/wanted
-       scrollbar hai. */
+       scrollbar hai.
+       IMPORTANT: display:flex zaroori hai - warna andar wale
+       #user-playlists-list ka "flex: 0 1 auto" aur "max-height: 38%"
+       kaam nahi karta (percentage height sirf flex container ke andar
+       hi theek resolve hoti hai), aur list bina scroll ke bas neeche
+       clip ho jati thi - yehi bug tha jiski wajah se playlists ka
+       scrollbar kabhi nahi dikh raha tha. */
+    display: flex;
+    flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
@@ -560,6 +568,7 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     justify-content: space-between;
     align-items: center;
     margin: 1rem 1.5rem 0.2rem 1.5rem;
+    flex-shrink: 0;
 }
 
 .library p {
@@ -4116,6 +4125,7 @@ body.red-theme .podcast-hub-card-download.downloaded { color: #ff4d4d; }
     margin: 1rem 1.5rem 0.2rem 1.5rem;
     font-size: 1rem;
     font-weight: 600;
+    flex-shrink: 0;
 }
 .user-playlists-list {
     flex: 0 1 auto;
