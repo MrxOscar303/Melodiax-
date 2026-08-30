@@ -5235,7 +5235,7 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .main-left-part {
         width: 100%;
         height: auto;
-        max-height: 18rem;
+        max-height: 19rem;
         /* Neeche wala friend (Friends list ka 2nd/3rd item) pehle is liye
            nahi dikhta tha kewnky friends-module fixed max-height ke
            andar clip ho jata tha. Ab poora panel nahi, balke sirf
@@ -5244,12 +5244,28 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
            space milta hai. */
         overflow: hidden;
     }
+    /* "Create your first playlist" / "Browse Podcasts" wale bare
+       onboarding boxes chhoti screen par sabse zyada jagah le rahe the
+       (2 box ~19rem!) - is wajah se "Your Playlists" ke liye jagah hi
+       nahi bachti thi aur wo poori tarah invisible ho jati thi. Mobile
+       par ye decorative boxes hide kar diye taake asal functional cheezein
+       (Your Playlists, Friends) hamesha guaranteed jagah aur apna scroll
+       pa sakein. */
+    .box-container { display: none; }
     .sidebar-scroll-top { flex: 1 1 auto; min-height: 5rem; }
+    .user-playlists-list {
+        /* Kam se kam 1 playlist hamesha bina scroll ke saaf nazar aaye -
+           is liye min-height guaranteed hai aur flex-shrink:0 (kabhi
+           squeeze ho ke chhupti nahi), max-height ke baad apna scroll. */
+        flex-shrink: 0;
+        min-height: 4.2rem;
+        max-height: 7rem;
+    }
     .friends-module {
         flex: 0 0 auto;
     }
     #friends-list.friends-list {
-        max-height: 9rem;
+        max-height: 6rem;
     }
     .main-right-part {
         width: 100%;
