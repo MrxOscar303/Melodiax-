@@ -16,9 +16,30 @@
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     const STICKERS = [
-        '😀', '😂', '😍', '🥳', '😎', '🤔', '😢', '😡',
-        '👍', '👎', '🙏', '👏', '💪', '🤝', '✌️', '🤞',
-        '❤️', '🔥', '✨', '🎉', '🎶', '💯', '😴', '👀',
+        { emoji: '😀', keywords: ['happy', 'smile', 'grin'] },
+        { emoji: '😂', keywords: ['laugh', 'lol', 'funny'] },
+        { emoji: '😍', keywords: ['love', 'heart eyes'] },
+        { emoji: '🥳', keywords: ['party', 'celebrate', 'birthday'] },
+        { emoji: '😎', keywords: ['cool', 'sunglasses'] },
+        { emoji: '🤔', keywords: ['think', 'hmm'] },
+        { emoji: '😢', keywords: ['sad', 'cry'] },
+        { emoji: '😡', keywords: ['angry', 'mad'] },
+        { emoji: '👍', keywords: ['thumbs up', 'good', 'yes'] },
+        { emoji: '👎', keywords: ['thumbs down', 'no', 'bad'] },
+        { emoji: '🙏', keywords: ['pray', 'thanks', 'please'] },
+        { emoji: '👏', keywords: ['clap', 'applause', 'bravo'] },
+        { emoji: '💪', keywords: ['strong', 'muscle', 'flex'] },
+        { emoji: '🤝', keywords: ['handshake', 'deal'] },
+        { emoji: '✌️', keywords: ['peace', 'victory'] },
+        { emoji: '🤞', keywords: ['luck', 'fingers crossed'] },
+        { emoji: '❤️', keywords: ['love', 'heart'] },
+        { emoji: '🔥', keywords: ['fire', 'lit', 'hot'] },
+        { emoji: '✨', keywords: ['sparkle', 'shiny', 'magic'] },
+        { emoji: '🎉', keywords: ['party', 'celebrate', 'confetti'] },
+        { emoji: '🎶', keywords: ['music', 'notes', 'song'] },
+        { emoji: '💯', keywords: ['100', 'perfect'] },
+        { emoji: '😴', keywords: ['sleep', 'tired'] },
+        { emoji: '👀', keywords: ['eyes', 'look', 'watching'] },
     ];
     // Emoji picker (chat text mein insert karne ke liye) - stickers se alag,
     // koi bhi combination type kar sake, thora bara set.
@@ -46,7 +67,6 @@
     const attachMenuPanel = document.getElementById('attach-menu-panel');
     const attachUploadFileBtn = document.getElementById('attach-upload-file-btn');
     const attachUploadDocumentBtn = document.getElementById('attach-upload-document-btn');
-    const attachShareSongBtn = document.getElementById('attach-share-song-btn');
     const attachFileInput = document.getElementById('attach-file-input');
     const attachDocumentInput = document.getElementById('attach-document-input');
 
@@ -54,16 +74,19 @@
     const emojiPickerPanel = document.getElementById('emoji-picker-panel');
     const emojiPickerGrid = document.getElementById('emoji-picker-grid');
 
+    // Media picker (Stickers / GIF / Music) - ek hi panel, tabs se switch hota hai
+    const mediaPickerPanel = document.getElementById('media-picker-panel');
+    const mediaPickerTabs = mediaPickerPanel ? mediaPickerPanel.querySelectorAll('.media-picker-tab') : [];
+    const mediaPickerBodies = mediaPickerPanel ? mediaPickerPanel.querySelectorAll('.media-picker-body') : [];
+
     const gifPickerBtn = document.getElementById('gif-picker-btn');
-    const gifPickerPanel = document.getElementById('gif-picker-panel');
     const gifSearchInput = document.getElementById('gif-search-input');
     const gifPickerGrid = document.getElementById('gif-picker-grid');
 
     const stickerPickerBtn = document.getElementById('sticker-picker-btn');
-    const stickerPickerPanel = document.getElementById('sticker-picker-panel');
+    const stickerSearchInput = document.getElementById('sticker-search-input');
     const stickerPickerGrid = document.getElementById('sticker-picker-grid');
 
-    const songSharePanel = document.getElementById('song-share-panel');
     const songShareSearchInput = document.getElementById('song-share-search-input');
     const songShareList = document.getElementById('song-share-list');
 
@@ -226,12 +249,18 @@
 
         let html = '';
         let lastDay = null;
+        let lastTimestampMs = null;
         messages.forEach((m, i) => {
             const dayLabel = formatDayLabel(m.createdAt);
+            const msgTimeMs = new Date(m.createdAt).getTime();
             if (dayLabel !== lastDay) {
                 html += `<div class="chat-day-divider"><span>${dayLabel}</span></div>`;
                 lastDay = dayLabel;
+            } else if (lastTimestampMs !== null && (msgTimeMs - lastTimestampMs) / 60000 >= 15) {
+                // Sirf tab time header aata hai jab pichle message se 15+ minute ka gap ho
+                html += `<div class="chat-time-divider"><span>${formatTime(m.createdAt)}</span></div>`;
             }
+            lastTimestampMs = msgTimeMs;
             const bareType = m.type === 'gif' || m.type === 'sticker'; // in par bubble background nahi chahiye
             const cardType = m.type === 'file' || m.type === 'song'; // in ka apna card-style look hai
             const seenLabel = (i === lastMineIndex) ? `<span class="chat-seen-label">${m.read ? 'Seen' : 'Delivered'}</span>` : '';
@@ -239,7 +268,6 @@
                 <div class="chat-bubble-row ${m.mine ? 'chat-bubble-row-mine' : ''}">
                     <div class="chat-bubble ${bareType ? 'chat-bubble-bare' : ''} ${m.type === 'voice' ? 'chat-bubble-voice' : ''} ${cardType ? 'chat-bubble-card' : ''}">
                         ${renderBubbleContent(m)}
-                        <span class="chat-bubble-time">${formatTime(m.createdAt)}</span>
                     </div>
                 </div>
                 ${seenLabel}
@@ -342,15 +370,17 @@
         chatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
         });
+        // Send icon sirf tabhi dikhta hai jab input mein kuch likha ho
+        chatInput.addEventListener('input', () => {
+            if (chatSendBtn) chatSendBtn.classList.toggle('chat-send-btn-hidden', !chatInput.value.trim());
+        });
     }
 
     // ---------------- Panels: open/close (sirf ek waqt mein ek hi khula rahe) ----------------
     function closeAllPickers() {
         if (attachMenuPanel) attachMenuPanel.style.display = 'none';
         if (emojiPickerPanel) emojiPickerPanel.style.display = 'none';
-        if (gifPickerPanel) gifPickerPanel.style.display = 'none';
-        if (stickerPickerPanel) stickerPickerPanel.style.display = 'none';
-        if (songSharePanel) songSharePanel.style.display = 'none';
+        if (mediaPickerPanel) mediaPickerPanel.style.display = 'none';
     }
     function togglePanel(panel, onOpen) {
         const isOpen = panel.style.display === 'block';
@@ -392,11 +422,39 @@
                 if (chatInput) {
                     chatInput.value += btn.textContent;
                     chatInput.focus();
+                    chatInput.dispatchEvent(new Event('input'));
                 }
             });
         });
     }
     if (emojiPickerBtn) emojiPickerBtn.addEventListener('click', () => togglePanel(emojiPickerPanel));
+
+    // ---------------- Media picker (Stickers / GIF / Music) - Instagram jaisa tabbed module ----------------
+    function switchMediaTab(tab) {
+        mediaPickerTabs.forEach((btn) => btn.classList.toggle('active', btn.getAttribute('data-tab') === tab));
+        mediaPickerBodies.forEach((body) => {
+            body.style.display = body.getAttribute('data-panel') === tab ? 'flex' : 'none';
+        });
+        if (tab === 'gif') {
+            if (gifSearchInput) gifSearchInput.value = '';
+            searchGifs('');
+            if (gifSearchInput) gifSearchInput.focus();
+        } else if (tab === 'music') {
+            if (songShareSearchInput) songShareSearchInput.value = '';
+            searchSongs('');
+            if (songShareSearchInput) songShareSearchInput.focus();
+        } else if (tab === 'stickers') {
+            if (stickerSearchInput) stickerSearchInput.value = '';
+            renderStickers('');
+            if (stickerSearchInput) stickerSearchInput.focus();
+        }
+    }
+    mediaPickerTabs.forEach((btn) => {
+        btn.addEventListener('click', () => switchMediaTab(btn.getAttribute('data-tab')));
+    });
+    function openMediaPicker(defaultTab) {
+        togglePanel(mediaPickerPanel, () => switchMediaTab(defaultTab));
+    }
 
     // ---------------- GIF picker (Giphy) ----------------
     async function searchGifs(query) {
@@ -430,13 +488,7 @@
         }
     }
 
-    if (gifPickerBtn) {
-        gifPickerBtn.addEventListener('click', () => togglePanel(gifPickerPanel, () => {
-            gifSearchInput.value = '';
-            searchGifs('');
-            gifSearchInput.focus();
-        }));
-    }
+    if (gifPickerBtn) gifPickerBtn.addEventListener('click', () => openMediaPicker('gif'));
     if (gifSearchInput) {
         gifSearchInput.addEventListener('input', () => {
             clearTimeout(gifSearchDebounce);
@@ -445,15 +497,25 @@
     }
 
     // ---------------- Sticker picker ----------------
-    if (stickerPickerGrid) {
-        stickerPickerGrid.innerHTML = STICKERS.map((s) => `<button type="button" class="chat-sticker-option">${s}</button>`).join('');
+    function renderStickers(query) {
+        if (!stickerPickerGrid) return;
+        const q = (query || '').trim().toLowerCase();
+        const filtered = q ? STICKERS.filter((s) => (s.keywords || []).some((k) => k.includes(q))) : STICKERS;
+        if (!filtered.length) {
+            stickerPickerGrid.innerHTML = '<p class="chat-picker-empty">No stickers found.</p>';
+            return;
+        }
+        stickerPickerGrid.innerHTML = filtered.map((s) => `<button type="button" class="chat-sticker-option">${s.emoji}</button>`).join('');
         stickerPickerGrid.querySelectorAll('.chat-sticker-option').forEach((btn) => {
             btn.addEventListener('click', () => sendSticker(btn.textContent));
         });
     }
-    if (stickerPickerBtn) stickerPickerBtn.addEventListener('click', () => togglePanel(stickerPickerPanel));
+    if (stickerPickerBtn) stickerPickerBtn.addEventListener('click', () => openMediaPicker('stickers'));
+    if (stickerSearchInput) {
+        stickerSearchInput.addEventListener('input', () => renderStickers(stickerSearchInput.value));
+    }
 
-    // ---------------- Share Song picker ----------------
+    // ---------------- Share Song (Music tab) ----------------
     async function searchSongs(query) {
         if (!songShareList) return;
         songShareList.innerHTML = '<p class="chat-picker-empty">Loading...</p>';
@@ -480,13 +542,6 @@
         } catch (err) {
             songShareList.innerHTML = '<p class="chat-picker-empty">Could not load songs.</p>';
         }
-    }
-    if (attachShareSongBtn) {
-        attachShareSongBtn.addEventListener('click', () => togglePanel(songSharePanel, () => {
-            songShareSearchInput.value = '';
-            searchSongs('');
-            songShareSearchInput.focus();
-        }));
     }
     if (songShareSearchInput) {
         songShareSearchInput.addEventListener('input', () => {

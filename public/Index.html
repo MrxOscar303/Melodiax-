@@ -359,11 +359,10 @@
                 </div>
                 <div id="chat-messages" class="chat-messages"></div>
 
-                <!-- "+" attach menu: File upload / Document upload / Share Song -->
+                <!-- "+" attach menu: File upload / Document upload -->
                 <div id="attach-menu-panel" class="chat-picker-panel attach-menu-panel" style="display:none;">
                     <button type="button" id="attach-upload-file-btn" class="attach-menu-item"><i class="fa-solid fa-image"></i> Upload File</button>
                     <button type="button" id="attach-upload-document-btn" class="attach-menu-item"><i class="fa-solid fa-file-lines"></i> Upload Document</button>
-                    <button type="button" id="attach-share-song-btn" class="attach-menu-item"><i class="fa-solid fa-music"></i> Share Song</button>
                     <input type="file" id="attach-file-input" style="display:none;" accept="image/*,video/*">
                     <input type="file" id="attach-document-input" style="display:none;" accept=".pdf,.doc,.docx,.txt,.zip,.rar,.ppt,.pptx,.xls,.xlsx">
                 </div>
@@ -373,25 +372,38 @@
                     <div id="emoji-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
                 </div>
 
-                <!-- GIF picker (Giphy) -->
-                <div id="gif-picker-panel" class="chat-picker-panel" style="display:none;">
-                    <div class="chat-picker-search-row">
-                        <input type="text" id="gif-search-input" placeholder="Search GIFs..." autocomplete="off">
+                <!-- Media picker - Instagram/Discord jaisa: Stickers / GIF / Music
+                     teeno ek hi module mein, tabs se switch hote hain. -->
+                <div id="media-picker-panel" class="chat-picker-panel media-picker-panel" style="display:none;">
+                    <div class="media-picker-tabs">
+                        <button type="button" class="media-picker-tab active" data-tab="stickers" title="Stickers"><i class="fa-regular fa-face-grin-stars"></i></button>
+                        <button type="button" class="media-picker-tab" data-tab="gif" title="GIFs"><span class="media-picker-gif-label">GIF</span></button>
+                        <button type="button" class="media-picker-tab" data-tab="music" title="Music"><i class="fa-solid fa-music"></i></button>
                     </div>
-                    <div id="gif-picker-grid" class="chat-picker-grid"></div>
-                </div>
 
-                <!-- Sticker picker -->
-                <div id="sticker-picker-panel" class="chat-picker-panel" style="display:none;">
-                    <div id="sticker-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
-                </div>
-
-                <!-- Share Song picker -->
-                <div id="song-share-panel" class="chat-picker-panel song-share-panel" style="display:none;">
-                    <div class="chat-picker-search-row">
-                        <input type="text" id="song-share-search-input" placeholder="Search songs..." autocomplete="off">
+                    <div class="media-picker-body" data-panel="stickers">
+                        <div class="chat-picker-search-row">
+                            <i class="fa-solid fa-magnifying-glass chat-picker-search-icon"></i>
+                            <input type="text" id="sticker-search-input" placeholder="Search stickers" autocomplete="off">
+                        </div>
+                        <div id="sticker-picker-grid" class="chat-picker-grid chat-sticker-grid"></div>
                     </div>
-                    <div id="song-share-list" class="song-share-list"></div>
+
+                    <div class="media-picker-body" data-panel="gif" style="display:none;">
+                        <div class="chat-picker-search-row">
+                            <i class="fa-solid fa-magnifying-glass chat-picker-search-icon"></i>
+                            <input type="text" id="gif-search-input" placeholder="Search GIFs" autocomplete="off">
+                        </div>
+                        <div id="gif-picker-grid" class="chat-picker-grid"></div>
+                    </div>
+
+                    <div class="media-picker-body" data-panel="music" style="display:none;">
+                        <div class="chat-picker-search-row">
+                            <i class="fa-solid fa-magnifying-glass chat-picker-search-icon"></i>
+                            <input type="text" id="song-share-search-input" placeholder="Search songs" autocomplete="off">
+                        </div>
+                        <div id="song-share-list" class="song-share-list"></div>
+                    </div>
                 </div>
 
                 <!-- Voice recording indicator -->
@@ -411,7 +423,7 @@
                     <button type="button" id="voice-record-btn" class="chat-tool-btn" title="Record a voice message"><i class="fa-solid fa-microphone"></i></button>
                     <button type="button" id="gif-picker-btn" class="chat-tool-btn" title="Send a GIF"><i class="fa-regular fa-image"></i></button>
                     <button type="button" id="sticker-picker-btn" class="chat-tool-btn" title="Send a sticker"><i class="fa-solid fa-note-sticky"></i></button>
-                    <button type="button" id="chat-send-btn" class="chat-send-btn" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                    <button type="button" id="chat-send-btn" class="chat-send-btn chat-send-btn-hidden" title="Send"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
             <div class="music-section">

@@ -359,20 +359,23 @@
         });
     }
 
-    function renderFriendsInto(container, countEl, friends) {
+    function renderFriendsInto(container, countEl, friends, showDivider) {
         if (!container) return;
         if (countEl) countEl.textContent = friends.length;
         if (!friends.length) {
             container.innerHTML = '<p class="friends-empty">No friends yet - add one using the "Online" tab.</p>';
             return;
         }
-        container.innerHTML = friends.map((f) => friendItemHtml(f) + '<div class="friends-list-divider"></div>').join('');
+        container.innerHTML = friends
+            .map((f) => friendItemHtml(f) + (showDivider ? '<div class="friends-list-divider"></div>' : ''))
+            .join('');
         wireFriendItemEvents(container);
     }
 
     function renderFriendsList(friends) {
-        renderFriendsInto(friendsListEl, friendsCountEl, friends);
-        renderFriendsInto(friendsViewListEl, friendsViewCountEl, friends);
+        // Sidebar (home page) mein divider nahi chahiye, sirf "Online" tab mein.
+        renderFriendsInto(friendsListEl, friendsCountEl, friends, false);
+        renderFriendsInto(friendsViewListEl, friendsViewCountEl, friends, true);
     }
 
     // ---------------- Render: incoming requests ----------------
