@@ -870,25 +870,33 @@
                     <p id="profile-bio-feedback" class="profile-edit-feedback"></p>
 
                     <p class="profile-section-label">Status</p>
-                    <!-- Discord jaisi simple single-column list - click = turant apply,
-                         koi "..." ya duration flyout nahi, sirf 4 seedhi rows. -->
-                    <div id="profile-card-status-options" class="profile-status-list">
-                        <button type="button" class="profile-status-option active" data-status="online">
-                            <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
-                            <span>Online</span>
+                    <!-- Ab dropdown hai (pehle 4 rows hamesha khuli rehti thi jisse
+                         profile card lamba ho jata tha) - band hone par sirf ek row
+                         jitni jagah leta hai, click karne par options niche khulte hain. -->
+                    <div id="profile-status-dropdown" class="profile-dropdown">
+                        <button type="button" id="profile-status-dropdown-trigger" class="profile-dropdown-trigger">
+                            <span id="profile-status-trigger-icon" class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
+                            <span id="profile-status-trigger-label">Online</span>
+                            <i class="fa-solid fa-chevron-down profile-dropdown-chevron"></i>
                         </button>
-                        <button type="button" class="profile-status-option" data-status="night">
-                            <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
-                            <span>Idle</span>
-                        </button>
-                        <button type="button" class="profile-status-option" data-status="dnd">
-                            <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
-                            <span>Do Not Disturb</span>
-                        </button>
-                        <button type="button" class="profile-status-option" data-status="invisible">
-                            <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
-                            <span>Invisible</span>
-                        </button>
+                        <div id="profile-card-status-options" class="profile-status-list profile-dropdown-panel">
+                            <button type="button" class="profile-status-option active" data-status="online">
+                                <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
+                                <span>Online</span>
+                            </button>
+                            <button type="button" class="profile-status-option" data-status="night">
+                                <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
+                                <span>Idle</span>
+                            </button>
+                            <button type="button" class="profile-status-option" data-status="dnd">
+                                <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
+                                <span>Do Not Disturb</span>
+                            </button>
+                            <button type="button" class="profile-status-option" data-status="invisible">
+                                <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
+                                <span>Invisible</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="profile-status-message-row">
@@ -903,30 +911,36 @@
                     </div>
 
                     <p class="profile-section-label">Profile Effect</p>
-                    <!-- Avatar ke gird chalta hua animated decoration - status
-                         list jaisi hi single-column, click = turant apply +
-                         preview (avatar par turant dikhta hai). -->
-                    <div id="profile-effect-options" class="profile-status-list">
-                        <button type="button" class="profile-effect-option active" data-effect="none">
-                            <span class="profile-status-icon"><i class="fa-regular fa-circle-xmark"></i></span>
-                            <span>None</span>
+                    <!-- Avatar ke gird chalta hua animated decoration - ye bhi ab
+                         dropdown hai, jaisa Status ke upar wala. -->
+                    <div id="profile-effect-dropdown" class="profile-dropdown">
+                        <button type="button" id="profile-effect-dropdown-trigger" class="profile-dropdown-trigger">
+                            <span id="profile-effect-trigger-icon" class="profile-status-icon"><i class="fa-regular fa-circle-xmark"></i></span>
+                            <span id="profile-effect-trigger-label">None</span>
+                            <i class="fa-solid fa-chevron-down profile-dropdown-chevron"></i>
                         </button>
-                        <button type="button" class="profile-effect-option" data-effect="glow">
-                            <span class="profile-status-icon profile-effect-preview-icon profile-effect-glow"><i class="fa-solid fa-circle"></i></span>
-                            <span>Glow</span>
-                        </button>
-                        <button type="button" class="profile-effect-option" data-effect="ring">
-                            <span class="profile-status-icon profile-effect-preview-icon profile-effect-ring"><i class="fa-solid fa-circle"></i></span>
-                            <span>Spinning Ring</span>
-                        </button>
-                        <button type="button" class="profile-effect-option" data-effect="sparkle">
-                            <span class="profile-status-icon profile-effect-preview-icon profile-effect-sparkle"><i class="fa-solid fa-circle"></i></span>
-                            <span>Sparkle</span>
-                        </button>
-                        <button type="button" class="profile-effect-option" data-effect="confetti">
-                            <span class="profile-status-icon profile-effect-preview-icon profile-effect-confetti"><i class="fa-solid fa-circle"></i></span>
-                            <span>Confetti</span>
-                        </button>
+                        <div id="profile-effect-options" class="profile-status-list profile-dropdown-panel">
+                            <button type="button" class="profile-effect-option active" data-effect="none">
+                                <span class="profile-status-icon"><i class="fa-regular fa-circle-xmark"></i></span>
+                                <span>None</span>
+                            </button>
+                            <button type="button" class="profile-effect-option" data-effect="glow">
+                                <span class="profile-status-icon profile-effect-preview-icon profile-effect-glow"><i class="fa-solid fa-circle"></i></span>
+                                <span>Glow</span>
+                            </button>
+                            <button type="button" class="profile-effect-option" data-effect="ring">
+                                <span class="profile-status-icon profile-effect-preview-icon profile-effect-ring"><i class="fa-solid fa-circle"></i></span>
+                                <span>Spinning Ring</span>
+                            </button>
+                            <button type="button" class="profile-effect-option" data-effect="sparkle">
+                                <span class="profile-status-icon profile-effect-preview-icon profile-effect-sparkle"><i class="fa-solid fa-circle"></i></span>
+                                <span>Sparkle</span>
+                            </button>
+                            <button type="button" class="profile-effect-option" data-effect="confetti">
+                                <span class="profile-status-icon profile-effect-preview-icon profile-effect-confetti"><i class="fa-solid fa-circle"></i></span>
+                                <span>Confetti</span>
+                            </button>
+                        </div>
                     </div>
 
                     <p id="profile-member-since" class="profile-member-since">

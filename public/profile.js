@@ -49,6 +49,10 @@
     const statusOptionsWrap = document.getElementById('profile-card-status-options');
     const statusMessageInput = document.getElementById('profile-card-status-message-input');
     const statusClearBtn = document.getElementById('profile-status-clear-btn');
+    const statusDropdown = document.getElementById('profile-status-dropdown');
+    const statusDropdownTrigger = document.getElementById('profile-status-dropdown-trigger');
+    const statusTriggerIcon = document.getElementById('profile-status-trigger-icon');
+    const statusTriggerLabel = document.getElementById('profile-status-trigger-label');
 
     const statusEmojiBtn = document.getElementById('profile-status-emoji-btn');
     const statusEmojiPanel = document.getElementById('profile-status-emoji-panel');
@@ -56,6 +60,10 @@
 
     const cardAvatarWrap = document.querySelector('.profile-card-avatar-wrap');
     const effectOptionsWrap = document.getElementById('profile-effect-options');
+    const effectDropdown = document.getElementById('profile-effect-dropdown');
+    const effectDropdownTrigger = document.getElementById('profile-effect-dropdown-trigger');
+    const effectTriggerIcon = document.getElementById('profile-effect-trigger-icon');
+    const effectTriggerLabel = document.getElementById('profile-effect-trigger-label');
 
     const memberSinceDateEl = document.getElementById('profile-member-since-date');
 
@@ -66,14 +74,56 @@
 
     let selectedAvatarFile = null;
 
+    // ---------------- Dropdown open/close (Status + Profile Effect) ----------------
+    // Simple shared pattern: trigger click -> toggle .open on wrapper;
+    // outside click ya doosra dropdown khulne par band ho jata hai.
+    function closeAllProfileDropdowns() {
+        if (statusDropdown) statusDropdown.classList.remove('open');
+        if (effectDropdown) effectDropdown.classList.remove('open');
+    }
+    if (statusDropdownTrigger && statusDropdown) {
+        statusDropdownTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = !statusDropdown.classList.contains('open');
+            closeAllProfileDropdowns();
+            if (willOpen) statusDropdown.classList.add('open');
+        });
+    }
+    if (effectDropdownTrigger && effectDropdown) {
+        effectDropdownTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const willOpen = !effectDropdown.classList.contains('open');
+            closeAllProfileDropdowns();
+            if (willOpen) effectDropdown.classList.add('open');
+        });
+    }
+    document.addEventListener('click', closeAllProfileDropdowns);
+    if (statusOptionsWrap) statusOptionsWrap.addEventListener('click', (e) => e.stopPropagation());
+    if (effectOptionsWrap) effectOptionsWrap.addEventListener('click', (e) => e.stopPropagation());
+
+    // Dropdown ka trigger row hamesha currently-selected option jaisa dikhna
+    // chahiye - is liye us option button ka icon/label hi copy kar dete hain
+    // (naya set of icons alag se maintain nahi karna padta).
+    function syncDropdownTrigger(panelWrap, dataAttr, value, triggerIcon, triggerLabel) {
+        if (!panelWrap || !triggerIcon || !triggerLabel) return;
+        const match = panelWrap.querySelector(`[${dataAttr}="${value || 'online'}"]`) || panelWrap.querySelector(`[${dataAttr}]`);
+        if (!match) return;
+        const iconEl = match.querySelector('.profile-status-icon');
+        const labelEl = match.querySelector('span:last-child');
+        if (iconEl) {
+            triggerIcon.className = iconEl.className;
+            triggerIcon.innerHTML = iconEl.innerHTML;
+        }
+        if (labelEl) triggerLabel.textContent = labelEl.textContent;
+    }
+
     // ---------------- Status helpers (shared visual language) ----------------
     function statusDotInnerHtml(status) {
         if (status === 'dnd') return '<i class="fa-solid fa-minus"></i>';
         if (status === 'night') return '<i class="fa-solid fa-moon"></i>';
         return '';
     }
-    function setStatusDotClass(el, status) {
-        el.classList.remove('status-online', 'status-dnd', 'status-night', 'status-invisible');
+    function setStatusDotClass(el, status) {        el.classList.remove('status-online', 'status-dnd', 'status-night', 'status-invisible');
         el.classList.add(`status-${status || 'online'}`);
         el.innerHTML = statusDotInnerHtml(status);
     }
@@ -94,6 +144,7 @@
                 btn.classList.toggle('active', isActive);
             });
         }
+        syncDropdownTrigger(statusOptionsWrap, 'data-status', status, statusTriggerIcon, statusTriggerLabel);
     }
     window.melodiaxApplyProfileCardStatus = applyStatusToCard; // friends.js se bhi sync hota hai
 
@@ -117,6 +168,7 @@
                 btn.classList.toggle('active', btn.getAttribute('data-effect') === (effect || 'none'));
             });
         }
+        syncDropdownTrigger(effectOptionsWrap, 'data-effect', effect || 'none', effectTriggerIcon, effectTriggerLabel);
     }
     window.melodiaxApplyProfileCardEffect = applyEffectToCard;
 
@@ -125,6 +177,7 @@
             btn.addEventListener('click', async () => {
                 const effect = btn.getAttribute('data-effect');
                 applyEffectToCard(effect);
+                closeAllProfileDropdowns();
                 if (window.currentUser) window.currentUser.profileEffect = effect;
                 // Nav avatar (top-right corner) par bhi turant reflect ho jaye.
                 const navAvatarWrap = document.querySelector('.my-status-dot-wrap');
@@ -181,6 +234,7 @@
                 const status = btn.getAttribute('data-status');
                 if (typeof window.melodiaxResetAutoIdle === 'function') window.melodiaxResetAutoIdle();
                 applyStatusToCard(status, statusMessageInput ? statusMessageInput.value : '');
+                closeAllProfileDropdowns();
                 if (window.currentUser) { window.currentUser.status = status; window.currentUser.statusExpiresAt = null; }
                 if (typeof window.melodiaxApplyMyStatusToUI === 'function') {
                     window.melodiaxApplyMyStatusToUI(status, statusMessageInput ? statusMessageInput.value : '');

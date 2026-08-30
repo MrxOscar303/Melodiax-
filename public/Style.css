@@ -533,8 +533,22 @@ body.red-theme .logo-wrap:focus-visible .logo-m {
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* is se andar sirf playlists list scroll hogi, poora left part nahi */
+    /* Pehle overflow:hidden tha ("sirf playlists list scroll ho, poora
+       left part nahi") - lekin jab library+playlists+friends sab milkar
+       available height se zyada ho jate the, to friends-module (aur uska
+       apna scrollbar) neeche clip ho ke poori tarah invisible ho jata
+       tha - scroll karne ka option hi nahi milta tha. Ab poora sidebar
+       khud vertically scroll ho sakta hai (nested scroll: "Your
+       Playlists" ki apni list abhi bhi apni jagah 38% par scroll karti
+       hai, bas ab agar sab kuch overall bhi na sama to poora panel
+       scroll ho jayega taake "Friends" module hamesha reachable rahe). */
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #4d4d4d transparent;
 }
+.main-left-part::-webkit-scrollbar { width: 6px; }
+.main-left-part::-webkit-scrollbar-thumb { background: #4d4d4d; border-radius: 10px; }
 
 
 .library {
@@ -1620,7 +1634,45 @@ body.red-theme .profile-inline-save-btn { background-color: #ff4d4d; color: #fff
     margin: 1.1rem 0 0.5rem;
 }
 
-/* ---- Status grid (cool + formal: consistent circular emblem, subtle animation) ---- */
+/* ---- Status / Profile Effect ab dropdown hain (pehle hamesha khuli
+   list thi jo profile card ko lamba kar deti thi aur scroll karwati
+   thi - ab band hone par sirf ek trigger row jitni jagah lagti hai). ---- */
+.profile-dropdown { position: relative; }
+.profile-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    color: #fff;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+.profile-dropdown-trigger:hover { border-color: #444; background-color: #212121; }
+.profile-dropdown-chevron { margin-left: auto; font-size: 0.68rem; color: #888; transition: transform 0.2s; }
+.profile-dropdown.open .profile-dropdown-chevron { transform: rotate(180deg); }
+.profile-dropdown-panel.profile-status-list {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background-color: #1c1c1c;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 0.35rem;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+    max-height: 14rem;
+    overflow-y: auto;
+    display: none; /* .profile-status-list ke display:flex se zyada specific hai, is liye ye jeetega */
+}
+.profile-dropdown.open .profile-dropdown-panel { display: flex; }
 .profile-status-list {
     display: flex;
     flex-direction: column;
@@ -2473,7 +2525,10 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
     min-height: 6rem;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* header fixed rehta hai, sirf list neeche scroll hoti hai */
+    /* Ab outer .main-left-part khud scroll karta hai, is liye yahan
+       overflow:hidden nahi rakha - warna friends-list wapas clip ho
+       jayegi jab sidebar apni poori natural height le raha ho. */
+    overflow: visible;
 }
 .friends-module-header {
     display: flex;
