@@ -791,16 +791,18 @@
                      button banner ke NEECHE-right corner mein hai (close "X"
                      se takra na jaye, jo upar-right mein hai). -->
                 <div id="profile-banner" class="profile-banner">
-                    <button type="button" id="profile-banner-color-btn" class="profile-banner-color-btn" title="Change banner color">
-                        <i class="fa-solid fa-palette"></i>
+                    <button type="button" id="profile-banner-color-btn" class="profile-banner-color-btn" title="Change banner">
+                        <i class="fa-solid fa-pencil"></i>
                     </button>
                     <div id="profile-banner-color-picker" class="profile-banner-color-picker" style="display:none;">
-                        <button type="button" class="banner-color-swatch" data-color="#1db954" style="background:#1db954;"></button>
-                        <button type="button" class="banner-color-swatch" data-color="#ff4d4d" style="background:#ff4d4d;"></button>
-                        <button type="button" class="banner-color-swatch" data-color="#5865f2" style="background:#5865f2;"></button>
-                        <button type="button" class="banner-color-swatch" data-color="#f1c40f" style="background:#f1c40f;"></button>
-                        <button type="button" class="banner-color-swatch" data-color="#e91e8c" style="background:#e91e8c;"></button>
-                        <button type="button" class="banner-color-swatch" data-color="#00bcd4" style="background:#00bcd4;"></button>
+                        <div class="banner-color-swatches">
+                            <button type="button" class="banner-color-swatch" data-color="#1db954" style="background:#1db954;"></button>
+                            <button type="button" class="banner-color-swatch" data-color="#ff4d4d" style="background:#ff4d4d;"></button>
+                            <button type="button" class="banner-color-swatch" data-color="#5865f2" style="background:#5865f2;"></button>
+                            <button type="button" class="banner-color-swatch" data-color="#f1c40f" style="background:#f1c40f;"></button>
+                            <button type="button" class="banner-color-swatch" data-color="#e91e8c" style="background:#e91e8c;"></button>
+                            <button type="button" class="banner-color-swatch" data-color="#00bcd4" style="background:#00bcd4;"></button>
+                        </div>
                         <label class="banner-color-custom-label">
                             <input type="color" id="profile-banner-color-input" value="#1db954">
                             Custom
@@ -856,49 +858,25 @@
                     <p id="profile-bio-feedback" class="profile-edit-feedback"></p>
 
                     <p class="profile-section-label">Status</p>
-                    <!-- Har status row: click = turant apply, "..." icon = side
-                         mein flyout (description + kitni der ke liye rakhna hai). -->
-                    <div id="profile-card-status-options" class="profile-status-grid">
-                        <div class="profile-status-option-row">
-                            <button type="button" class="profile-status-option active" data-status="online">
-                                <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
-                                <span>Online</span>
-                            </button>
-                            <button type="button" class="profile-status-info-btn" data-status="online" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
-                        </div>
-                        <div class="profile-status-option-row">
-                            <button type="button" class="profile-status-option" data-status="night">
-                                <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
-                                <span>Idle</span>
-                            </button>
-                            <button type="button" class="profile-status-info-btn" data-status="night" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
-                        </div>
-                        <div class="profile-status-option-row">
-                            <button type="button" class="profile-status-option" data-status="dnd">
-                                <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
-                                <span>Do Not Disturb</span>
-                            </button>
-                            <button type="button" class="profile-status-info-btn" data-status="dnd" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
-                        </div>
-                        <div class="profile-status-option-row">
-                            <button type="button" class="profile-status-option" data-status="invisible">
-                                <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
-                                <span>Invisible</span>
-                            </button>
-                            <button type="button" class="profile-status-info-btn" data-status="invisible" title="Description &amp; duration"><i class="fa-solid fa-ellipsis"></i></button>
-                        </div>
-                    </div>
-
-                    <!-- Shared flyout - jo bhi "..." dabaya jaye, usi status
-                         ke hisaab se content yahan set ho kar side mein dikhta hai. -->
-                    <div id="profile-status-flyout" class="profile-status-flyout" style="display:none;">
-                        <p id="profile-status-flyout-desc" class="profile-status-flyout-desc"></p>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="15">For 15 Minutes</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="60">For 1 Hour</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="480">For 8 Hours</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="1440">For 24 Hours</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="4320">For 3 Days</button>
-                        <button type="button" class="profile-status-flyout-duration" data-minutes="0">Forever</button>
+                    <!-- Discord jaisi simple single-column list - click = turant apply,
+                         koi "..." ya duration flyout nahi, sirf 4 seedhi rows. -->
+                    <div id="profile-card-status-options" class="profile-status-list">
+                        <button type="button" class="profile-status-option active" data-status="online">
+                            <span class="profile-status-icon status-online"><i class="fa-solid fa-check"></i></span>
+                            <span>Online</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="night">
+                            <span class="profile-status-icon status-night"><i class="fa-solid fa-moon"></i></span>
+                            <span>Idle</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="dnd">
+                            <span class="profile-status-icon status-dnd"><i class="fa-solid fa-minus"></i></span>
+                            <span>Do Not Disturb</span>
+                        </button>
+                        <button type="button" class="profile-status-option" data-status="invisible">
+                            <span class="profile-status-icon status-invisible"><i class="fa-regular fa-circle"></i></span>
+                            <span>Invisible</span>
+                        </button>
                     </div>
 
                     <div class="profile-status-message-row">

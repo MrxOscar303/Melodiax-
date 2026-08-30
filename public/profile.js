@@ -49,8 +49,6 @@
     const statusOptionsWrap = document.getElementById('profile-card-status-options');
     const statusMessageInput = document.getElementById('profile-card-status-message-input');
     const statusClearBtn = document.getElementById('profile-status-clear-btn');
-    const statusFlyout = document.getElementById('profile-status-flyout');
-    const statusFlyoutDesc = document.getElementById('profile-status-flyout-desc');
 
     const statusEmojiBtn = document.getElementById('profile-status-emoji-btn');
     const statusEmojiPanel = document.getElementById('profile-status-emoji-panel');
@@ -131,11 +129,12 @@
     };
 
     if (statusOptionsWrap) {
-        // Row ka button (icon+label) = turant apply karo (koi duration nahi, jab tak khud na badlein)
+        // Discord jaisa simple list - jis row par click karo, wahi status turant apply ho jata hai.
         statusOptionsWrap.querySelectorAll('.profile-status-option').forEach((btn) => {
+            const st = btn.getAttribute('data-status');
+            if (STATUS_DESCRIPTIONS[st]) btn.title = STATUS_DESCRIPTIONS[st];
             btn.addEventListener('click', async () => {
                 const status = btn.getAttribute('data-status');
-                closeStatusFlyout();
                 if (typeof window.melodiaxResetAutoIdle === 'function') window.melodiaxResetAutoIdle();
                 applyStatusToCard(status, statusMessageInput ? statusMessageInput.value : '');
                 if (window.currentUser) { window.currentUser.status = status; window.currentUser.statusExpiresAt = null; }
@@ -145,57 +144,7 @@
                 try { await patchStatus({ status, durationMinutes: 0 }); } catch (err) { /* silent */ }
             });
         });
-
-        // "..." icon = side flyout: description + "kitni der ke liye rakhna hai"
-        statusOptionsWrap.querySelectorAll('.profile-status-info-btn').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const status = btn.getAttribute('data-status');
-                const isOpen = statusFlyout.classList.contains('profile-status-flyout-show') && statusFlyout.dataset.status === status;
-                closeStatusFlyout();
-                if (isOpen) return;
-                openStatusFlyout(btn, status);
-            });
-        });
     }
-
-    function openStatusFlyout(anchorBtn, status) {
-        if (!statusFlyout) return;
-        statusFlyoutDesc.textContent = STATUS_DESCRIPTIONS[status] || '';
-        statusFlyout.dataset.status = status;
-        // Flyout ko us status-option-row ke against position karo (anchorBtn ki row).
-        const row = anchorBtn.closest('.profile-status-option-row');
-        if (row) statusFlyout.style.top = row.offsetTop + 'px';
-        statusFlyout.style.display = 'block';
-        requestAnimationFrame(() => statusFlyout.classList.add('profile-status-flyout-show'));
-        anchorBtn.classList.add('active');
-    }
-    function closeStatusFlyout() {
-        if (!statusFlyout) return;
-        statusFlyout.classList.remove('profile-status-flyout-show');
-        setTimeout(() => { statusFlyout.style.display = 'none'; }, 180);
-        if (statusOptionsWrap) {
-            statusOptionsWrap.querySelectorAll('.profile-status-info-btn').forEach((b) => b.classList.remove('active'));
-        }
-    }
-    if (statusFlyout) {
-        statusFlyout.addEventListener('click', (e) => e.stopPropagation());
-        statusFlyout.querySelectorAll('.profile-status-flyout-duration').forEach((durBtn) => {
-            durBtn.addEventListener('click', async () => {
-                const status = statusFlyout.dataset.status;
-                const minutes = Number(durBtn.getAttribute('data-minutes')) || 0;
-                closeStatusFlyout();
-                if (typeof window.melodiaxResetAutoIdle === 'function') window.melodiaxResetAutoIdle();
-                applyStatusToCard(status, statusMessageInput ? statusMessageInput.value : '');
-                if (window.currentUser) window.currentUser.status = status;
-                if (typeof window.melodiaxApplyMyStatusToUI === 'function') {
-                    window.melodiaxApplyMyStatusToUI(status, statusMessageInput ? statusMessageInput.value : '');
-                }
-                try { await patchStatus({ status, durationMinutes: minutes }); } catch (err) { /* silent */ }
-            });
-        });
-    }
-    document.addEventListener('click', closeStatusFlyout);
 
     let statusMsgDebounce = null;
     if (statusMessageInput) {
@@ -330,9 +279,15 @@
     if (bannerColorBtn) {
         bannerColorBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            bannerColorPicker.style.display = bannerColorPicker.style.display === 'flex' ? 'none' : 'flex';
+            const willOpen = bannerColorPicker.style.display !== 'flex';
+            bannerColorPicker.style.display = willOpen ? 'flex' : 'none';
+            bannerColorBtn.classList.toggle('active', willOpen);
         });
     }
+    document.addEventListener('click', () => {
+        if (bannerColorPicker) bannerColorPicker.style.display = 'none';
+        if (bannerColorBtn) bannerColorBtn.classList.remove('active');
+    });
     if (bannerColorPicker) {
         bannerColorPicker.addEventListener('click', (e) => e.stopPropagation());
         bannerColorPicker.querySelectorAll('.banner-color-swatch').forEach((sw) => {

@@ -262,16 +262,12 @@
         const menu = document.createElement('div');
         menu.className = 'friend-context-menu';
         menu.innerHTML = `
-            <button type="button" class="friend-context-item friend-context-danger" data-action="remove">
-                <i class="fa-solid fa-user-xmark"></i> Remove Friend
-            </button>
-            <button type="button" class="friend-context-item" data-action="mute-toggle">
-                <i class="fa-solid fa-volume-${muted ? 'high' : 'xmark'}"></i> ${muted ? 'Unmute' : 'Mute'}
-            </button>
-            ${muted ? '' : `
+            <button type="button" class="friend-context-item friend-context-danger" data-action="remove">Remove Friend</button>
+            ${muted ? `
+            <button type="button" class="friend-context-item" data-action="unmute">Unmute</button>` : `
             <div class="friend-context-submenu-wrap">
                 <div class="friend-context-item friend-context-parent" data-action="mute-durations">
-                    <span><i class="fa-solid fa-clock"></i> Mute for...</span>
+                    <span>Mute</span>
                     <i class="fa-solid fa-chevron-right friend-context-chevron"></i>
                 </div>
                 <div class="friend-context-submenu">
@@ -309,7 +305,7 @@
                 } catch (err) {
                     window.alert(err.message);
                 }
-            } else if (action === 'mute-toggle' && muted) {
+            } else if (action === 'unmute') {
                 unmuteFriend(friendshipId);
                 closeFriendMenu();
                 loadFriends();
@@ -370,7 +366,7 @@
             container.innerHTML = '<p class="friends-empty">No friends yet - add one using the "Online" tab.</p>';
             return;
         }
-        container.innerHTML = friends.map(friendItemHtml).join('') + '<div class="friends-list-divider"></div>';
+        container.innerHTML = friends.map((f) => friendItemHtml(f) + '<div class="friends-list-divider"></div>').join('');
         wireFriendItemEvents(container);
     }
 
