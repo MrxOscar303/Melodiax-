@@ -102,6 +102,11 @@
     const friendsListEl = document.getElementById('friends-list');
     const friendsCountEl = document.getElementById('friends-count');
 
+    const messagesSummaryPill = document.getElementById('messages-summary-pill');
+    const messagesSummaryBadge = document.getElementById('messages-summary-badge');
+    const messagesSummaryAvatars = document.getElementById('messages-summary-avatars');
+    let latestFriendsForSummary = [];
+
     const friendsViewSection = document.getElementById('friends-view-section');
     const friendsViewListEl = document.getElementById('friends-view-list');
     const friendsViewCountEl = document.getElementById('friends-view-count');
@@ -369,6 +374,44 @@
         });
     }
 
+    // ---------------- "Messages" summary pill (avatar stack + badge) ----------------
+    // Max 3 friends dikhte hain - jinke unread messages sabse zyada hain
+    // unhe priority, phir online friends, phir baaki. unread-badges.js
+    // har poll par window.melodiaxUpdateMessagesSummary() call karta hai
+    // jisse badge + avatar order dono refresh ho jate hain.
+    function renderMessagesSummaryAvatars(friends, unreadPerFriend) {
+        if (!messagesSummaryAvatars) return;
+        const unreadMap = unreadPerFriend || {};
+        const sorted = [...friends].sort((a, b) => {
+            const ua = unreadMap[a.id] || 0;
+            const ub = unreadMap[b.id] || 0;
+            if (ua !== ub) return ub - ua;
+            const aOnline = a.status && a.status !== 'offline' ? 1 : 0;
+            const bOnline = b.status && b.status !== 'offline' ? 1 : 0;
+            return bOnline - aOnline;
+        });
+        const top3 = sorted.slice(0, 3);
+        messagesSummaryAvatars.innerHTML = top3
+            .map((f) => `<img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="messages-summary-avatar">`)
+            .join('');
+    }
+
+    window.melodiaxUpdateMessagesSummary = function updateMessagesSummary(total, unreadPerFriend) {
+        if (messagesSummaryBadge) {
+            if (total > 0) {
+                messagesSummaryBadge.textContent = total > 99 ? '99+' : String(total);
+                messagesSummaryBadge.style.display = 'inline-flex';
+            } else {
+                messagesSummaryBadge.style.display = 'none';
+            }
+        }
+        renderMessagesSummaryAvatars(latestFriendsForSummary, unreadPerFriend);
+    };
+
+    if (messagesSummaryPill) {
+        messagesSummaryPill.addEventListener('click', () => showFriendsTab());
+    }
+
     function renderFriendsInto(container, countEl, friends, showDivider) {
         if (!container) return;
         if (countEl) countEl.textContent = friends.length;
@@ -386,6 +429,8 @@
         // Sidebar (home page) mein divider nahi chahiye, sirf "Online" tab mein.
         renderFriendsInto(friendsListEl, friendsCountEl, friends, false);
         renderFriendsInto(friendsViewListEl, friendsViewCountEl, friends, true);
+        latestFriendsForSummary = friends;
+        renderMessagesSummaryAvatars(friends, window.melodiaxUnreadPerFriend);
     }
 
     // ---------------- Render: incoming requests ----------------

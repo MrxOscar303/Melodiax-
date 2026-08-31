@@ -46,8 +46,14 @@
             if (!res.ok) return;
             const data = await res.json();
             window.melodiaxMsgUnreadCount = data.total || 0;
+            window.melodiaxUnreadPerFriend = data.perFriend || {};
             setOnlineBadge(window.melodiaxMsgUnreadCount);
             window.melodiaxUpdateTabTitle();
+            // Home sidebar ka "Messages" summary pill (badge + avatar stack)
+            // bhi isi poll se refresh hota hai - friends.js ye function deta hai.
+            if (typeof window.melodiaxUpdateMessagesSummary === 'function') {
+                window.melodiaxUpdateMessagesSummary(window.melodiaxMsgUnreadCount, window.melodiaxUnreadPerFriend);
+            }
         } catch (err) {
             // Chup chap ignore - agla poll try kar lega.
         }

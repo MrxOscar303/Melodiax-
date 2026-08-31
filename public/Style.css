@@ -2532,17 +2532,90 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
 /* ---------------- Friends module (sidebar) ---------------- */
 .friends-module {
     margin: 1.2rem 0 0;
-    padding: 1rem 1.5rem 0.8rem;
+    padding: 1rem 1.5rem 1.2rem;
     border-top: 1px solid #262626;
-    /* Ab flex:1 auto-shrink nahi - fixed/guaranteed space hai (jaise
-       "Your Playlists" list ki apni fixed max-height hai), taake ye kabhi
-       squeeze ho ke clip na ho. Upar wala .sidebar-scroll-top hissa khud
-       apni jagah scroll kar lega agar tight ho. */
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* header fixed rehta hai, sirf list neeche scroll hoti hai */
+    overflow: hidden;
 }
+
+/* ---- "Messages" summary pill (Friends section ki jagah) ----
+   Flat/modern look: ek hi soft drop-shadow, koi inset/bevel highlight
+   nahi (isi se "3D" feel avoid hoti hai), gradient sirf subtle background
+   ke tor par. */
+.messages-summary-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.85rem;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #202020 0%, #2b2b2b 100%);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-family: inherit;
+    text-align: left;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.messages-summary-pill:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+    transform: translateY(-1px);
+}
+.messages-summary-icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    color: #04210f;
+    background: linear-gradient(135deg, #1db954 0%, #14833d 100%);
+}
+body.red-theme .messages-summary-icon {
+    color: #2a0000;
+    background: linear-gradient(135deg, #ff4d4d 0%, #c62828 100%);
+}
+.messages-summary-label {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.86rem;
+    white-space: nowrap;
+}
+.messages-summary-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ed4245 0%, #c4262a 100%);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+.messages-summary-avatars {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+.messages-summary-avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 2px solid #202020;
+    margin-left: -0.6rem;
+}
+.messages-summary-avatars .messages-summary-avatar:first-child { margin-left: 0; }
 .friends-module-header {
     display: flex;
     align-items: center;

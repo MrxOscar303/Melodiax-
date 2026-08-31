@@ -222,13 +222,26 @@
                  (library/playlists) scroll se ALAG, apna dedicated
                  guaranteed-space section hai - jaise "Your Playlists" ka
                  apna internal scroll hai, waisa hi is section ka apna. -->
+            <!-- "Messages" summary pill - sirf logged-in users ko dikhta hai.
+                 Pehle yahan "Friends (N)" ka poora list tha - ab simple
+                 pill hai: icon + "Messages" + unread badge + max 3 friends
+                 ki overlapping profile circles (jinke messages sabse
+                 zyada unread hain, ya jo online hain unhe priority milti
+                 hai). Click karne par poora "Online" tab khulta hai jahan
+                 se asal messaging/friend-management hoti hai. -->
             <div class="friends-module" id="friends-module" style="display:none;">
-                <div class="friends-module-header">
-                    <p>Friends (<span id="friends-count">0</span>)</p>
-                </div>
-                <div id="friends-list" class="friends-list">
-                    <p class="friends-empty">No friends yet - use the "Online" tab above to add one.</p>
-                </div>
+                <button type="button" id="messages-summary-pill" class="messages-summary-pill">
+                    <span class="messages-summary-icon"><i class="fa-solid fa-message"></i></span>
+                    <span class="messages-summary-label">Messages</span>
+                    <span id="messages-summary-badge" class="messages-summary-badge" style="display:none;">0</span>
+                    <span id="messages-summary-avatars" class="messages-summary-avatars"></span>
+                </button>
+                <!-- Purane elements (#friends-list, #friends-count) friends.js
+                     abhi bhi internally friends data track karne ke liye
+                     null-safe tarike se access karta hai - display:none rakhe
+                     hain taake koi cheez visually na tootay. -->
+                <div id="friends-list" class="friends-list" style="display:none;"></div>
+                <span id="friends-count" style="display:none;">0</span>
             </div>
         </div>
 
