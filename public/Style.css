@@ -2548,9 +2548,10 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    width: 100%;
+    width: fit-content;
+    max-width: 100%;
     box-sizing: border-box;
-    padding: 0.6rem 0.85rem;
+    padding: 0.55rem 0.8rem;
     border: none;
     border-radius: 999px;
     cursor: pointer;
@@ -2614,6 +2615,7 @@ body.red-theme .messages-summary-icon {
     display: block;
     border: 2px solid #202020;
     margin-left: -0.6rem;
+    cursor: pointer;
 }
 .messages-summary-avatars .messages-summary-avatar:first-child { margin-left: 0; }
 .friends-module-header {

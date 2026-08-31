@@ -392,8 +392,24 @@
         });
         const top3 = sorted.slice(0, 3);
         messagesSummaryAvatars.innerHTML = top3
-            .map((f) => `<img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="messages-summary-avatar">`)
+            .map((f) => `<img src="${escapeHtml(f.profilePicture)}" alt="${escapeHtml(f.username)}" class="messages-summary-avatar" data-friend-id="${f.id}" data-friend-username="${escapeHtml(f.username)}" data-friend-avatar="${escapeHtml(f.profilePicture)}" data-friend-status="${f.status || 'online'}" data-friend-effect="${escapeHtml(f.profileEffect || 'none')}">`)
             .join('');
+        messagesSummaryAvatars.querySelectorAll('.messages-summary-avatar').forEach((img) => {
+            img.addEventListener('click', (e) => {
+                // Pill ka apna click (jo poora "Online" tab kholta hai) trigger
+                // na ho - avatar par click sidha usi friend ki chat khole.
+                e.stopPropagation();
+                if (typeof window.melodiaxOpenChat === 'function') {
+                    window.melodiaxOpenChat({
+                        id: img.getAttribute('data-friend-id'),
+                        username: img.getAttribute('data-friend-username'),
+                        profilePicture: img.getAttribute('data-friend-avatar'),
+                        status: img.getAttribute('data-friend-status'),
+                        profileEffect: img.getAttribute('data-friend-effect'),
+                    });
+                }
+            });
+        });
     }
 
     window.melodiaxUpdateMessagesSummary = function updateMessagesSummary(total, unreadPerFriend) {
