@@ -358,6 +358,48 @@ router.post('/logout', (req, res) => {
 // asal (opener) tab ko postMessage se result bata deta hai. Agar kabhi popup
 // na ho (browser ne block kar diya tha, is liye normal full-page navigation
 // hui), to seedha home page par redirect ho jata hai - jaisa pehle hota tha.
+//
+// ELECTRON DESKTOP APP: Google apni policy ki wajah se kisi bhi embedded
+// app window (Electron waghera) ke andar OAuth login block kar deta hai -
+// is liye desktop app is poore flow ko asal system browser (Chrome/Edge)
+// mein khulta hai. Wahan login poora hone ke baad, is "opener"/popup
+// tareeqe ki bajaye ek custom "melodiax-desktop://" link par redirect kar
+// dete hain - jise Windows/Mac khud-ba-khud wapas Melodiax app ko de deta
+// hai (jaisa app pehle se OS mein "protocol handler" ke tor par register
+// hota hai).
+function sendOauthResult(req, res, success, token) {
+    if (req.query.state === 'electron') {
+        const target = success
+            ? `melodiax-desktop://auth-callback?token=${encodeURIComponent(token)}`
+            : `melodiax-desktop://auth-callback?error=1`;
+        res.send(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Melodiax</title>
+<meta http-equiv="refresh" content="0;url=${target}">
+<style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#121212; color:#fff; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; text-align:center; padding:24px; }
+    .box { max-width: 340px; }
+    h1 { font-size: 1.1rem; margin: 0 0 8px; color: ${success ? '#1db954' : '#ff4d4d'}; }
+    p { font-size: 0.9rem; color: #b3b3b3; margin: 0 0 14px; }
+    a { color: #1db954; }
+</style>
+</head>
+<body>
+<div class="box">
+    <h1>${success ? 'Login successful!' : 'Login failed'}</h1>
+    <p>${success ? 'Taking you back to the Melodiax app...' : 'Something went wrong, please try again.'}</p>
+    <p>Agar khud-ba-khud wapas na jayein, to <a href="${target}">yahan click karein</a>, phir is tab ko band kar dein.</p>
+</div>
+<script>window.location.href = ${JSON.stringify(target)};</script>
+</body>
+</html>`);
+        return;
+    }
+    sendOauthPopupResponse(res, success);
+}
+
 function sendOauthPopupResponse(res, success) {
     const type = success ? 'oauth-success' : 'oauth-failed';
     const fallbackUrl = success ? '/?auth=success' : '/?auth=failed';
@@ -418,26 +460,36 @@ function sendOauthPopupResponse(res, success) {
 }
 
 // ============ GOOGLE OAUTH ============
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
+// ?client=electron - desktop app is param ke saath system browser mein
+// OAuth kholta hai, taake Google ka "embedded browser" block na lage.
+router.get('/google', (req, res, next) => {
+    const opts = { scope: ['profile', 'email'], session: false };
+    if (req.query.client === 'electron') opts.state = 'electron';
+    passport.authenticate('google', opts)(req, res, next);
+});
 
 router.get('/google/callback', (req, res, next) => {
     passport.authenticate('google', { session: false }, (err, user) => {
-        if (err || !user) return sendOauthPopupResponse(res, false);
+        if (err || !user) return sendOauthResult(req, res, false);
         const token = signToken(user._id);
-        sendAuthCookie(res, token);
-        return sendOauthPopupResponse(res, true);
+        if (req.query.state !== 'electron') sendAuthCookie(res, token);
+        return sendOauthResult(req, res, true, token);
     })(req, res, next);
 });
 
 // ============ FACEBOOK OAUTH ============
-router.get('/facebook', passport.authenticate('facebook', { scope: ['email'], session: false }));
+router.get('/facebook', (req, res, next) => {
+    const opts = { scope: ['email'], session: false };
+    if (req.query.client === 'electron') opts.state = 'electron';
+    passport.authenticate('facebook', opts)(req, res, next);
+});
 
 router.get('/facebook/callback', (req, res, next) => {
     passport.authenticate('facebook', { session: false }, (err, user) => {
-        if (err || !user) return sendOauthPopupResponse(res, false);
+        if (err || !user) return sendOauthResult(req, res, false);
         const token = signToken(user._id);
-        sendAuthCookie(res, token);
-        return sendOauthPopupResponse(res, true);
+        if (req.query.state !== 'electron') sendAuthCookie(res, token);
+        return sendOauthResult(req, res, true, token);
     })(req, res, next);
 });
 

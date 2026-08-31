@@ -13,7 +13,7 @@
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // GIF picker Giphy API use karta hai - https://developers.giphy.com se
     // (free) apni khud ki API key banayein aur yahan daal dein.
-    const GIPHY_API_KEY = 'zKDelWwdBYdYAWxBpJXyM8q4GBvXeZCC';
+    const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     const STICKERS = [
@@ -102,6 +102,7 @@
     let currentFriend = null;
     let pollTimer = null;
     let lastMessageCount = 0;
+    let lastRenderSignature = '';
     let gifSearchDebounce = null;
     let stickerSearchDebounce = null;
     let songSearchDebounce = null;
@@ -264,7 +265,11 @@
                 document.querySelectorAll('.chat-voice-audio-el').forEach((a) => {
                     if (a !== audio && !a.paused) a.pause();
                 });
-                if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+                if (audio.paused) {
+                    audio.play().catch((err) => console.error('Voice message playback failed:', err));
+                } else {
+                    audio.pause();
+                }
             });
 
             audio.addEventListener('play', () => setPlayingUI(true));
@@ -322,8 +327,24 @@
         if (!messages.length) {
             chatMessagesEl.innerHTML = '<p class="chat-empty">No messages yet - say hi!</p>';
             lastMessageCount = 0;
+            lastRenderSignature = '';
             return;
         }
+
+        // BUG FIX: pehle har 4-second poll par poora chat DOM innerHTML se
+        // rebuild ho jata tha, chahe kuch naya aaya ho ya nahi - is wajah
+        // se agar koi voice message play ho rahi hoti, uska <audio>
+        // element beech me hi destroy ho ke naya (paused, 0%) ban jata
+        // tha - isi liye awaz sunai nahi deti thi aur progress/waveform
+        // bhi hamesha reset hoti rehti thi. Ab sirf tab dobara render
+        // karte hain jab message list me asal me kuch badla ho (naya
+        // message aaya, ya kisi ka read/unread status change hua) -
+        // warna DOM (aur chal rahi audio) ko bilkul chhedte nahi.
+        const signature = messages.map((m) => `${m.id}:${m.read ? 1 : 0}`).join(',');
+        if (signature === lastRenderSignature) {
+            return;
+        }
+        lastRenderSignature = signature;
 
         let lastMineIndex = -1;
         messages.forEach((m, i) => { if (m.mine) lastMineIndex = i; });
