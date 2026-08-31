@@ -231,9 +231,11 @@
                  se asal messaging/friend-management hoti hai. -->
             <div class="friends-module" id="friends-module" style="display:none;">
                 <button type="button" id="messages-summary-pill" class="messages-summary-pill">
-                    <span class="messages-summary-icon"><i class="fa-solid fa-paper-plane"></i></span>
+                    <span class="messages-summary-icon-wrap">
+                        <span class="messages-summary-icon"><i class="fa-solid fa-paper-plane"></i></span>
+                        <span id="messages-summary-badge" class="messages-summary-badge" style="display:none;">0</span>
+                    </span>
                     <span class="messages-summary-label">Messages</span>
-                    <span id="messages-summary-badge" class="messages-summary-badge" style="display:none;">0</span>
                     <span id="messages-summary-avatars" class="messages-summary-avatars"></span>
                 </button>
                 <!-- Purane elements (#friends-list, #friends-count) friends.js

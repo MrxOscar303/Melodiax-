@@ -2566,8 +2566,11 @@ body.red-theme .notif-mark-all-btn { color: #ff4d4d; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
     transform: translateY(-1px);
 }
-.messages-summary-icon {
+.messages-summary-icon-wrap {
+    position: relative;
     flex-shrink: 0;
+}
+.messages-summary-icon {
     width: 2rem;
     height: 2rem;
     border-radius: 50%;
@@ -2589,18 +2592,24 @@ body.red-theme .messages-summary-icon {
     white-space: nowrap;
 }
 .messages-summary-badge {
-    flex-shrink: 0;
+    /* Reference design ke hisaab se - icon ke top-left corner par
+       overlap karta hua badge, alag se row me nahi. */
+    position: absolute;
+    top: -0.3rem;
+    left: -0.3rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 1.15rem;
-    height: 1.15rem;
-    padding: 0 0.3rem;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.28rem;
     border-radius: 999px;
     background: linear-gradient(135deg, #ed4245 0%, #c4262a 100%);
     color: #fff;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 700;
+    border: 2px solid #202020;
+    box-sizing: content-box;
 }
 .messages-summary-avatars {
     flex-shrink: 0;
