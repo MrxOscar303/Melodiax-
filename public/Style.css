@@ -2592,21 +2592,22 @@ body.red-theme .messages-summary-icon {
     white-space: nowrap;
 }
 .messages-summary-badge {
-    /* Reference design ke hisaab se - icon ke top-left corner par
-       overlap karta hua badge, alag se row me nahi. */
+    /* Icon poora dhak jaata tha pehle - ab sirf uske bahar wale corner
+       par thora sa overlap karta hai, taake icon (paper-plane) khud
+       poora saaf nazar aaye. */
     position: absolute;
-    top: -0.3rem;
-    left: -0.3rem;
+    top: -0.45rem;
+    left: -0.45rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 1.1rem;
-    height: 1.1rem;
-    padding: 0 0.28rem;
+    min-width: 0.95rem;
+    height: 0.95rem;
+    padding: 0 0.22rem;
     border-radius: 999px;
     background: linear-gradient(135deg, #ed4245 0%, #c4262a 100%);
     color: #fff;
-    font-size: 0.62rem;
+    font-size: 0.58rem;
     font-weight: 700;
     border: 2px solid #202020;
     box-sizing: content-box;

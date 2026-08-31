@@ -24,6 +24,12 @@
     // set na kiya ho) - dobara activity hote hi wapas "Online".
     const HEARTBEAT_INTERVAL_MS = 30 * 1000;
     const IDLE_AFTER_MS = 5 * 60 * 1000;
+    // Desktop app (Electron) minimize hone par bhi "chal rahi" hoti hai
+    // (jaise Discord/Spotify) - browser tab jaisi nahi jahan minimize/
+    // background hote hi "not really active" maan lena sahi hai. Is liye
+    // sirf Electron ke andar hi visibility-gate hata dete hain, taake
+    // minimized hone par bhi user "Offline" na dikhe.
+    const isElectronApp = /electron/i.test(navigator.userAgent || '');
     let heartbeatTimer = null;
     let idleCheckTimer = null;
     let lastActivityAt = Date.now();
@@ -76,7 +82,7 @@
         stopPresenceTracking();
         sendHeartbeat();
         heartbeatTimer = setInterval(() => {
-            if (document.visibilityState === 'visible') sendHeartbeat();
+            if (isElectronApp || document.visibilityState === 'visible') sendHeartbeat();
         }, HEARTBEAT_INTERVAL_MS);
         idleCheckTimer = setInterval(checkIdle, 15000);
         ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach((evt) => {
