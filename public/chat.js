@@ -13,7 +13,7 @@
     // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // GIF picker Giphy API use karta hai - https://developers.giphy.com se
     // (free) apni khud ki API key banayein aur yahan daal dein.
-    const GIPHY_API_KEY = 'YOUR_GIPHY_API_KEY';
+    const GIPHY_API_KEY = 'zKDelWwdBYdYAWxBpJXyM8q4GBvXeZCC';
     // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     const STICKERS = [
