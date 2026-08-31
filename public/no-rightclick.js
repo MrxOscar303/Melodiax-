@@ -13,8 +13,12 @@
 // security measure nahi.
 // ============================================================
 (function () {
-    const isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
-        || navigator.maxTouchPoints > 0;
+    // Sirf "pointer: coarse" (primary input touch hai) check karte hain -
+    // "navigator.maxTouchPoints > 0" akela istemal nahi karte kewnky
+    // touchscreen-enabled Windows laptops par ye true ho jata hai chahe
+    // user mouse/trackpad hi use kar raha ho, jiski wajah se un par galti
+    // se right-click allow ho jata tha.
+    const isTouchDevice = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
     if (isTouchDevice) return;
 
     document.addEventListener('contextmenu', (e) => {
