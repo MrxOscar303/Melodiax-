@@ -390,8 +390,7 @@ function sendOauthResult(req, res, success, token) {
 <div class="box">
     <h1>${success ? 'Login successful!' : 'Login failed'}</h1>
     <p>${success ? 'Taking you back to the Melodiax app...' : 'Something went wrong, please try again.'}</p>
-    <p>Agar khud-ba-khud wapas na jayein, to <a href="${target}">yahan click karein</a>, phir is tab ko band kar dein.</p>
-</div>
+    <p>If you are not redirected automatically, <a href="${target}">click here</a>, then you can close this tab.</p></div>
 <script>window.location.href = ${JSON.stringify(target)};</script>
 </body>
 </html>`);
