@@ -8,14 +8,13 @@ const User = require('../models/User');
 // -> Create Credentials -> OAuth client ID -> Web application
 // Authorized redirect URI: <BASE_URL>/api/auth/google/callback
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    passport.use(
-        new GoogleStrategy(
-            {
-                clientID: process.env.GOOGLE_CLIENT_ID,
-                clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-                callbackURL: `${process.env.BASE_URL}/api/auth/google/callback`,
-            },
-            async (accessToken, refreshToken, profile, done) => {
+    const googleStrategy = new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: `${process.env.BASE_URL}/api/auth/google/callback`,
+        },
+        async (accessToken, refreshToken, profile, done) => {
                 try {
                     let user = await User.findOne({ googleId: profile.id });
                     if (!user) {
@@ -46,8 +45,13 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
                     return done(err, null);
                 }
             }
-        )
     );
+    // Google login screen system/browser ki language follow karta hai
+    // (jaise user ke system locale ke hisaab se Malay, Hindi, waghera
+    // dikh jata hai) - "hl" (host language) param force karke hamesha
+    // English me dikhane ke liye.
+    googleStrategy.authorizationParams = () => ({ hl: 'en' });
+    passport.use(googleStrategy);
 }
 
 // ---------------- FACEBOOK ----------------

@@ -185,6 +185,14 @@ const googleOauthBtn = document.getElementById('google-oauth-btn');
 const facebookOauthBtn = document.getElementById('facebook-oauth-btn');
 
 function openOAuthPopup(provider) {
+    // Desktop app (Electron) ke andar - seedha wahan bata do OAuth kholne
+    // ke liye (system browser me khulega, jahan Google block/degrade
+    // nahi karta jaisa embedded app windows ke andar karta hai).
+    if (window.melodiaxDesktop && window.melodiaxDesktop.isElectron) {
+        window.melodiaxDesktop.openOAuth(provider);
+        return;
+    }
+
     const width = 480;
     const height = 640;
     const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
