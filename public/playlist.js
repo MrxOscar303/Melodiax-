@@ -10,16 +10,29 @@
 // - Kisi bhi playlist (sidebar item ya grid card) pe click karne se - play
 //   button pe nahi - ek detail module khulta hai jisme us playlist ke sab
 //   songs, aur har song kis date/time par playlist me add hua tha, dikhta hai.
-// - Data localStorage me, per logged-in user (guest ke liye alag se) store
-//   hota hai, is liye login/logout par playlist.js khud refresh ho jata hai.
+// - Data database me store hoti hai (per logged-in user account) - is liye
+//   playlists ab website aur desktop app dono me (aur kisi bhi device pe)
+//   hamesha sync rehti hain. Guest (logged-out) users playlist nahi bana
+//   sakte. Login/logout hote hi playlist.js khud refresh ho jata hai.
 // ==========================================================================
 (function () {
     'use strict';
 
-    // ---------------- Storage ----------------
-    function getStorageKey() {
-        const uid = (window.currentUser && window.currentUser._id) ? window.currentUser._id : 'guest';
-        return 'melodiax_playlists_' + uid;
+    // ---------------- Storage (server-backed - saari devices/browsers me sync) ----------------
+    // Pehle ye data localStorage me tha (per-browser/device, kabhi sync
+    // nahi hota tha) - ab database me hai (naya /api/user-playlists route),
+    // is liye account ke saath hamesha, har jagah (website + desktop app)
+    // sync rehta hai.
+    async function apiRequest(method, path, body) {
+        const res = await fetch('/api/user-playlists' + path, {
+            method,
+            credentials: 'include',
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Something went wrong.');
+        return data;
     }
 
     let playlists = [];
@@ -28,31 +41,18 @@
     let detailPlaylistId = null; // is waqt detail module me kaunsi playlist khuli hai
 
     // Playlist shape: { id, name, image, createdAt, songs: [{ id, addedAt }] }
-    function loadPlaylists() {
+    async function loadPlaylists() {
+        // Guest (logged-out) users ke liye koi account hi nahi jiske sath
+        // playlist save ho - is liye khaali list, koi API call nahi.
+        if (!window.currentUser || !window.currentUser._id) {
+            playlists = [];
+            return;
+        }
         try {
-            const raw = localStorage.getItem(getStorageKey());
-            let parsed = raw ? JSON.parse(raw) : [];
-            if (!Array.isArray(parsed)) parsed = [];
-            // Purane format (songIds: [...]) ko naye format (songs: [{id, addedAt}]) me migrate karo
-            parsed = parsed.map((pl) => {
-                if (!pl.songs && Array.isArray(pl.songIds)) {
-                    pl.songs = pl.songIds.map((id) => ({ id: String(id), addedAt: pl.createdAt || Date.now() }));
-                    delete pl.songIds;
-                }
-                if (!Array.isArray(pl.songs)) pl.songs = [];
-                return pl;
-            });
-            playlists = parsed;
+            const data = await apiRequest('GET', '');
+            playlists = Array.isArray(data.playlists) ? data.playlists : [];
         } catch (e) {
             playlists = [];
-        }
-    }
-
-    function savePlaylists() {
-        try {
-            localStorage.setItem(getStorageKey(), JSON.stringify(playlists));
-        } catch (e) {
-            console.warn('Playlist failed to save:', e);
         }
     }
 
@@ -312,35 +312,49 @@
     // playlist ka detail module bhi khol do.
     function upsertAutoPlaylist(sectionName, image, songIds) {
         if (!songIds || !songIds.length) return null;
+        if (!window.currentUser || !window.currentUser._id) return null; // guest - kuch save nahi ho sakta
         const now = Date.now();
         let pl = playlists.find((p) => p.autoSection && p.autoSection.toLowerCase() === sectionName.toLowerCase());
-        if (pl) {
-            const existingMap = new Map(pl.songs.map((s) => [s.id, s.addedAt]));
-            pl.songs = songIds.map((id) => ({ id, addedAt: existingMap.has(id) ? existingMap.get(id) : now }));
-            if (image) pl.image = image;
-        } else {
-            pl = {
-                id: generateId(),
-                name: sectionName,
-                image: image || null,
-                songs: songIds.map((id) => ({ id, addedAt: now })),
-                createdAt: now,
-                autoSection: sectionName
-            };
-            playlists.push(pl);
-        }
-        savePlaylists();
-        renderSidebar();
-        return pl.id;
+        const idToReturn = pl ? pl.id : null;
+
+        (async () => {
+            try {
+                if (pl) {
+                    const existingMap = new Map(pl.songs.map((s) => [s.id, s.addedAt]));
+                    const newSongs = songIds.map((id) => ({ id, addedAt: existingMap.has(id) ? existingMap.get(id) : now }));
+                    const data = await apiRequest('PATCH', '/' + pl.id, { songs: newSongs, image: image || pl.image });
+                    Object.assign(pl, data.playlist);
+                } else {
+                    const data = await apiRequest('POST', '', {
+                        name: sectionName,
+                        image: image || null,
+                        songs: songIds.map((id) => ({ id, addedAt: now })),
+                        autoSection: sectionName,
+                    });
+                    playlists.push(data.playlist);
+                    // Pehli baar create hui thi - detail module ab sahi (server-assigned) id se khulwate hain.
+                    if (typeof window.melodiaxOpenSectionPlaylist._pendingOpen === 'function') {
+                        window.melodiaxOpenSectionPlaylist._pendingOpen(data.playlist.id);
+                    }
+                }
+                renderSidebar();
+            } catch (e) {
+                console.warn('Auto-playlist save failed:', e);
+            }
+        })();
+
+        return idToReturn;
     }
 
     window.melodiaxOpenSectionPlaylist = function (sectionName, image, songIds) {
         const id = upsertAutoPlaylist(sectionName, image, songIds);
-        if (!id) return;
-        // Homepage se kahin bhi switch nahi karte - seedha bara (80% screen)
-        // detail module khol dete hain. Playlist khud Playlist tab ki grid me
-        // (playlists array ke through) already create ho chuki hai.
-        openPlaylistDetail(id, { large: true });
+        if (id) {
+            // Playlist pehle se maujood thi - id turant maloom hai.
+            openPlaylistDetail(id, { large: true });
+        } else if (window.currentUser && window.currentUser._id) {
+            // Naya create ho raha hai (async) - jab ready ho tabhi detail kholte hain.
+            window.melodiaxOpenSectionPlaylist._pendingOpen = (newId) => openPlaylistDetail(newId, { large: true });
+        }
     };
 
     // ---------------- Playlist Detail module (songs + added date/time) ----------------
@@ -528,11 +542,7 @@
         reader.readAsDataURL(file);
     });
 
-    function generateId() {
-        return 'pl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    }
-
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         if (!name) {
             errorEl.textContent = 'Please enter a playlist name.';
@@ -544,48 +554,111 @@
             return;
         }
         const now = Date.now();
+        saveBtn.disabled = true;
 
-        if (editingId) {
-            const pl = playlists.find((p) => p.id === editingId);
-            if (pl) {
-                // Pehle se maujood songs ki original "added" date/time barkarar rakho,
-                // sirf naye tick kiye hue songs ko abhi ka date/time milega.
-                const existingMap = new Map(pl.songs.map((s) => [s.id, s.addedAt]));
-                pl.name = name;
-                pl.image = selectedCoverDataUrl;
-                pl.songs = checkedIds.map((id) => ({ id, addedAt: existingMap.has(id) ? existingMap.get(id) : now }));
+        try {
+            if (editingId) {
+                const pl = playlists.find((p) => p.id === editingId);
+                if (pl) {
+                    // Pehle se maujood songs ki original "added" date/time barkarar rakho,
+                    // sirf naye tick kiye hue songs ko abhi ka date/time milega.
+                    const existingMap = new Map(pl.songs.map((s) => [s.id, s.addedAt]));
+                    const newSongs = checkedIds.map((id) => ({ id, addedAt: existingMap.has(id) ? existingMap.get(id) : now }));
+                    const data = await apiRequest('PATCH', '/' + editingId, {
+                        name,
+                        image: selectedCoverDataUrl,
+                        songs: newSongs,
+                    });
+                    Object.assign(pl, data.playlist);
+                }
+            } else {
+                const data = await apiRequest('POST', '', {
+                    name,
+                    image: selectedCoverDataUrl,
+                    songs: checkedIds.map((id) => ({ id, addedAt: now })),
+                });
+                playlists.push(data.playlist);
             }
-        } else {
-            playlists.push({
-                id: generateId(),
-                name: name,
-                image: selectedCoverDataUrl,
-                songs: checkedIds.map((id) => ({ id, addedAt: now })),
-                createdAt: now
-            });
-        }
 
-        savePlaylists();
-        renderSidebar();
-        if (playlistsViewSection && playlistsViewSection.style.display !== 'none') renderPlaylistsView();
-        closeModal();
+            renderSidebar();
+            if (playlistsViewSection && playlistsViewSection.style.display !== 'none') renderPlaylistsView();
+            closeModal();
+        } catch (e) {
+            errorEl.textContent = e.message || 'Something went wrong, please try again.';
+        } finally {
+            saveBtn.disabled = false;
+        }
     });
 
     function deletePlaylist(id) {
         const pl = playlists.find((p) => p.id === id);
         if (!pl) return;
-        showConfirm('Delete the playlist "' + pl.name + '"?').then((ok) => {
+        showConfirm('Delete the playlist "' + pl.name + '"?').then(async (ok) => {
             if (!ok) return;
-            playlists = playlists.filter((p) => p.id !== id);
-            savePlaylists();
-            renderSidebar();
-            if (playlistsViewSection && playlistsViewSection.style.display !== 'none') renderPlaylistsView();
+            try {
+                await apiRequest('DELETE', '/' + id);
+                playlists = playlists.filter((p) => p.id !== id);
+                renderSidebar();
+                if (playlistsViewSection && playlistsViewSection.style.display !== 'none') renderPlaylistsView();
+            } catch (e) {
+                console.warn('Delete playlist failed:', e);
+            }
         });
     }
 
+    // ---------------- One-time migration (purani localStorage playlists) ----------------
+    // Pehle ye data localStorage me tha - is update ke baad agar kisi user
+    // ke localStorage me purani playlists mil jayen (aur abhi tak migrate
+    // nahi hui), to unhe ek dafa automatically database me upload kar dete
+    // hain, taake koi purana data lost na ho. Har playlist migrate hone ke
+    // baad localStorage se turant hata dete hain (taake dobara na ho).
+    async function migrateOldLocalPlaylistsIfAny() {
+        if (!window.currentUser || !window.currentUser._id) return;
+        const oldKey = 'melodiax_playlists_' + window.currentUser._id;
+        let raw;
+        try {
+            raw = localStorage.getItem(oldKey);
+        } catch (e) {
+            return;
+        }
+        if (!raw) return;
+
+        let oldPlaylists;
+        try {
+            oldPlaylists = JSON.parse(raw);
+        } catch (e) {
+            localStorage.removeItem(oldKey);
+            return;
+        }
+        if (!Array.isArray(oldPlaylists) || !oldPlaylists.length) {
+            localStorage.removeItem(oldKey);
+            return;
+        }
+
+        for (const pl of oldPlaylists) {
+            const songsArr = Array.isArray(pl.songs) ? pl.songs : [];
+            if (!pl.name || !songsArr.length) continue; // adhoori/khaali entry - skip
+            try {
+                const data = await apiRequest('POST', '', {
+                    name: pl.name,
+                    image: pl.image || null,
+                    songs: songsArr.map((s) => ({ id: String(s.id), addedAt: s.addedAt || Date.now() })),
+                    autoSection: pl.autoSection || undefined,
+                });
+                playlists.push(data.playlist);
+            } catch (e) {
+                console.warn('Old playlist migration failed for "' + pl.name + '":', e);
+            }
+        }
+        // Migration ho chuki hai (chahe kuch fail hue hon) - dobara try na ho,
+        // is liye purana data hata dete hain.
+        localStorage.removeItem(oldKey);
+    }
+
     // ---------------- Init (aur login/logout par user switch hone par re-init) ----------------
-    function init() {
-        loadPlaylists();
+    async function init() {
+        await loadPlaylists();
+        await migrateOldLocalPlaylistsIfAny();
         renderSidebar();
         showDefaultTab();
     }

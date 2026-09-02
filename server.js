@@ -84,6 +84,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);
 app.use('/api/playlists', playlistRoutes);
+app.use('/api/user-playlists', require('./routes/user-playlists'));
 app.use('/api/podcasts', podcastRoutes);
 app.use('/api/premium', premiumRoutes);
 app.use('/api/friends', friendRoutes);
