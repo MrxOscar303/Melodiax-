@@ -48,16 +48,31 @@ async function sendBrevoEmail({ to, subject, html, replyTo }) {
 
 async function sendVerificationEmail(to, username, verifyUrl) {
     const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto;">
-            <h2>Hi ${username},</h2>
-            <p>Thanks for creating a Melodiax account! Please click the button below to verify your email address:</p>
-            <p style="margin: 24px 0;">
-                <a href="${verifyUrl}" style="background:#1db954;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
-                    Verify Email
-                </a>
-            </p>
-            <p>Or paste this link into your browser:<br>${verifyUrl}</p>
-            <p style="color:#888;font-size:12px;">This link is valid for 24 hours. If you didn't create this account, you can safely ignore this email.</p>
+        <div style="background-color:#0a0a0a;padding:32px 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+            <div style="max-width:480px;margin:0 auto;background-color:#121212;border-radius:16px;overflow:hidden;border:1px solid #262626;">
+                <div style="background:linear-gradient(135deg,#1db954 0%,#14833d 100%);padding:28px 32px;text-align:center;">
+                    <span style="font-size:22px;font-weight:800;color:#04210f;letter-spacing:0.5px;">&#9835; Melodiax</span>
+                </div>
+                <div style="padding:32px;">
+                    <h2 style="margin:0 0 8px;color:#ffffff;font-size:20px;">Hi ${username},</h2>
+                    <p style="margin:0 0 20px;color:#b3b3b3;font-size:14px;line-height:1.6;">
+                        Thanks for creating a Melodiax account! Confirm your email address to get started.
+                    </p>
+                    <div style="text-align:center;margin:28px 0;">
+                        <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(135deg,#1db954 0%,#14833d 100%);color:#04210f;padding:14px 36px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;">
+                            Verify Email
+                        </a>
+                    </div>
+                    <p style="margin:0 0 6px;color:#777;font-size:12px;">Or paste this link into your browser:</p>
+                    <p style="margin:0 0 24px;word-break:break-all;">
+                        <a href="${verifyUrl}" style="color:#1db954;font-size:12px;text-decoration:none;">${verifyUrl}</a>
+                    </p>
+                    <hr style="border:none;border-top:1px solid #262626;margin:0 0 16px;">
+                    <p style="margin:0;color:#666;font-size:11px;line-height:1.6;">
+                        This link is valid for 24 hours. If you didn't create this account, you can safely ignore this email.
+                    </p>
+                </div>
+            </div>
         </div>
     `;
 

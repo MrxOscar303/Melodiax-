@@ -5915,4 +5915,24 @@ body.red-theme .admin-total-counter { background: rgba(255, 77, 77, 0.15); color
     .chat-song-play-btn { width: 1.7rem; height: 1.7rem; font-size: 0.75rem; }
     .chat-song-title { font-size: 0.78rem; }
     .chat-song-section { font-size: 0.68rem; }
+
+    /* ---- Profile card - mobile polish ---- */
+    .profile-modal-content { width: 94vw; border-radius: 16px; }
+    .profile-banner { height: 5.5rem; }
+    .profile-card-body { padding: 0 1.1rem 1.3rem; }
+    .profile-card-avatar-wrap { width: 5.2rem; height: 5.2rem; margin-top: -2.7rem; }
+    #profile-card-username { font-size: 1.15rem; }
+    .profile-card-handle { font-size: 0.78rem; }
+    .profile-section-label { font-size: 0.82rem; margin: 1rem 0 0.4rem; }
+
+    /* Dropdown trigger aur panel dono ko thoda bada/touch-friendly banaya -
+       chhoti screen par icon+text overlap na ho, aur panel ke andar
+       options ek-ek row me poori chaudai le kar aasani se tap ho sakein. */
+    .profile-dropdown-trigger { padding: 0.65rem 0.8rem; font-size: 0.82rem; gap: 0.55rem; }
+    .profile-dropdown-panel.profile-status-list { max-height: 11rem; }
+    .profile-status-option, .profile-effect-option { padding: 0.6rem 0.65rem; font-size: 0.8rem; }
+    .profile-status-icon { width: 1.35rem; height: 1.35rem; font-size: 0.68rem; }
+
+    .profile-status-message-row { flex-wrap: wrap; }
+    .my-status-message-input { font-size: 0.82rem; }
 }
