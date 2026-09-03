@@ -377,10 +377,13 @@ function sendOauthResult(req, res, success, token) {
 <head>
 <meta charset="utf-8">
 <title>Melodiax</title>
+<link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2">
 <meta http-equiv="refresh" content="0;url=${target}">
 <style>
     body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:#121212; color:#fff; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif; text-align:center; padding:24px; }
     .box { max-width: 340px; }
+    .logo { width: 88px; height: 88px; margin: 0 0 18px; }
     h1 { font-size: 1.1rem; margin: 0 0 8px; color: ${success ? '#1db954' : '#ff4d4d'}; }
     p { font-size: 0.9rem; color: #b3b3b3; margin: 0 0 14px; }
     a { color: #1db954; }
@@ -388,6 +391,7 @@ function sendOauthResult(req, res, success, token) {
 </head>
 <body>
 <div class="box">
+    <img class="logo" src="/assets/m-logo-favicon-source.png" alt="Melodiax">
     <h1>${success ? 'Login successful!' : 'Login failed'}</h1>
     <p>${success ? 'Taking you back to the Melodiax app...' : 'Something went wrong, please try again.'}</p>
     <p>If you are not redirected automatically, <a href="${target}">click here</a>, then you can close this tab.</p></div>
