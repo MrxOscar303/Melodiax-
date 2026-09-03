@@ -47,11 +47,13 @@ async function sendBrevoEmail({ to, subject, html, replyTo }) {
 }
 
 async function sendVerificationEmail(to, username, verifyUrl) {
+    const logoUrl = `${process.env.BASE_URL}/assets/m-logo-favicon-source.png`;
     const html = `
         <div style="background-color:#0a0a0a;padding:32px 16px;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
             <div style="max-width:480px;margin:0 auto;background-color:#121212;border-radius:16px;overflow:hidden;border:1px solid #262626;">
-                <div style="background:linear-gradient(135deg,#1db954 0%,#14833d 100%);padding:28px 32px;text-align:center;">
-                    <span style="font-size:22px;font-weight:800;color:#04210f;letter-spacing:0.5px;">&#9835; Melodiax</span>
+                <div style="background-color:#000000;padding:24px 32px;text-align:center;border-bottom:1px solid #1db954;">
+                    <img src="${logoUrl}" alt="Melodiax" width="36" height="36" style="display:inline-block;vertical-align:middle;">
+                    <span style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:0.5px;vertical-align:middle;margin-left:10px;">Melodiax</span>
                 </div>
                 <div style="padding:32px;">
                     <h2 style="margin:0 0 8px;color:#ffffff;font-size:20px;">Hi ${username},</h2>
