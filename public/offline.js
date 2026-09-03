@@ -8,17 +8,85 @@
 //   network path use karte hain).
 // - YouTube-type (admin) tracks download nahi ho sakte - unko stream karne
 //   ke liye hamesha internet chahiye hota hai, is liye unpar button nahi lagta.
-// - Downloads PER LOGGED-IN USER alag rehti hain (playlist.js jaisa hi
-//   pattern): har account ki apni IndexedDB database hoti hai, is liye ek
-//   hi device/browser par do alag accounts login karein to unki offline
-//   downloads kabhi aapas me mix nahi hoti. Login/logout hote hi
-//   ('melodiax-auth-changed' event) khud sahi user ki list par switch ho
-//   jata hai.
+// - Ab "kaunse gaane downloaded hain" ki list account ke saath sync bhi
+//   hoti hai (server par - /api/downloads) - matlab website par download
+//   kiya gaana desktop app me (aur kisi bhi device pe) bhi list me dikhega,
+//   aur wo device khud usko background me fetch karke apni local copy bana
+//   lega (asal audio file kabhi server par store nahi hoti, sirf list).
 // ==========================================================================
 (function () {
     'use strict';
 
     if (!('indexedDB' in window)) return; // bohot purana browser - chup-chaap skip
+
+    async function downloadsApi(method, path, body) {
+        const res = await fetch('/api/downloads' + path, {
+            method,
+            credentials: 'include',
+            headers: body ? { 'Content-Type': 'application/json' } : undefined,
+            body: body ? JSON.stringify(body) : undefined,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Something went wrong.');
+        return data;
+    }
+
+    // Server ki "downloaded" list is device ki apni IndexedDB se compare
+    // karte hain - jo bhi song list me hai lekin is device par abhi tak
+    // physically download nahi hua, use chup-chaap background me fetch
+    // karke local copy bana dete hain (isi tarah jaise pehli baar download
+    // kiya jata hai). Isi se "sync" ka asal experience milta hai - list
+    // hamesha same, har device apni copy khud rakhta hai.
+    let syncInProgress = false;
+    async function syncDownloadsFromServer() {
+        if (syncInProgress) return;
+        syncInProgress = true;
+        try {
+            const data = await downloadsApi('GET', '');
+            const serverList = Array.isArray(data.downloads) ? data.downloads : [];
+            const serverIds = new Set(serverList.map((rec) => String(rec.id)));
+            const localSongs = await listAllOfflineSongs();
+            const localIds = new Set(localSongs.map((rec) => String(rec.id)));
+
+            // 1) Jo server list me hai lekin is device par local nahi -
+            //    background me fetch karke local copy bana do.
+            const missingLocally = serverList.filter((rec) => !localIds.has(String(rec.id)));
+            for (const rec of missingLocally) {
+                try {
+                    const src = getSongSourceUrl(rec.id);
+                    const res = await fetch(src);
+                    if (!res.ok) continue;
+                    const blob = await res.blob();
+                    await saveOfflineSong(rec.id, blob, { name: rec.name, desc: rec.desc, image: rec.image });
+                } catch (err) {
+                    console.warn('Background download sync failed for song ' + rec.id + ':', err);
+                }
+            }
+
+            // 2) Jo is device par local hai (jaise is update se pehle
+            //    downloaded ki hui) lekin server list me abhi tak nahi -
+            //    server ko bata do, taake wo bhi ab se saari devices par
+            //    sync ho jaye.
+            const missingOnServer = localSongs.filter((rec) => !serverIds.has(String(rec.id)));
+            for (const rec of missingOnServer) {
+                try {
+                    await downloadsApi('POST', '', { id: rec.id, name: rec.name, desc: rec.desc, image: rec.image });
+                } catch (err) { /* best-effort */ }
+            }
+
+            if (missingLocally.length) {
+                await updateDownloadsNavVisibility();
+                if (downloadsSection && downloadsSection.style.display !== 'none') {
+                    await renderDownloadsGrid();
+                }
+            }
+        } catch (err) {
+            // Offline ho, ya server abhi reachable na ho - chup-chaap ignore,
+            // agli baar try ho jayega.
+        } finally {
+            syncInProgress = false;
+        }
+    }
 
     const DB_VERSION = 2;
     const STORE = 'songs';
@@ -387,6 +455,7 @@
             revokeOfflineUrl(id);
             setBtnState(btn, 'idle');
             afterOfflineChange(id);
+            downloadsApi('DELETE', '/' + id).catch(() => {}); // server list se bhi hata do (best-effort)
             return;
         }
 
@@ -399,13 +468,15 @@
             const titleEl = card.querySelector('.img-title');
             const descEl = card.querySelector('.img-description');
             const imgEl = card.querySelector('img');
-            await saveOfflineSong(id, blob, {
+            const meta = {
                 name: titleEl ? titleEl.textContent.trim() : '',
                 desc: descEl ? descEl.textContent.trim() : '',
                 image: imgEl ? imgEl.getAttribute('src') : ''
-            });
+            };
+            await saveOfflineSong(id, blob, meta);
             setBtnState(btn, 'downloaded');
             afterOfflineChange(id);
+            downloadsApi('POST', '', { id, ...meta }).catch(() => {}); // server list me bhi add karo (best-effort)
         } catch (err) {
             console.warn('Offline download failed:', err);
             setBtnState(btn, 'idle');
@@ -507,6 +578,7 @@
                 const homeCardBtn = cardIcon ? cardIcon.closest('.music-card')?.querySelector('.music-download-btn') : null;
                 if (homeCardBtn) setBtnState(homeCardBtn, 'idle');
                 afterOfflineChange(rec.id);
+                downloadsApi('DELETE', '/' + rec.id).catch(() => {});
             });
             card.addEventListener('click', () => playDownloadedSong(rec));
 
@@ -754,6 +826,7 @@
                 const homeCardBtn = cardIcon ? cardIcon.closest('.music-card')?.querySelector('.music-download-btn') : null;
                 if (homeCardBtn) setBtnState(homeCardBtn, 'idle');
                 afterOfflineChange(id);
+                downloadsApi('DELETE', '/' + id).catch(() => {});
                 return;
             }
 
@@ -835,15 +908,17 @@
                 const titleEl = card ? card.querySelector('.img-title') : null;
                 const descEl = card ? card.querySelector('.img-description') : null;
                 const imgEl = card ? card.querySelector('img') : null;
-                await saveOfflineSong(id, blob, {
+                const meta = {
                     name: nowBarMeta.name || (titleEl ? titleEl.textContent.trim() : ''),
                     desc: nowBarMeta.desc || (descEl ? descEl.textContent.trim() : ''),
                     image: nowBarMeta.image || (imgEl ? imgEl.getAttribute('src') : '')
-                }, projectorBlob);
+                };
+                await saveOfflineSong(id, blob, meta, projectorBlob);
                 setPlayerBtnState('downloaded');
                 const homeCardBtn = card ? card.querySelector('.music-download-btn') : null;
                 if (homeCardBtn) setBtnState(homeCardBtn, 'downloaded');
                 afterOfflineChange(id);
+                downloadsApi('POST', '', { id, ...meta }).catch(() => {});
             } catch (err) {
                 console.warn('Offline download failed:', err);
                 setPlayerBtnState('idle');
@@ -854,6 +929,7 @@
     // Pehli load pe bhi Download nav button ki visibility set kardo (agar
     // pehle se koi gaana downloaded ho).
     updateDownloadsNavVisibility();
+    if (hasOfflineAccess()) syncDownloadsFromServer();
 
     // ---------------- Login/logout par user switch ----------------
     // auth.js har login/logout ke baad 'melodiax-auth-changed' fire karta hai
@@ -879,5 +955,6 @@
             playerDownloadBtn.style.display = '';
             setPlayerBtnState(rec ? 'downloaded' : 'idle');
         }
+        syncDownloadsFromServer();
     });
 })();
