@@ -34,6 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuInstallBtn = document.getElementById('mobile-menu-install');
     if (!navInstallBtn && !menuInstallBtn) return;
 
+    // Agar hum already Electron desktop app ke andar chal rahe hain, to
+    // "Install App" dikhana hi illogical hai (app pehle se installed hai
+    // aur chal rahi hai) - is liye button hamesha hidden rakhte hain.
+    if (window.melodiaxDesktop && window.melodiaxDesktop.isElectron) {
+        if (navInstallBtn) navInstallBtn.style.display = 'none';
+        if (menuInstallBtn) menuInstallBtn.style.display = 'none';
+        return;
+    }
+
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); // iPadOS 13+ desktop-jaisa UA bhejta hai
     const isOtherMobile = /android|iemobile|blackberry|opera mini/i.test(navigator.userAgent);
