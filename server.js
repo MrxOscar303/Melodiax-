@@ -80,6 +80,16 @@ app.get('/service-worker.js', (req, res) => {
 // Frontend (Index.html, Style.css, Script.js, uploads/avatars) yahin se serve hoga
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Google OAuth verification (aur general good practice) ke liye clean
+// URLs - taake in pages ko homepage/privacy-policy links ke tor par
+// submit kiya ja sake bina ".html" extension ke.
+app.get('/privacy-policy', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'privacy-policy.html'));
+});
+app.get('/terms-of-service', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'terms-of-service.html'));
+});
+
 // Sara account/auth ka kaam is prefix ke neeche
 app.use('/api/auth', authRoutes);
 app.use('/api/songs', songRoutes);

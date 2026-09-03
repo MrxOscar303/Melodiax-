@@ -4528,6 +4528,9 @@ body.red-theme .about-hero-title {
     font-size: 1rem;
     margin-bottom: 2.2rem;
 }
+.about-legal-links { margin: -1.6rem 0 2.2rem; font-size: 0.85rem; }
+.about-legal-links a { color: #1db954; text-decoration: none; }
+.about-legal-links a:hover { text-decoration: underline; }
 
 .about-contact-heading { margin-bottom: 1rem; }
 
