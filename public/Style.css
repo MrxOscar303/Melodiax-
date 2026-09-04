@@ -54,6 +54,21 @@ nav {
     height: 4rem;
 }
 
+/* Google OAuth verification (aur general SEO/accessibility) ke liye -
+   hamesha visible rehne wali chhoti tagline strip, "About us" jaisa
+   click-to-reveal nahi. Unobtrusive rakha hai taake visual design par
+   asar na pare. */
+.homepage-tagline {
+    margin: 0;
+    padding: 0.35rem 1.2rem;
+    background-color: #0a0a0a;
+    color: #777;
+    font-size: 0.7rem;
+    text-align: center;
+    border-bottom: 1px solid #1a1a1a;
+}
+.homepage-tagline strong { color: #1db954; }
+
 .left-half {
     display: flex;
     align-items: center;
